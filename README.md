@@ -3,6 +3,7 @@
 [简体中文](README.zh-CN.md)
 
 Shared repository knowledge for developers and coding agents, targeting VS Code on **Windows and Linux**.
+Windows VS Code **Remote SSH to Linux is a required workflow**. See the [Remote SSH setup and acceptance guide](docs/user/remote-ssh.zh-CN.md).
 
 ## Status: M1 implementation preview
 
@@ -28,7 +29,7 @@ npm run package:vsix
 
 Install the resulting `dist/repo-knowledge-0.0.0.vsix` through VS Code's Install from VSIX command. Run **Repo Knowledge: Open Three-Card Demo**, trust the self-authored demo, then **Search Cards**, **Diagnose Standalone MCP** and **Show Codex MCP Setup**. Merge the generated table into Codex config.toml and restart Codex. The command previews configuration and does not overwrite existing settings. See the [Chinese setup guide](docs/user/quickstart.zh-CN.md).
 
-The external MCP process requires Node 24.19.x for preview acceptance; set `repoKnowledge.nodeExecutable` to an absolute executable path when Node is not on PATH. VS Code's embedded Node and this external runtime are distinct. Preview compatibility requires actual host acceptance; the declared VS Code minimum is provisional.
+Native preview uses an external Node 24.19.x executable. On Remote SSH, the default uses the remote VS Code Server Node in a separate process (remote MCP tested on Node 22.22.1), so npm/system installation is unnecessary. An absolute `repoKnowledge.nodeExecutable` overrides the default. The declared VS Code minimum is provisional; real Remote SSH editor/Codex acceptance remains a release gate.
 
 ## Architecture
 

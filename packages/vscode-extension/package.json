@@ -56,7 +56,7 @@
           "type": "string",
           "default": "node",
           "scope": "machine",
-          "description": "External Node executable for the standalone MCP service. Use Node 24.19.x for preview acceptance."
+          "description": "Node executable for standalone MCP. Native preview uses Node 24.19.x. On Remote SSH, the default node value uses the remote VS Code Server Node binary; an absolute remote Node path overrides it."
         },
         "repoKnowledge.storeDirectory": {
           "type": "string",

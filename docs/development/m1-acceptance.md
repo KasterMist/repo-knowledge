@@ -37,6 +37,8 @@ Do not close T09/T10 or label this as Qoder-equivalent integration before these 
 
 ## References
 
+Remote SSH from Windows to Linux is an additional required execution path, not implied by Linux runner success. See [Remote SSH evidence](remote-ssh-acceptance.md) and its [manual guide](../user/remote-ssh.zh-CN.md). Its actual editor/Codex gate remains open even when native checks pass.
+
 - [Codex MCP configuration](https://learn.chatgpt.com/docs/extend/mcp)
 - [Official TypeScript MCP SDK](https://github.com/modelcontextprotocol/typescript-sdk/tree/v1.x)
 - [VS Code extension bundling](https://code.visualstudio.com/api/working-with-extensions/bundling-extension)
