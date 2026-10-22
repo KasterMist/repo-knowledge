@@ -1,0 +1,15 @@
+node_modules/
+dist/
+*.tsbuildinfo
+*.vsix
+.tools/
+.tmp/
+coverage/
+*.log
+.env
+.env.*
+!.env.example
+.codex/
+.repo-knowledge/
+.DS_Store
+Thumbs.db

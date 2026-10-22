@@ -1,0 +1,7 @@
+node_modules/
+dist/
+.tools/
+.tmp/
+package-lock.json
+LICENSE
+*.tsbuildinfo

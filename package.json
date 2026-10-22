@@ -1,0 +1,35 @@
+{
+  "name": "repo-knowledge-workspace",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Shared repository knowledge for developers and coding agents",
+  "license": "Apache-2.0",
+  "type": "module",
+  "engines": {
+    "node": ">=24.19.0 <25",
+    "npm": ">=11 <13"
+  },
+  "packageManager": "npm@12.2.1",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "lint": "eslint . --max-warnings 0",
+    "typecheck": "tsc -b --pretty false",
+    "build": "tsc -b --pretty false",
+    "test:unit": "node --test tests/unit/repository-policy.test.mjs",
+    "test:integration": "node --test tests/integration/bootstrap.test.mjs",
+    "check:repository": "node scripts/check-repository.mjs",
+    "check": "node scripts/check.mjs"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "eslint": "10.13.0",
+    "prettier": "3.9.10",
+    "typescript": "5.9.3",
+    "typescript-eslint": "8.72.0",
+    "yaml": "2.9.1"
+  }
+}
