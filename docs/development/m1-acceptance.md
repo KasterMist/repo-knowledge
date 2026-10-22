@@ -37,7 +37,7 @@ Do not close T09/T10 or label this as Qoder-equivalent integration before these 
 
 ## References
 
-Remote SSH from Windows to Linux is an additional required execution path, not implied by Linux runner success. See [Remote SSH evidence](remote-ssh-acceptance.md) and its [manual guide](../user/remote-ssh.zh-CN.md). Its actual editor/Codex gate remains open even when native checks pass.
+Remote SSH from Windows to Linux is an additional required execution path, not implied by Linux runner success. See [Remote SSH evidence](remote-ssh-acceptance.md) and its [manual guide](../user/remote-ssh.zh-CN.md). On 2026-10-22 the maintainer supplied two successful official Codex retrieval responses: status, Chinese search and evidence-backed read-fallback interpretation. The actual Remote SSH extension diagnostic also passed. These results do not establish native Windows or native Linux Codex acceptance. Remote proposal/conflict/stale recovery and confirmation of independent new-conversation reuse remain open, so T09/T10 are not complete.
 
 - [Codex MCP configuration](https://learn.chatgpt.com/docs/extend/mcp)
 - [Official TypeScript MCP SDK](https://github.com/modelcontextprotocol/typescript-sdk/tree/v1.x)

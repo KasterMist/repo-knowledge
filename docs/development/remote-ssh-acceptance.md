@@ -21,11 +21,20 @@ The actual Remote SSH diagnostic command exposed "Cannot identify the SSH author
 
 After installing the fix and reloading the Remote SSH window, the maintainer reported a successful actual VS Code diagnostic: STDIO handshake completed, four tools discovered, execution host ssh-remote/Linux with Node 22.22.1, and the new extension-host file routing message. The official Codex extension was visible as kind=2, scheme=file, version 26.51007.21434. The self-authored demo returned schemaVersion 1 and all three revision-1 cards with stale=false. Personal Node/account paths from the submitted output are omitted. This confirms the real Remote SSH extension diagnostic, not knowledge tool use by an official Codex conversation. Snapshot/demo UI opening and the separate Codex conversation gates still need evidence.
 
+## Maintainer-reported official Codex retrieval
+
+On 2026-10-22 the maintainer supplied two successful official Codex conversation responses from the Remote SSH acceptance workflow. Both report actual calls to get_knowledge_status, search_knowledge with query “读取”, and read_knowledge with id read-fallback. Status reported all three cards as stale=false; search returned read-fallback and cache-storage; read returned revision 1, stale=false and current source evidence.
+
+The response cites src/读取.ts line 5, `return cache.get(key) ?? '未找到';`, and distinguishes a stored empty string (preserved) from an undefined cache miss (fallback “未找到”). The submitted response labels its code fence Kotlin; the demo file is TypeScript. This presentation error does not change the cited expression or its interpretation. The maintainer reports no source execution or knowledge modification.
+
+This is maintainer-reported actual Codex retrieval evidence, not an independently captured tool trace. The earlier unavailable-tools report is superseded for these successful conversations; the configuration change that enabled discovery was not supplied, so no root cause is asserted. Two successful responses alone do not prove two independent new conversations. New-conversation reuse, the fourth proposal tool and its conflict behavior in Codex remain separate gates.
+
+The URI fix in [PR #7](https://github.com/KasterMist/repo-knowledge/pull/7) passed Windows, Linux and the separate Node 22.22.1 remote-runtime job in [CI run 39760269686](https://github.com/KasterMist/repo-knowledge/actions/runs/39760269686). Its merged source commit is 5858676d0c093afb0a9157a66c7e47043c6fa530. The manually installed candidate SHA-256 is f487a2aa198fae5c27b00356e9680b72b7acb0644f0d5b300ac08c5c9427f7fd.
+
 ## Still required
 
-- Record final PR Windows/Linux CI and candidate artifacts.
 - In a real Remote SSH editor, verify demo remains remote, snapshot URI routing and all six commands.
-- In the official Codex IDE conversation, verify four-tool behavior and a genuinely new-conversation retrieval; capture stale/conflict recovery with the copied demo.
+- In the official Codex IDE conversation, verify proposal submission and revision conflict behavior, confirm genuinely new-conversation retrieval, and capture stale recovery with the copied demo. Three retrieval tools have maintainer-reported evidence above.
 - Retain the native Linux editor gate from M1 where applicable; Linux CI and an SSH protocol test alone do not establish every editor configuration.
 - Release alpha only after the actual host/agent gates in [M1 acceptance](m1-acceptance.md).
 
