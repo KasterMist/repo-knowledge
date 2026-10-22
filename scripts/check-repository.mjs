@@ -24,6 +24,17 @@ async function inspect(directory) {
   for (const entry of await readdir(directory, { withFileTypes: true })) {
     if (ignored.has(entry.name)) continue;
     const path = resolve(directory, entry.name);
+    const projectPath = relative(root, path).replaceAll('\\', '/');
+    if (
+      [
+        'packages/vscode-extension/README.md',
+        'packages/vscode-extension/LICENSE',
+        'packages/vscode-extension/CHANGELOG.md',
+        'packages/vscode-extension/THIRD_PARTY_NOTICES.md',
+        'packages/vscode-extension/demo',
+      ].includes(projectPath)
+    )
+      continue;
     if (entry.isDirectory()) await inspect(path);
     else if (entry.name.endsWith('.md')) {
       const content = await readFile(path, 'utf8');

@@ -6,6 +6,17 @@ export default tseslint.config(
   js.configs.recommended,
   ...tseslint.configs.recommended,
   {
+    files: ['**/*.cjs'],
+    languageOptions: {
+      globals: {
+        require: 'readonly',
+        exports: 'readonly',
+        process: 'readonly',
+      },
+    },
+    rules: { '@typescript-eslint/no-require-imports': 'off' },
+  },
+  {
     files: ['**/*.mjs'],
     languageOptions: {
       globals: {
@@ -15,6 +26,7 @@ export default tseslint.config(
         Buffer: 'readonly',
         fetch: 'readonly',
         AbortSignal: 'readonly',
+        structuredClone: 'readonly',
       },
     },
   },

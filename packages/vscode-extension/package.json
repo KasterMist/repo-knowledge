@@ -1,7 +1,72 @@
 {
   "name": "repo-knowledge",
   "displayName": "Repo Knowledge",
-  "description": "Repository Wiki and shared knowledge cards (under development)",
+  "description": "Shared knowledge retrieval and Codex MCP connection preview",
+  "publisher": "KasterMist",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/KasterMist/repo-knowledge.git"
+  },
+  "main": "./dist/extension.cjs",
+  "categories": [
+    "Other"
+  ],
+  "extensionKind": [
+    "workspace"
+  ],
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": false
+    },
+    "virtualWorkspaces": {
+      "supported": false
+    }
+  },
+  "contributes": {
+    "commands": [
+      {
+        "command": "repoKnowledge.initialize",
+        "title": "Repo Knowledge: Initialize External Store"
+      },
+      {
+        "command": "repoKnowledge.openSnapshot",
+        "title": "Repo Knowledge: Open Knowledge Snapshot"
+      },
+      {
+        "command": "repoKnowledge.search",
+        "title": "Repo Knowledge: Search Cards"
+      },
+      {
+        "command": "repoKnowledge.codexSetup",
+        "title": "Repo Knowledge: Show Codex MCP Setup"
+      },
+      {
+        "command": "repoKnowledge.diagnostics",
+        "title": "Repo Knowledge: Diagnose Standalone MCP"
+      },
+      {
+        "command": "repoKnowledge.openDemo",
+        "title": "Repo Knowledge: Open Three-Card Demo"
+      }
+    ],
+    "configuration": {
+      "title": "Repo Knowledge",
+      "properties": {
+        "repoKnowledge.nodeExecutable": {
+          "type": "string",
+          "default": "node",
+          "scope": "machine",
+          "description": "External Node executable for the standalone MCP service. Use Node 24.19.x for preview acceptance."
+        },
+        "repoKnowledge.storeDirectory": {
+          "type": "string",
+          "default": "",
+          "scope": "resource",
+          "description": "Absolute directory containing knowledge.json. Empty uses per-repository extension storage outside the target repository."
+        }
+      }
+    }
+  },
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -10,6 +75,7 @@
     "vscode": "^1.96.2"
   },
   "dependencies": {
-    "@repo-knowledge/core": "0.0.0"
+    "@repo-knowledge/core": "0.0.0",
+    "@modelcontextprotocol/sdk": "1.32.1"
   }
 }

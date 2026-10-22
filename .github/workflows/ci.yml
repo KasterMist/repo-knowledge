@@ -34,5 +34,14 @@ jobs:
         run: npm install --global npm@12.2.1 --ignore-scripts
       - name: Install locked dependencies
         run: npm ci
-      - name: Check repository, source and bootstrap
+      - name: Check source, MCP and actual VSIX
         run: npm run check
+      - name: Upload unreleased test candidate
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: repo-knowledge-candidate-${{ matrix.os }}
+          path: |
+            dist/repo-knowledge-0.0.0.vsix
+            dist/SHA256SUMS
+          if-no-files-found: error
+          retention-days: 7

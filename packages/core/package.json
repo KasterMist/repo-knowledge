@@ -4,5 +4,8 @@
   "private": true,
   "type": "module",
   "license": "Apache-2.0",
-  "exports": "./dist/index.js"
+  "exports": "./dist/index.js",
+  "dependencies": {
+    "zod": "4.6.7"
+  }
 }

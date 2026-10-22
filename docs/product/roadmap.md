@@ -2,7 +2,7 @@
 
 更新：2026-10-22。所有者：KasterMist。许可证：Apache-2.0。仓库名 repo-knowledge。Windows 与 Linux 均为必需平台。
 
-当前状态：M0 本地工程正在验证；公开仓库已由维护者创建。远程 CI、仓库规则和 Issue 完成情况见 docs/development/m0-status.md。任务 ID 是规划编号，不能当作 GitHub Issue 编号。
+当前状态：M0 源码已公开，双平台 CI 已通过；治理待办见 docs/development/m0-status.md。M1 的知识格式、MCP、候选协议和最小扩展已进入实现预览，真实 Codex IDE 验收与 alpha 发布仍待完成，见 [Issue #3](https://github.com/KasterMist/repo-knowledge/issues/3) 和 [验收记录](../development/m1-acceptance.md)。任务 ID 是规划编号，不能当作 GitHub Issue 编号。
 
 ## 1. 里程碑与发布含义
 

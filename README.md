@@ -4,11 +4,11 @@
 
 Shared repository knowledge for developers and coding agents, targeting VS Code on **Windows and Linux**.
 
-## Status: M0 engineering foundation
+## Status: M1 implementation preview
 
-This repository currently contains an npm/TypeScript workspace, package boundaries, contribution documentation, repository checks and a Windows/Linux CI matrix. Package source files deliberately have no product behavior.
+Implemented: runtime-validated knowledge cards, source freshness checks, lexical search, standalone STDIO MCP tools, immutable update proposals and VS Code commands for browsing, diagnostics and Codex configuration. Includes a self-authored three-card demo.
 
-**There is no installable extension, MCP server, Wiki generation or Codex integration yet.** These are tracked in the [roadmap](docs/product/roadmap.md). No Marketplace release is available.
+Build a local VSIX candidate with the commands below. **Official Codex IDE acceptance on Windows and Linux is still required before an alpha release.** Protocol tests alone do not establish that integration. No Wiki generation, automatic publication or Marketplace release is available. See [M1 acceptance](docs/development/m1-acceptance.md) and the [roadmap](docs/product/roadmap.md).
 
 ## Planned workflow
 
@@ -22,17 +22,21 @@ Use Node.js **24.19.0** and npm **12.2.1** on Windows or Linux:
 npm install --global npm@12.2.1
 npm ci
 npm run check
+npm run build
+npm run package:vsix
 ```
 
-See [CONTRIBUTING](CONTRIBUTING.md) for individual commands and [platform requirements](docs/product/requirements.md) for the support policy. The extension host runtime and external Node runtime are distinct; end-user runtime and minimum editor compatibility will be validated in M1.
+Install the resulting `dist/repo-knowledge-0.0.0.vsix` through VS Code's Install from VSIX command. Run **Repo Knowledge: Open Three-Card Demo**, trust the self-authored demo, then **Search Cards**, **Diagnose Standalone MCP** and **Show Codex MCP Setup**. Merge the generated table into Codex config.toml and restart Codex. The command previews configuration and does not overwrite existing settings. See the [Chinese setup guide](docs/user/quickstart.zh-CN.md).
+
+The external MCP process requires Node 24.19.x for preview acceptance; set `repoKnowledge.nodeExecutable` to an absolute executable path when Node is not on PATH. VS Code's embedded Node and this external runtime are distinct. Preview compatibility requires actual host acceptance; the declared VS Code minimum is provisional.
 
 ## Architecture
 
 - `packages/core`: editor-independent knowledge boundary.
-- `packages/mcp-server`: standalone protocol boundary, planned for M1.
-- `packages/vscode-extension`: editor UI boundary, planned for M1.
+- `packages/mcp-server`: independently launched protocol service.
+- `packages/vscode-extension`: editor commands and bundled standalone server.
 
-No model requests, credentials, background services or repository scans run in M0. Public fixtures will be used for tests; private source code must not be included in bug reports.
+No model requests or credential reads run in the plugin. Tools read the explicit knowledge store and cited source files. Update proposals write only to the store; they never publish themselves or modify target source. Card content is untrusted data. Do not put secrets in cards or upload private source to bug reports.
 
 ## Contributing and licensing
 

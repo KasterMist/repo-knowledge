@@ -1,0 +1,60 @@
+{
+  "schemaVersion": 1,
+  "repository": {
+    "id": "self-authored-demo",
+    "sourceRevision": "demo-v1"
+  },
+  "cards": [
+    {
+      "id": "cache-storage",
+      "revision": 1,
+      "title": "Cache 使用内存 Map 存储",
+      "body": "Cache.put 写入同一 Map，Cache.get 按字符串 key 读取。这个演示实现没有持久化操作。",
+      "tags": ["cache", "缓存", "Map"],
+      "kind": "fact",
+      "scope": ["src/cache.ts"],
+      "evidence": [
+        {
+          "path": "src/cache.ts",
+          "startLine": 1,
+          "endLine": 10,
+          "sha256": "5d8459866e2749704628be5ca7094046351b39f88af6227cfa9755a57b288142"
+        }
+      ]
+    },
+    {
+      "id": "cache-miss",
+      "revision": 1,
+      "title": "缓存未命中返回 undefined",
+      "body": "Cache.get 的返回类型为 string | undefined；空字符串是合法缓存值。",
+      "tags": ["cache", "未命中", "undefined"],
+      "kind": "fact",
+      "scope": ["src/cache.ts"],
+      "evidence": [
+        {
+          "path": "src/cache.ts",
+          "startLine": 1,
+          "endLine": 10,
+          "sha256": "5d8459866e2749704628be5ca7094046351b39f88af6227cfa9755a57b288142"
+        }
+      ]
+    },
+    {
+      "id": "read-fallback",
+      "revision": 1,
+      "title": "读取函数的缺省返回值",
+      "body": "读取使用 ?? 操作符，仅在 nullish 未命中时返回“未找到”，保留空字符串。",
+      "tags": ["读取", "fallback", "空字符串"],
+      "kind": "fact",
+      "scope": ["src/读取.ts"],
+      "evidence": [
+        {
+          "path": "src/读取.ts",
+          "startLine": 1,
+          "endLine": 6,
+          "sha256": "6cfa348db87e8bc4ef3a2905a1c7435681b85c957879f38439f6860bcbe7ead5"
+        }
+      ]
+    }
+  ]
+}

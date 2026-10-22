@@ -5,3 +5,8 @@ dist/
 package-lock.json
 LICENSE
 *.tsbuildinfo
+packages/vscode-extension/demo/
+packages/vscode-extension/LICENSE
+packages/vscode-extension/README.md
+packages/vscode-extension/CHANGELOG.md
+packages/vscode-extension/THIRD_PARTY_NOTICES.md
