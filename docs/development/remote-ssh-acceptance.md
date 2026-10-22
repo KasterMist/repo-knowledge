@@ -43,10 +43,13 @@ In response to the explicit instruction to start a new official Codex conversati
 
 An official SDK client connected over the authenticated SSH transport to the remote standalone MCP process. The check temporarily replaced `??` with `||` only in the self-authored copied demo source. Both status and read reported stale evidence, with read evidence status changed. A proposal retaining the original source hash was rejected with STALE_EVIDENCE. The check restored the exact original source bytes in a finally-protected workflow; read returned fresh again, the snapshot hash was unchanged and the proposal count did not increase. No source was executed. This is an independently run remote protocol check, not an official Codex IDE conversation test of stale recovery.
 
+## Official Codex stale-evidence recovery
+
+The maintainer subsequently completed the same stale-recovery scenario in an official Codex IDE conversation: status and read returned stale=true/changed after the temporary demo edit; propose_knowledge_update using the saved original evidence returned STALE_EVIDENCE; after restoring the original file, read returned stale=false/current. The maintainer reports no source execution, builds, tests or direct knowledge.json changes. An independent read-only SFTP check then confirmed the source matches the saved original bytes, the canonical snapshot matches the original fixture bytes, and three pending proposal files remain. The error and intermediate tool states are maintainer-reported; the restored bytes and final storage state were independently checked. This passes the Remote SSH official Codex stale-recovery gate.
+
 ## Still required
 
 - In a real Remote SSH editor, verify demo remains remote, snapshot URI routing and all six commands.
-- In the official Codex IDE, capture stale recovery with the copied demo. Independent new-conversation retrieval has maintainer-reported evidence above; the stale protocol check does not replace IDE acceptance.
 - Retain the native Linux editor gate from M1 where applicable; Linux CI and an SSH protocol test alone do not establish every editor configuration.
 - Release alpha only after the actual host/agent gates in [M1 acceptance](m1-acceptance.md).
 
