@@ -15,7 +15,7 @@
 
 运行 `Repo Knowledge: Show Codex MCP Setup`，将显示的完整 TOML 表合并到用户 `~/.codex/config.toml` 或可信项目的 `.codex/config.toml`。若已有同名表，替换该表，不要重复追加。该命令不编辑你的配置。通过 Codex MCP 设置重启扩展，在新会话中明确要求调用四个知识工具。
 
-配置包含已安装扩展目录的绝对路径。扩展升级、移动或重装后重新生成配置。默认 `repo_knowledge` 绑定一个明确的代码目录和知识目录；多仓库请使用不同表名，并核对路径。此预览不为 WSL、SSH 或云端提供路径映射。
+配置包含已安装扩展目录的绝对路径。扩展升级、移动或重装后重新生成配置。默认 `repo_knowledge` 绑定一个明确的代码目录和知识目录；多仓库请使用不同表名，并核对路径。Remote SSH 的扩展与 MCP 必须在同一 Linux 主机执行，见[专用指南](remote-ssh.zh-CN.md)。WSL 与云端路径映射尚未验收。
 
 [官方 MCP 说明](https://learn.chatgpt.com/docs/extend/mcp)确认了 Codex 的 STDIO、config.toml 和 IDE 接入方式。`.vscode/mcp.json` 的配置不能代替 Codex 配置。配置成功不保证 Agent 每轮主动调用；建议在项目 AGENTS.md 中明确按需检索知识及核查证据的约定。
 

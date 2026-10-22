@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Remote SSH implementation preview: preserve remote editor URI authority, isolate host filesystem paths and use the existing remote VS Code Server Node for independent MCP startup.
+- Real Linux SSH protocol loop and native Windows host regression; actual Remote SSH editor/Codex conversations remain a release gate.
+
 - M0: npm workspaces and strict TypeScript package boundaries.
 - Shared engineering checks and policy failure tests.
 - Windows/Linux CI matrix and Unicode/space-path bootstrap fixture.

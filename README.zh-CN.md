@@ -3,6 +3,7 @@
 [English](README.md)
 
 供开发者与编码 Agent 共同使用的代码库知识系统，面向 **Windows 和 Linux 上的 VS Code**。
+**Windows VS Code 通过 Remote SSH 连接 Linux 是必需场景**，见[远程接入与验收指南](docs/user/remote-ssh.zh-CN.md)。
 
 ## 当前状态：M1 实现预览
 
@@ -28,7 +29,7 @@ npm run package:vsix
 
 在 VS Code 中通过“从 VSIX 安装”选择 `dist/repo-knowledge-0.0.0.vsix`。依次运行 **Repo Knowledge: Open Three-Card Demo**、信任自主编写的演示目录，然后运行 **Search Cards**、**Diagnose Standalone MCP**、**Show Codex MCP Setup**。将生成的配置合并到 Codex config.toml，重启 Codex。引导命令只展示配置，不覆盖已有设置。具体步骤见[使用指南](docs/user/quickstart.zh-CN.md)。
 
-预览验收使用外部 Node 24.19.x；PATH 中没有 Node 时，配置 `repoKnowledge.nodeExecutable` 的绝对路径。VS Code 扩展宿主的内置 Node 与该外部运行时不同。声明的 VS Code 最低版本仍是暂定值，兼容范围以实际宿主验收为准。
+原生预览使用外部 Node 24.19.x；Remote SSH 默认以服务器上的 VS Code Server Node 启动独立 MCP 子进程，远端 MCP 已在 Node 22.22.1 验证，不要求 npm 或系统级安装。设置 `repoKnowledge.nodeExecutable` 的绝对路径可覆盖默认行为。声明的 VS Code 最低版本仍为暂定值，真实 Remote SSH 编辑器与 Codex 验收仍是发布门槛。
 
 ## 工程边界
 
