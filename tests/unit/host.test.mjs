@@ -26,6 +26,15 @@ const remote = () => ({
   },
   configuredStore: '',
 });
+test('real SSH extension-host file URIs do not require a client-side authority', () => {
+  const input = remote();
+  input.folder = { ...input.folder, scheme: 'file', authority: '' };
+  input.storage = { ...input.storage, scheme: 'file', authority: '' };
+  const host = resolveHost(input);
+  assert.equal(host.kind, 'ssh-remote');
+  assert.equal(host.repository, '/work/代码 demo');
+  assert.equal(host.authority, '');
+});
 test('SSH resolves remote native paths, keeps authority and uses host Node without npm', () => {
   const result = resolveHost(remote());
   assert.equal(result.kind, 'ssh-remote');

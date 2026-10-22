@@ -67,13 +67,7 @@ export function activate(context: vscode.ExtensionContext): void {
       knowledge: new KnowledgeStore(root, store),
       configuration,
       host,
-      uriForFile: (path: string) =>
-        host.kind === 'ssh-remote'
-          ? vscode.Uri.file(path).with({
-              scheme: 'vscode-remote',
-              authority: host.authority,
-            })
-          : vscode.Uri.file(path),
+      uriForFile: (path: string) => vscode.Uri.file(path),
     };
   };
   register('initialize', async () => {
@@ -231,6 +225,9 @@ export function activate(context: vscode.ExtensionContext): void {
         `Execution host: ${target.host.kind}; ${process.platform}; extension-host Node ${process.version}.`,
       );
       output.appendLine(
+        'URI routing: extension-host file scheme; VS Code handles the SSH authority.',
+      );
+      output.appendLine(
         `MCP command: ${command}. Repository/store use extension-host filesystem paths.`,
       );
       const codex = vscode.extensions.getExtension('openai.chatgpt');
@@ -257,20 +254,7 @@ export function activate(context: vscode.ExtensionContext): void {
     }
   });
   register('openDemo', async () => {
-    const folders = vscode.workspace.workspaceFolders;
-    const route = vscode.env.remoteName
-      ? (folders?.[0]?.uri ?? context.globalStorageUri)
-      : undefined;
-    if (
-      vscode.env.remoteName &&
-      (!route ||
-        route.scheme !== 'vscode-remote' ||
-        vscode.env.remoteName !== 'ssh-remote' ||
-        process.platform !== 'linux')
-    )
-      throw new Error(
-        'Open a Linux Remote SSH folder before opening the remote demo.',
-      );
+    if (vscode.env.remoteName && !(await selected())) return;
     const demo = join(context.globalStorageUri.fsPath, 'demo');
     let exists = true;
     try {
@@ -296,12 +280,7 @@ export function activate(context: vscode.ExtensionContext): void {
     }
     await vscode.commands.executeCommand(
       'vscode.openFolder',
-      route
-        ? vscode.Uri.file(demo).with({
-            scheme: route.scheme,
-            authority: route.authority,
-          })
-        : vscode.Uri.file(demo),
+      vscode.Uri.file(demo),
       true,
     );
   });

@@ -24,7 +24,7 @@ exports.run = async function run() {
   );
   if (vscode.env.remoteName) {
     assert.equal(vscode.env.remoteName, 'ssh-remote');
-    assert.equal(document.uri.scheme, 'vscode-remote');
+    assert.equal(document.uri.scheme, 'file');
     assert.equal(
       document.uri.authority,
       vscode.workspace.workspaceFolders[0].uri.authority,
@@ -53,6 +53,8 @@ exports.run = async function run() {
         extensionVersion: extension.packageJSON.version,
         remoteName: vscode.env.remoteName || null,
         protocolConnected: diagnostics.protocolConnected,
+        workspaceUriScheme: vscode.workspace.workspaceFolders[0].uri.scheme,
+        snapshotUriScheme: document.uri.scheme,
         evidence: [
           'packaged extension activation',
           'six command registrations',
