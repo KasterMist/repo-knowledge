@@ -1,4 +1,4 @@
-// This is the M0 repository policy, not a knowledge schema or an MCP implementation.
+// Repository engineering policy; knowledge contracts live in packages/core.
 export function validateManifests(root, workspaces) {
   const errors = [];
   const manifests = [root, ...workspaces];
@@ -28,8 +28,13 @@ export function validateManifests(root, workspaces) {
   const core = workspaces.find(
     (workspace) => workspace.name === '@repo-knowledge/core',
   );
-  if (core && Object.keys(core.dependencies ?? {}).length > 0) {
-    errors.push('core: M0 must remain independent');
+  if (
+    core &&
+    Object.keys(core.dependencies ?? {}).some((name) => name !== 'zod')
+  ) {
+    errors.push(
+      'core: only runtime schema validation is allowed; keep editor/protocol independent',
+    );
   }
   return errors;
 }

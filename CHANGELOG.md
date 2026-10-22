@@ -7,4 +7,7 @@
 - Windows/Linux CI matrix and Unicode/space-path bootstrap fixture.
 - Apache-2.0 licensing, bilingual project status and contribution/release documentation.
 
-No installable extension, MCP implementation or product release yet.
+- M1 implementation preview: schemaVersion 1 snapshots, bounded evidence reads, lexical search and freshness checks.
+- Standalone MCP search/read/status and revision-checked update proposals; published knowledge is never overwritten by tools.
+- VS Code card search, external-store initialization, demo, standalone diagnostics and Codex configuration preview.
+- Bundled VSIX candidate with third-party notices. Official Codex IDE Windows/Linux acceptance remains required; no alpha or Marketplace release is claimed.

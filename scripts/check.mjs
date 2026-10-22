@@ -11,8 +11,10 @@ const tasks = [
     'typecheck/build',
     ['node_modules/typescript/bin/tsc', '-b', '--pretty', 'false'],
   ],
-  ['unit', ['--test', 'tests/unit/repository-policy.test.mjs']],
-  ['integration', ['--test', 'tests/integration/bootstrap.test.mjs']],
+  ['bundle', ['scripts/bundle.mjs']],
+  ['vsix', ['scripts/package.mjs']],
+  ['unit', ['--test', 'tests/unit/*.test.mjs']],
+  ['integration', ['--test', 'tests/integration/*.test.mjs']],
 ];
 
 for (const [name, args] of tasks) {

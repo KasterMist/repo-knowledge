@@ -11,9 +11,9 @@ npm ci
 npm run check
 ```
 
-`check` verifies repository metadata/local links/YAML, formatting, lint, strict TypeScript build, policy rejection tests and built-package bootstrap tests. Individual commands: `format:check`, `lint`, `typecheck`, `build`, `test:unit`, `test:integration`, `check:repository`. Run build before running integration tests alone. `npm run format` applies formatting.
+`check` verifies repository metadata/local links/YAML, formatting, lint, strict TypeScript build, bundle construction, policy/schema/store tests and actual STDIO client/server tests. Individual commands: `format:check`, `lint`, `typecheck`, `build`, `test:unit`, `test:integration`, `check:repository`, `package:vsix`. Run build before running integration tests alone. `npm run format` applies formatting.
 
-Install scripts are disabled in `.npmrc`; dependencies currently require no lifecycle scripts. The root and workspace packages are private to prevent accidental npm publication. M0 has no VSIX packaging, F5 activation or real Codex acceptance script; these belong to M1.
+Install scripts are disabled in `.npmrc`; the locked platform packages provide esbuild without lifecycle scripts. The root and workspace packages are private to prevent accidental npm publication. Build with `npm run build`, package with `npm run package:vsix`, and follow [M1 acceptance](docs/development/m1-acceptance.md) for actual IDE verification. Packaging does not publish a release.
 
 ## Workflow
 
