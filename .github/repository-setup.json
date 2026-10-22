@@ -1,0 +1,68 @@
+{
+  "repository": "KasterMist/repo-knowledge",
+  "labels": [
+    {
+      "name": "type:bug",
+      "color": "d73a4a",
+      "description": "Reproducible defect"
+    },
+    {
+      "name": "type:feature",
+      "color": "a2eeef",
+      "description": "User-visible capability"
+    },
+    { "name": "type:docs", "color": "0075ca", "description": "Documentation" },
+    { "name": "area:core", "color": "5319e7", "description": "Knowledge core" },
+    {
+      "name": "area:mcp",
+      "color": "5319e7",
+      "description": "Standalone MCP protocol"
+    },
+    {
+      "name": "area:extension",
+      "color": "5319e7",
+      "description": "VS Code integration"
+    },
+    {
+      "name": "area:generator",
+      "color": "5319e7",
+      "description": "Generation adapters"
+    },
+    {
+      "name": "priority:p0",
+      "color": "b60205",
+      "description": "Critical priority, not phase P0"
+    },
+    {
+      "name": "priority:p1",
+      "color": "fbca04",
+      "description": "High priority, not phase P1"
+    }
+  ],
+  "milestones": [
+    {
+      "title": "M0 Engineering foundation",
+      "description": "Public source, Windows/Linux checks and contribution workflow"
+    },
+    {
+      "title": "M1 Codex integration preview",
+      "description": "Real Codex search, evidence retrieval and update proposals"
+    },
+    {
+      "title": "M2 Knowledge workbench",
+      "description": "Wiki, cards, editing and versioned publication"
+    },
+    {
+      "title": "M3 Initial generation",
+      "description": "Bounded generation with resumable jobs and citations"
+    },
+    {
+      "title": "M4 Incremental maintenance",
+      "description": "Source invalidation, branch isolation and human-edit protection"
+    },
+    {
+      "title": "M5 Stable candidate",
+      "description": "Windows/Linux package acceptance and release documentation"
+    }
+  ]
+}

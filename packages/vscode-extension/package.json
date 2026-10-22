@@ -1,0 +1,15 @@
+{
+  "name": "repo-knowledge",
+  "displayName": "Repo Knowledge",
+  "description": "Repository Wiki and shared knowledge cards (under development)",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "license": "Apache-2.0",
+  "engines": {
+    "vscode": "^1.96.2"
+  },
+  "dependencies": {
+    "@repo-knowledge/core": "0.0.0"
+  }
+}

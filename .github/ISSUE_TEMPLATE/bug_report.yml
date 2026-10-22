@@ -1,0 +1,24 @@
+name: Bug report
+description: Report a reproducible defect using sanitized examples.
+labels: ['type:bug']
+body:
+  - type: input
+    id: version
+    attributes:
+      label: Version or commit
+    validations:
+      required: true
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Platform
+      options: [Windows native, Linux native, WSL, Other]
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps and minimal public example
+      description: Include Node/VS Code/Codex versions and expected versus actual behavior. Do not upload credentials or private repositories.
+    validations:
+      required: true

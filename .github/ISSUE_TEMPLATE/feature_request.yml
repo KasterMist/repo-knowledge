@@ -1,0 +1,16 @@
+name: Feature request
+description: Describe a user need and observable acceptance criteria.
+labels: ['type:feature']
+body:
+  - type: textarea
+    id: scenario
+    attributes:
+      label: User scenario
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Expected outcome and scope
+    validations:
+      required: true

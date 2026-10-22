@@ -1,0 +1,11 @@
+{
+  "name": "@repo-knowledge/mcp-server",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "license": "Apache-2.0",
+  "exports": "./dist/index.js",
+  "dependencies": {
+    "@repo-knowledge/core": "0.0.0"
+  }
+}
