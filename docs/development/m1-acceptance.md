@@ -12,6 +12,8 @@ To repeat the host test, use `node scripts/run-host-check.mjs <Code-executable> 
 
 ## Actual host acceptance (required on both platforms)
 
+Implementation commit `aff6cab794a2197197b802671d8908f575ad47fa` passed both Windows and Linux [CI run 39740920964](https://github.com/KasterMist/repo-knowledge/actions/runs/39740920964), including locked installation, shared checks, actual VSIX packaging and extracted-server tests. Both platform candidates and their SHA256SUMS are available as seven-day workflow artifacts. [PR #4](https://github.com/KasterMist/repo-knowledge/pull/4) contains the implementation. The maintainer has a Linux IDE environment and will perform the manual official Codex steps below; results are not yet supplied.
+
 Record OS/architecture, VS Code version, official openai.chatgpt extension version, external Node version, source commit, VSIX SHA-256 and test date. Use the self-authored demo only. Remove local usernames, absolute personal paths, account details and credentials from evidence.
 
 1. Install the actual VSIX in an isolated VS Code profile. Verify extension activation, demo opening, search results, snapshot access and standalone diagnostics.
@@ -25,7 +27,7 @@ Record OS/architecture, VS Code version, official openai.chatgpt extension versi
 
 | Gate                                   | Windows native                 | Linux native               |
 | -------------------------------------- | ------------------------------ | -------------------------- |
-| Automated checks                       | Local passed; final CI pending | CI pending                 |
+| Automated checks                       | Passed: CI run 39740920964     | Passed: CI run 39740920964 |
 | Packaged extension isolated activation | Passed: VS Code 1.117.0, win32 | Pending                    |
 | Official Codex four-tool loop          | Pending                        | Pending                    |
 | Official Codex new-conversation reuse  | Pending                        | Pending                    |
