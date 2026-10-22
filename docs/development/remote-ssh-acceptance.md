@@ -33,8 +33,10 @@ The URI fix in [PR #7](https://github.com/KasterMist/repo-knowledge/pull/7) pass
 
 ## Still required
 
+The maintainer subsequently reported a successful official Codex propose_knowledge_update call returning pending-review, followed by REVISION_CONFLICT when baseRevision was deliberately changed from 1 to 2. An independent read-only SSH/SFTP check found the reported proposal 22d9318c-d1bd-4e54-9a8c-a4722df8d556: baseRevision 1, unchanged card ID, proposed revision 2, and wording explicitly mentioning empty strings. The canonical snapshot remains byte-identical to the original fixture, SHA-256 2079e0d56b253b5e9e199592411f464df8094deb2d70998b068bd64bd88301e9, with published card revision 1. The rejected-call error is maintainer-reported; the saved candidate and unchanged snapshot were independently checked. This completes the reported four-tool loop in that conversation, but not cross-conversation reuse or the remaining platform/recovery gates.
+
 - In a real Remote SSH editor, verify demo remains remote, snapshot URI routing and all six commands.
-- In the official Codex IDE conversation, verify proposal submission and revision conflict behavior, confirm genuinely new-conversation retrieval, and capture stale recovery with the copied demo. Three retrieval tools have maintainer-reported evidence above.
+- In the official Codex IDE, confirm genuinely new-conversation retrieval and capture stale recovery with the copied demo. The four-tool loop now has maintainer-reported evidence, with candidate persistence and snapshot preservation independently checked above.
 - Retain the native Linux editor gate from M1 where applicable; Linux CI and an SSH protocol test alone do not establish every editor configuration.
 - Release alpha only after the actual host/agent gates in [M1 acceptance](m1-acceptance.md).
 

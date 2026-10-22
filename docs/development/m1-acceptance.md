@@ -37,6 +37,8 @@ Do not close T09/T10 or label this as Qoder-equivalent integration before these 
 
 ## References
 
+The subsequent Remote SSH official Codex proposal/conflict check was reported successful. Read-only server verification confirmed the saved revision-2 candidate and byte-identical revision-1 canonical snapshot; details and evidence limitations are in the Remote SSH record. The four-tool loop is therefore recorded for this remote conversation. Independent new-conversation reuse, stale recovery and native-platform official Codex gates remain open.
+
 Remote SSH from Windows to Linux is an additional required execution path, not implied by Linux runner success. See [Remote SSH evidence](remote-ssh-acceptance.md) and its [manual guide](../user/remote-ssh.zh-CN.md). On 2026-10-22 the maintainer supplied two successful official Codex retrieval responses: status, Chinese search and evidence-backed read-fallback interpretation. Both were explicitly confirmed to be in the same conversation. The actual Remote SSH extension diagnostic also passed. These results do not establish native Windows or native Linux Codex acceptance. Remote proposal/conflict/stale recovery and independent new-conversation reuse remain open, so T09/T10 are not complete.
 
 - [Codex MCP configuration](https://learn.chatgpt.com/docs/extend/mcp)
