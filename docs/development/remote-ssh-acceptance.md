@@ -15,6 +15,12 @@ Connection used the local credential file only inside an ignored helper, and ver
 - Authenticated SSH to actual Linux Node 22.22.1: official SDK handshake, four tools, three cards and source excerpts. Two separate server processes retrieved the same canonical knowledge and each saved a pending proposal; incorrect base revision returned REVISION_CONFLICT.
 - Remote canonical knowledge.json remained byte-identical to the original demo after proposals. The candidate installed into the remote VS Code Server. Only the new demo's project-level MCP table was prepared; user-level Codex configuration was not edited.
 
+## User-reported URI regression and fix
+
+The actual Remote SSH diagnostic command exposed "Cannot identify the SSH authority for editor file routing." The remote extension host legitimately receives file URIs without a client-side authority. The original unit fixture used untransformed vscode-remote URIs and missed this case. A new regression test reproduced the exact message before the fix and passes afterward. Snapshot/demo opening now submits Uri.file to the VS Code API; VS Code performs the client/server URI transform. The real-host runner also checks file URIs as seen by the remote extension host. See ADR 0003 for the corrected contract. The updated full checks passed 12 unit tests and 2 integration tests, and the exact host-resolution case also passed on the actual Linux Node 22.22.1 runtime.
+
+After installing the fix and reloading the Remote SSH window, the maintainer reported a successful actual VS Code diagnostic: STDIO handshake completed, four tools discovered, execution host ssh-remote/Linux with Node 22.22.1, and the new extension-host file routing message. The official Codex extension was visible as kind=2, scheme=file, version 26.51007.21434. The self-authored demo returned schemaVersion 1 and all three revision-1 cards with stale=false. Personal Node/account paths from the submitted output are omitted. This confirms the real Remote SSH extension diagnostic, not knowledge tool use by an official Codex conversation. Snapshot/demo UI opening and the separate Codex conversation gates still need evidence.
+
 ## Still required
 
 - Record final PR Windows/Linux CI and candidate artifacts.

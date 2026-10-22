@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Fix Remote SSH diagnostics and editor opening when VS Code exposes file URIs inside the remote extension host; delegate authority mapping to VS Code instead of requiring or fabricating it.
+
 - Remote SSH implementation preview: preserve remote editor URI authority, isolate host filesystem paths and use the existing remote VS Code Server Node for independent MCP startup.
 - Real Linux SSH protocol loop and native Windows host regression; actual Remote SSH editor/Codex conversations remain a release gate.
 

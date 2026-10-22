@@ -48,10 +48,8 @@ export function resolveHost(input: HostInput) {
       'Workspace and extension storage belong to different SSH hosts.',
     );
   const authority = [...remoteAuthorities][0];
-  if (remote && !authority)
-    throw new Error(
-      'Cannot identify the SSH authority for editor file routing.',
-    );
+  // VS Code rewrites incoming remote URIs to file: inside its SSH extension host.
+  // A missing UI-side authority is expected; the host RPC layer maps it on output.
   if (input.configuredStore && !path.isAbsolute(input.configuredStore))
     throw new Error('storeDirectory must be absolute on the extension host.');
   if (remote && /^[a-z]:[\\/]/iu.test(input.configuredStore))
