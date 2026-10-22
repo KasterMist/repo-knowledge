@@ -1,6 +1,6 @@
 # Windows VS Code → Remote SSH → Linux
 
-这是必需的使用场景，当前为实现预览。真实服务器的 MCP 四工具闭环已验证；Remote SSH 编辑器交互和官方 Codex 对话仍须按下方步骤验收。跟踪 [Issue #5](https://github.com/KasterMist/repo-knowledge/issues/5)。
+这是必需的使用场景，当前为实现预览。真实服务器上已有官方 Codex 四工具闭环、新对话复用及过期证据恢复的人工验收结果，候选落盘、原快照不变及源码恢复也已独立核对。完整编辑器交互、错误恢复和原生平台验收仍有待办，尚未发布 alpha。详见 [验收记录](../development/remote-ssh-acceptance.md) 和 [Issue #5](https://github.com/KasterMist/repo-knowledge/issues/5)。
 
 ## 运行位置
 
