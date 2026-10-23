@@ -29,9 +29,10 @@ async function api(
     method,
     headers: {
       Authorization: `Bearer ${process.env.GH_TOKEN}`,
-      Accept: binary
-        ? 'application/octet-stream'
-        : 'application/vnd.github+json',
+      Accept:
+        binary && method === 'GET'
+          ? 'application/octet-stream'
+          : 'application/vnd.github+json',
       ...(body
         ? {
             'Content-Type': binary
@@ -104,16 +105,53 @@ async function verifyInfo() {
   return info;
 }
 
-if (mode === 'gate') {
-  await checkedMain();
+async function unusedTagOrEmptyDraft() {
+  if (await api(`/git/ref/tags/${release.tag}`, { allow404: true }))
+    throw new Error('Release tag already exists; refusing replacement');
+  const existing = await api(`/releases/tags/${release.tag}`, {
+    allow404: true,
+  });
+  if (!release.recovery) {
+    if (existing)
+      throw new Error('Release already exists; refusing replacement');
+    return null;
+  }
+  const recovery = release.recovery;
   if (
-    (await api(`/releases/tags/${release.tag}`, { allow404: true })) ||
-    (await api(`/git/ref/tags/${release.tag}`, { allow404: true }))
+    !Number.isSafeInteger(recovery.emptyDraftId) ||
+    recovery.emptyDraftId <= 0 ||
+    !/^[a-f0-9]{40}$/u.test(recovery.previousSourceCommit ?? '')
+  )
+    throw new Error('Invalid reviewed draft recovery metadata');
+  const draft = await api(`/releases/${recovery.emptyDraftId}`);
+  if (
+    (existing && existing.id !== draft.id) ||
+    draft.id !== recovery.emptyDraftId ||
+    draft.tag_name !== release.tag ||
+    draft.draft !== true ||
+    draft.prerelease !== true ||
+    draft.target_commitish !== recovery.previousSourceCommit ||
+    draft.published_at !== null ||
+    !Array.isArray(draft.assets) ||
+    draft.assets.length !== 0
   )
     throw new Error(
-      'Release or tag already exists; never overwrite published artifacts',
+      'Recovery is not a matching empty unpublished draft; refusing changes',
     );
-  console.log('Exact main CI and unused release tag verified');
+  // Recheck assets separately rather than trusting embedded/listed metadata alone.
+  if ((await api(`/releases/${draft.id}/assets`)).length !== 0)
+    throw new Error('Recovery draft has assets; refusing replacement');
+  return draft;
+}
+
+if (mode === 'gate') {
+  await checkedMain();
+  const recovery = await unusedTagOrEmptyDraft();
+  console.log(
+    recovery
+      ? 'Exact main CI and reviewed empty draft recovery verified'
+      : 'Exact main CI and unused release tag verified',
+  );
 } else if (mode === 'prepare') {
   workflowOnly();
   const { digest } = await verifyArtifact();
@@ -138,16 +176,10 @@ if (mode === 'gate') {
 } else if (mode === 'publish') {
   await checkedMain();
   const info = await verifyInfo();
-  if (
-    (await api(`/releases/tags/${release.tag}`, { allow404: true })) ||
-    (await api(`/git/ref/tags/${release.tag}`, { allow404: true }))
-  )
-    throw new Error(
-      'Existing release/tag must be reviewed; refusing replacement',
-    );
+  const recovery = await unusedTagOrEmptyDraft();
   const notes = await readFile(`docs/releases/${release.tag}.md`, 'utf8');
-  const draft = await api('/releases', {
-    method: 'POST',
+  const draft = await api(recovery ? `/releases/${recovery.id}` : '/releases', {
+    method: recovery ? 'PATCH' : 'POST',
     body: {
       tag_name: release.tag,
       target_commitish: source,

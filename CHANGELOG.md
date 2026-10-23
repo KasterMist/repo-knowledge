@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Fix GitHub asset upload HTTP 415 by requesting JSON responses for binary POST bodies; keep binary response negotiation for GET downloads. Add offline publication replay and exact empty-draft recovery guards (ADR 0004).
+
 ## 0.1.0-alpha.1 — release preparation
 
 - Product/VSIX version 0.1.0; GitHub-only prerelease tag v0.1.0-alpha.1. Publication is pending the manual release workflow, not implied by this entry.

@@ -80,6 +80,10 @@ T09 is complete for Windows-native Codex and Windows Remote SSH to Linux. M0 gov
 
 Local full checks passed 15 unit tests and 2 integration tests, including release metadata rejection, tampered-payload detection, packaged manifest/server version 0.1.0 and immutable manual publication ordering. The actual 0.1.0 VSIX was installed in a disposable Windows VS Code 1.117.0 profile; activation, six commands, standalone MCP, all four error recoveries and non-overwriting initialization passed. This runner does not repeat or claim a new official Codex conversation. The GitHub release workflow and public download/install jobs still require actual execution before T10 is complete.
 
+## First publication attempt — interrupted
+
+[Run 39913035042](https://github.com/KasterMist/repo-knowledge/actions/runs/39913035042) passed the actual build and identical-payload Windows/Linux install jobs. Publication created an empty draft but failed on the first asset POST with HTTP 415. No public tag/assets exist, and public installation jobs were skipped. The uploader incorrectly requested a binary response for the POST; changing only that Accept negotiation to JSON turns the deterministic offline real-script replay from failure to success. Draft recovery guards reject published/nonempty/mismatched-source drafts, including an independently listed asset that is absent from embedded metadata. This is regression evidence, not a successful real publication; a fresh corrected-source release run is still required. See ADR 0004 and the releasing guide.
+
 ## References
 
 - [Codex MCP configuration](https://learn.chatgpt.com/docs/extend/mcp)
