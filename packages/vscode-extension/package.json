@@ -63,6 +63,38 @@
       {
         "command": "repoKnowledge.openEvidence",
         "title": "Repo Knowledge: Open Source Evidence"
+      },
+      {
+        "command": "repoKnowledge.editCard",
+        "title": "Repo Knowledge: Edit Card Draft"
+      },
+      {
+        "command": "repoKnowledge.openDraft",
+        "title": "Repo Knowledge: Open Draft"
+      },
+      {
+        "command": "repoKnowledge.submitDraft",
+        "title": "Repo Knowledge: Submit Draft for Review"
+      },
+      {
+        "command": "repoKnowledge.reviewProposal",
+        "title": "Repo Knowledge: Review Proposal Diff"
+      },
+      {
+        "command": "repoKnowledge.publishProposal",
+        "title": "Repo Knowledge: Publish Reviewed Proposal"
+      },
+      {
+        "command": "repoKnowledge.openHistory",
+        "title": "Repo Knowledge: Open Publication History"
+      },
+      {
+        "command": "repoKnowledge.rollbackKnowledge",
+        "title": "Repo Knowledge: Roll Back Knowledge"
+      },
+      {
+        "command": "repoKnowledge.recoverPublication",
+        "title": "Repo Knowledge: Recover Publication Marker"
       }
     ],
     "configuration": {
@@ -95,11 +127,23 @@
       "repoKnowledge": [
         {
           "id": "repoKnowledge.wiki",
-          "name": "Repo Wiki \u00b7 \u6309\u6e90\u7801\u8303\u56f4"
+          "name": "Repo Wiki · 按源码范围"
         },
         {
           "id": "repoKnowledge.cards",
-          "name": "\u77e5\u8bc6\u5361\u7247 \u00b7 Cards"
+          "name": "知识卡片 · Cards"
+        },
+        {
+          "id": "repoKnowledge.drafts",
+          "name": "草稿 · Drafts"
+        },
+        {
+          "id": "repoKnowledge.proposals",
+          "name": "待审阅 · Proposals"
+        },
+        {
+          "id": "repoKnowledge.history",
+          "name": "发布历史 · History"
         }
       ]
     },
@@ -107,7 +151,7 @@
       "view/title": [
         {
           "command": "repoKnowledge.refreshKnowledge",
-          "when": "view == repoKnowledge.wiki || view == repoKnowledge.cards",
+          "when": "view =~ /^repoKnowledge\\./",
           "group": "navigation"
         }
       ],
@@ -116,6 +160,31 @@
           "command": "repoKnowledge.openCard",
           "when": "viewItem == knowledge-card",
           "group": "inline"
+        },
+        {
+          "command": "repoKnowledge.editCard",
+          "when": "viewItem == knowledge-card",
+          "group": "knowledge"
+        },
+        {
+          "command": "repoKnowledge.submitDraft",
+          "when": "viewItem == knowledge-drafts",
+          "group": "knowledge"
+        },
+        {
+          "command": "repoKnowledge.publishProposal",
+          "when": "viewItem == knowledge-proposals",
+          "group": "knowledge"
+        },
+        {
+          "command": "repoKnowledge.rollbackKnowledge",
+          "when": "viewItem == knowledge-history",
+          "group": "knowledge"
+        },
+        {
+          "command": "repoKnowledge.recoverPublication",
+          "when": "viewItem == knowledge-history",
+          "group": "knowledge"
         }
       ]
     }

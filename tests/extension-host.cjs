@@ -69,6 +69,71 @@ exports.run = async function run() {
   const files = await workbench.wiki.getChildren(scope[0]);
   assert.ok(files.some((file) => file.label === '读取.ts'));
   await vscode.commands.executeCommand('repoKnowledge.refreshKnowledge');
+  const snapshotPath = path.join(readNode.target.store, 'knowledge.json');
+  const beforeDraft = await fs.readFile(snapshotPath);
+  const draft = await vscode.commands.executeCommand(
+    'repoKnowledge.editCard',
+    readNode,
+  );
+  assert.ok(draft?.draftId);
+  assert.equal(vscode.window.activeTextEditor.document.uri.scheme, 'file');
+  const draftDocument = vscode.window.activeTextEditor.document;
+  const editedDraft = JSON.parse(draftDocument.getText());
+  editedDraft.proposedCard.body += '\n人工说明：空字符串会原样返回。';
+  const edit = new vscode.WorkspaceEdit();
+  edit.replace(
+    draftDocument.uri,
+    new vscode.Range(
+      draftDocument.positionAt(0),
+      draftDocument.positionAt(draftDocument.getText().length),
+    ),
+    JSON.stringify(editedDraft, null, 2),
+  );
+  assert.equal(await vscode.workspace.applyEdit(edit), true);
+  assert.equal(draftDocument.isDirty, true);
+  const draftRoots = await workbench.publication.drafts.getChildren();
+  const draftNodes = await workbench.publication.drafts.getChildren(
+    draftRoots[0],
+  );
+  const draftNode = draftNodes.find((node) => node.itemId === draft.draftId);
+  assert.ok(draftNode);
+  const dirtySubmit = await vscode.commands.executeCommand(
+    'repoKnowledge.submitDraft',
+    draftNode,
+  );
+  assert.equal(dirtySubmit?.error, true);
+  assert.match(dirtySubmit.message, /未保存|dirty/u);
+  assert.equal(await draftDocument.save(), true);
+  const pending = await vscode.commands.executeCommand(
+    'repoKnowledge.submitDraft',
+    draftNode,
+  );
+  assert.equal(pending?.state, 'pending-review');
+  const proposalRoots = await workbench.publication.proposals.getChildren();
+  const proposalNodes = await workbench.publication.proposals.getChildren(
+    proposalRoots[0],
+  );
+  const proposalNode = proposalNodes.find(
+    (node) => node.itemId === pending.proposalId,
+  );
+  assert.ok(proposalNode);
+  const diff = await vscode.commands.executeCommand(
+    'repoKnowledge.reviewProposal',
+    proposalNode,
+  );
+  assert.equal(diff.before.scheme, 'repo-knowledge');
+  assert.equal(diff.after.scheme, 'repo-knowledge');
+  assert.equal(
+    JSON.parse((await vscode.workspace.openTextDocument(diff.after)).getText())
+      .revision,
+    2,
+  );
+  assert.deepEqual(await fs.readFile(snapshotPath), beforeDraft);
+  const historyRoots = await workbench.publication.history.getChildren();
+  assert.equal(
+    (await workbench.publication.history.getChildren(historyRoots[0])).length,
+    0,
+  );
   const recovery = [];
   // Only the runner-owned disposable profile may change a machine setting.
   // The remote fallback runner must never modify a maintainer's real profile.
@@ -193,6 +258,7 @@ exports.run = async function run() {
           'packaged extension activation',
           'command registrations and two knowledge trees',
           'read-only knowledge document and validated source navigation',
+          'durable draft, dirty-editor rejection and saved candidate diff without publication',
           'snapshot editor access',
           'Codex TOML preview',
           'actual standalone MCP diagnostics from extension host',

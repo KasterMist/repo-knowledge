@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { KnowledgeStore, type Card } from '@repo-knowledge/core';
 import { KnowledgeDocuments } from './documents.js';
+import { PublicationWorkbench } from './publication-workbench.js';
 
 export interface KnowledgeTarget {
   root: string;
@@ -171,10 +172,15 @@ export class KnowledgeWorkbench implements vscode.Disposable {
   readonly documents = new KnowledgeDocuments();
   readonly wiki: KnowledgeTree;
   readonly cards: KnowledgeTree;
+  readonly publication: PublicationWorkbench;
   private readonly disposables: vscode.Disposable[] = [];
   constructor(private readonly resolve: ResolveTarget) {
     this.wiki = new KnowledgeTree('wiki', resolve);
     this.cards = new KnowledgeTree('cards', resolve);
+    this.publication = new PublicationWorkbench(resolve, this.documents, () =>
+      this.refresh(),
+    );
+    this.disposables.push(this.publication);
     for (const tree of [this.wiki, this.cards])
       this.disposables.push(
         tree,
@@ -216,6 +222,7 @@ export class KnowledgeWorkbench implements vscode.Disposable {
   refresh(): void {
     this.wiki.refresh();
     this.cards.refresh();
+    this.publication.refresh();
   }
   async choose(node?: KnowledgeNode) {
     if (node?.target && node.cardId)
