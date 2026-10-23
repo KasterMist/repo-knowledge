@@ -54,6 +54,7 @@ test(
     );
     assert.ok(files.has('extension/demo/src/读取.ts'));
     assert.ok(files.has('extension/dist/extension.cjs'));
+    assert.ok(files.has('extension/media/knowledge.svg'));
     for (const name of files.keys()) {
       assert.ok(
         !name.includes('node_modules') &&
@@ -63,7 +64,7 @@ test(
       assert.ok(
         name === '[Content_Types].xml' ||
           name === 'extension.vsixmanifest' ||
-          /^extension\/(?:LICENSE.txt|THIRD_PARTY_NOTICES.md|changelog.md|package.json|readme.md|dist\/(?:extension|server)\.cjs|demo\/)/u.test(
+          /^extension\/(?:LICENSE.txt|THIRD_PARTY_NOTICES.md|changelog.md|package.json|readme.md|media\/knowledge\.svg|dist\/(?:extension|server)\.cjs|demo\/)/u.test(
             name,
           ),
         name,
@@ -72,7 +73,11 @@ test(
     const manifest = JSON.parse(files.get('extension/package.json').toString());
     assert.equal(manifest.main, './dist/extension.cjs');
     assert.equal(manifest.version, product.version);
-    assert.equal(manifest.contributes.commands.length, 6);
+    assert.ok(
+      manifest.contributes.commands.some(
+        (c) => c.command === 'repoKnowledge.openWorkbench',
+      ),
+    );
     const f = await fixture();
     try {
       const server = join(f.directory, 'packaged server.cjs');

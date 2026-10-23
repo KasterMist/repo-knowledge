@@ -39,6 +39,36 @@ exports.run = async function run() {
   );
   assert.equal(diagnostics?.protocolConnected, true);
   assert.equal(diagnostics.tools.length, 4);
+  const workbench = extension.exports.workbench;
+  const roots = await workbench.cards.getChildren();
+  const cards = await workbench.cards.getChildren(roots[0]);
+  assert.equal(cards.length, 3);
+  const readNode = cards.find((card) => card.cardId === 'read-fallback');
+  assert.ok(readNode);
+  const cardUri = await vscode.commands.executeCommand(
+    'repoKnowledge.openCard',
+    readNode,
+  );
+  assert.equal(cardUri.scheme, 'repo-knowledge');
+  assert.match(
+    vscode.window.activeTextEditor.document.getText(),
+    /read-fallback/u,
+  );
+  const evidence = await workbench.cards.getChildren(readNode);
+  assert.equal(evidence[0].description, 'current');
+  const sourceUri = await vscode.commands.executeCommand(
+    'repoKnowledge.openEvidence',
+    evidence[0],
+  );
+  assert.equal(sourceUri.scheme, 'file');
+  assert.equal(path.basename(sourceUri.fsPath), '读取.ts');
+  assert.equal(vscode.window.activeTextEditor.selection.start.line, 0);
+  const wikiRoots = await workbench.wiki.getChildren();
+  const scope = await workbench.wiki.getChildren(wikiRoots[0]);
+  assert.equal(scope[0].label, 'src');
+  const files = await workbench.wiki.getChildren(scope[0]);
+  assert.ok(files.some((file) => file.label === '读取.ts'));
+  await vscode.commands.executeCommand('repoKnowledge.refreshKnowledge');
   const recovery = [];
   // Only the runner-owned disposable profile may change a machine setting.
   // The remote fallback runner must never modify a maintainer's real profile.
@@ -161,7 +191,8 @@ exports.run = async function run() {
         snapshotUriScheme: document.uri.scheme,
         evidence: [
           'packaged extension activation',
-          'six command registrations',
+          'command registrations and two knowledge trees',
+          'read-only knowledge document and validated source navigation',
           'snapshot editor access',
           'Codex TOML preview',
           'actual standalone MCP diagnostics from extension host',
