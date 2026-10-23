@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+## 0.1.0-alpha.1 — release preparation
+
+- Product/VSIX version 0.1.0; GitHub-only prerelease tag v0.1.0-alpha.1. Publication is pending the manual release workflow, not implied by this entry.
+- Complete scoped Windows-native and Windows Remote SSH to Linux official Codex acceptance and temporary-configuration cleanup; native Linux desktop Codex remains unverified.
+- Derive artifact names from validated release metadata, check packaged/server versions and reject checksum mismatches.
+- Add a manually dispatched GitHub release workflow: exact-source five-check gate, one payload, Windows/Linux install validation, draft-byte verification and anonymous public download/install checks. No Marketplace publishing or model calls.
+
 - Diagnose unavailable/malformed knowledge stores before MCP startup so validation failures remain actionable; failed connections now point to the host's nodeExecutable setting and bundled server.
 - Add isolated editor error/recovery and non-overwriting initialization checks, with pinned VS Code 1.117.0 Windows/Linux host CI and sanitized result artifacts.
 

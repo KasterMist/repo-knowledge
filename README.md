@@ -27,7 +27,7 @@ npm run build
 npm run package:vsix
 ```
 
-Install the resulting `dist/repo-knowledge-0.0.0.vsix` through VS Code's Install from VSIX command. Run **Repo Knowledge: Open Three-Card Demo**, trust the self-authored demo, then **Search Cards**, **Diagnose Standalone MCP** and **Show Codex MCP Setup**. Merge the generated table into Codex config.toml and restart Codex. The command previews configuration and does not overwrite existing settings. See the [Chinese setup guide](docs/user/quickstart.zh-CN.md).
+Install the resulting `dist/repo-knowledge-0.1.0.vsix` through VS Code's Install from VSIX command. Run **Repo Knowledge: Open Three-Card Demo**, trust the self-authored demo, then **Search Cards**, **Diagnose Standalone MCP** and **Show Codex MCP Setup**. Merge the generated table into Codex config.toml and restart Codex. The command previews configuration and does not overwrite existing settings. See the [Chinese setup guide](docs/user/quickstart.zh-CN.md).
 
 Native preview uses an external Node 24.19.x executable. On Remote SSH, the default uses the remote VS Code Server Node in a separate process (remote MCP tested on Node 22.22.1), so npm/system installation is unnecessary. An absolute `repoKnowledge.nodeExecutable` overrides the default. The declared VS Code minimum is provisional; real Remote SSH editor/Codex acceptance remains a release gate.
 

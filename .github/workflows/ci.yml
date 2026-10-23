@@ -41,7 +41,7 @@ jobs:
         with:
           name: repo-knowledge-candidate-${{ matrix.os }}
           path: |
-            dist/repo-knowledge-0.0.0.vsix
+            dist/repo-knowledge-*.vsix
             dist/SHA256SUMS
           if-no-files-found: error
           retention-days: 7

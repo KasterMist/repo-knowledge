@@ -27,7 +27,7 @@ npm run build
 npm run package:vsix
 ```
 
-在 VS Code 中通过“从 VSIX 安装”选择 `dist/repo-knowledge-0.0.0.vsix`。依次运行 **Repo Knowledge: Open Three-Card Demo**、信任自主编写的演示目录，然后运行 **Search Cards**、**Diagnose Standalone MCP**、**Show Codex MCP Setup**。将生成的配置合并到 Codex config.toml，重启 Codex。引导命令只展示配置，不覆盖已有设置。具体步骤见[使用指南](docs/user/quickstart.zh-CN.md)。
+在 VS Code 中通过“从 VSIX 安装”选择 `dist/repo-knowledge-0.1.0.vsix`。依次运行 **Repo Knowledge: Open Three-Card Demo**、信任自主编写的演示目录，然后运行 **Search Cards**、**Diagnose Standalone MCP**、**Show Codex MCP Setup**。将生成的配置合并到 Codex config.toml，重启 Codex。引导命令只展示配置，不覆盖已有设置。具体步骤见[使用指南](docs/user/quickstart.zh-CN.md)。
 
 原生预览使用外部 Node 24.19.x；Remote SSH 默认以服务器上的 VS Code Server Node 启动独立 MCP 子进程，远端 MCP 已在 Node 22.22.1 验证，不要求 npm 或系统级安装。设置 `repoKnowledge.nodeExecutable` 的绝对路径可覆盖默认行为。声明的 VS Code 最低版本仍为暂定值，真实 Remote SSH 编辑器与 Codex 验收仍是发布门槛。
 

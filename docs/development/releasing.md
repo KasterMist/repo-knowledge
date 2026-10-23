@@ -18,6 +18,22 @@ Implement real VSIX packaging, inspect bundle contents and independently start b
 
 Keep product version, tag mapping, changelog and knowledge-format versions consistent. Do not replace an already published artifact or move a public tag; issue a new version for corrections. Marketplace Publisher and authentication are separate tasks.
 
+## First alpha: concrete execution
+
+Release metadata is committed in .github/release.json: VSIX/product version 0.1.0 maps to GitHub tag v0.1.0-alpha.1. VS Code extension versions use a numeric triplet; the alpha designation is in the GitHub prerelease, not a Marketplace listing. All workspaces and internal dependencies share the product version. The schema remains version 1.
+
+The [release notes](../releases/v0.1.0-alpha.1.md) describe installation, limits, evidence, upgrade and rollback. Preparing these files does not publish a Release.
+
+1. Merge the release PR through all five required CI checks. Wait for main's push CI on that exact merged commit to pass as well.
+2. Open [Publish GitHub alpha](https://github.com/KasterMist/repo-knowledge/actions/workflows/release.yml). Select Run workflow → branch main → Run workflow. It has no inputs and publishes only the reviewed release metadata. This is an explicit publishing operation, not a schedule or a reaction to ordinary code changes.
+3. The workflow requires protected main HEAD and successful exact-source CI, rejects an existing release/tag, builds and checks once, and records source/digest in release-info.json.
+4. Windows and Linux install the identical artifact and run packaged-MCP/editor recovery checks without rebuilding it. Only after both pass may the publish job use a short-lived contents-write workflow token. Other jobs stay read-only; no PAT, administrator install, stored secret or Marketplace credentials are required.
+5. The publish job creates a draft prerelease on the exact source commit, uploads the VSIX, SHA256SUMS and release-info.json, downloads each draft asset and compares bytes, then publishes. It refuses tag/asset replacement. A failed upload/check leaves a draft for inspection; do not blindly delete, overwrite or rerun against existing assets. Review the failure before choosing recovery or a new product version.
+6. Separate Windows/Linux jobs anonymously download the public assets, verify GitHub digests plus recorded SHA/source/version, run the extracted-server check and install that public VSIX in real VS Code. Inspect all six jobs, not only publication success. Public-check failure leaves the published release intact for investigation; do not replace its assets in place.
+7. Record the public URL, asset checksum and final workflow run in project status/M1 acceptance and Issue #3. Close T10/M1 only after those public installation jobs pass. Linux editor CI does not establish Linux desktop Codex support.
+
+The current GitHub connector can manage source/PRs but exposes no release-asset upload or workflow-dispatch operation. A maintainer can start the prepared workflow using the page above; this capability gap is separate from repository authorization. No token should be sent in chat.
+
 ## References
 
 - [GitHub repository creation](https://docs.github.com/en/repositories/creating-and-managing-repositories/creating-a-new-repository)

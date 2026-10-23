@@ -67,7 +67,7 @@
       }
     }
   },
-  "version": "0.0.0",
+  "version": "0.1.0",
   "private": true,
   "type": "module",
   "license": "Apache-2.0",
@@ -75,7 +75,7 @@
     "vscode": "^1.96.2"
   },
   "dependencies": {
-    "@repo-knowledge/core": "0.0.0",
+    "@repo-knowledge/core": "0.1.0",
     "@modelcontextprotocol/sdk": "1.32.1"
   }
 }
