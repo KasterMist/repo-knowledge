@@ -40,6 +40,8 @@ Run 39913035042 passed build and both identical-payload installation jobs, creat
 
 The reviewed recovery entry in .github/release.json permits only that exact empty, unpublished draft with its recorded previous source. Embedded and separately queried asset lists must both be empty; public tags, published/nonempty drafts and source mismatches are rejected. See [ADR 0004](../architecture/adr/0004-empty-release-draft-recovery.md). Do not delete the draft, replace assets or re-run the old failed job. After the corrected source and main CI pass, explicitly run Publish GitHub alpha on main again. The old job keeps its original buggy source; a fresh dispatch is required to use the fix. T10 remains open until real publication and public installation verification pass.
 
+The second run, 39915068551, stopped at the pre-build gate with HTTP 403 while reading the private draft using the read-only build token; it made no changes. Keep that token read-only. The pre-build gate checks public release/tag state and exact-source CI; private draft identity/source/assets are checked only by the publish job with its existing contents-write permission. Offline replay covers the read-only gate as well as write-token publication, so permission separation is exercised before another manual run.
+
 ## References
 
 - [GitHub repository creation](https://docs.github.com/en/repositories/creating-and-managing-repositories/creating-a-new-repository)

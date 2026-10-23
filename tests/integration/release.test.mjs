@@ -61,6 +61,29 @@ test('release uploader negotiates JSON responses independently from binary bodie
     );
     assert.equal(result.status, 0, result.stderr);
     assert.match(result.stdout, /Published https:\/\/github.com/u);
+    const gate = spawnSync(
+      process.execPath,
+      [
+        '--import',
+        pathToFileURL(join(root, 'tests/fixtures/release-fetch.mjs')).href,
+        join(root, 'scripts/github-release.mjs'),
+        'gate',
+      ],
+      {
+        cwd: f.directory,
+        encoding: 'utf8',
+        env: {
+          ...process.env,
+          GH_TOKEN: 'offline-read-only',
+          GITHUB_SHA: source,
+          GITHUB_REPOSITORY: 'KasterMist/repo-knowledge',
+          GITHUB_EVENT_NAME: 'workflow_dispatch',
+          GITHUB_REF: 'refs/heads/main',
+        },
+        timeout: 10000,
+      },
+    );
+    assert.equal(gate.status, 0, gate.stderr);
     for (const state of [
       'published',
       'nonempty',

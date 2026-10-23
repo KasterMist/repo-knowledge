@@ -82,7 +82,7 @@
 2. **Windows 原生 Codex 验收及临时配置清理已完成。** 四工具、冲突、新对话均已通过。文件读写尝试先因工具限制、后因验收 shell 无法解析本机演示路径而未改动；最终由本机维护工具备份并临时修改自编演示，官方 Codex 直接 MCP 调用确认 stale/changed 及 STALE_EVIDENCE。维护工具逐字节恢复后，Codex 再次直接读取确认 revision=1、current。独立核对源码、原快照字节未变，拒绝提交未增加候选。仅移除经批准的临时验收 MCP 表，保留其他配置及私有备份；官方 CLI 已确认不再加载该表。Linux 桌面 Codex 仍不在首个 alpha 声明内。
 
 3. **M0 治理已完成。** 维护者确认两项设置保存后，main 公开元数据返回 protected=true，五项必需 CI 及 GitHub Actions 来源已独立核对。PR、禁止强推/删除、审批人数和私密漏洞报告按维护者保存确认记录；管理详情 API 返回 403，不冒充独立核验。当前检查约束为 non_admins，日常仍通过 PR 等待五项 CI，不使用管理员绕过。详见[治理证据](github-governance.zh-CN.md)。
-4. **完成 T10 alpha。** 产品/VSIX 0.1.0 对应 GitHub 标签 v0.1.0-alpha.1，schemaVersion 1 不变。PR #13 已合并，主分支五项 CI 通过。维护者已手动发起 [run 39913035042](https://github.com/KasterMist/repo-knowledge/actions/runs/39913035042)：构建及同包 Windows/Linux 安装均通过；创建空草稿后上传返回 415，因此未发布、公开安装未执行。已用离线真实脚本回放复现并修正上传 Accept；精确空草稿恢复策略见 ADR 0004。下一步合并修复、确认新主分支 CI，再发起新的手动发布运行，不能重跑旧代码代替。连接器无 Release 上传/工作流触发操作，操作入口限制不等于授权失败。T10/M1 仍未完成。详见[具体发布步骤](releasing.md)。
+4. **完成 T10 alpha。** 产品/VSIX 0.1.0 对应 GitHub 标签 v0.1.0-alpha.1，schemaVersion 1 不变。首轮 [run 39913035042](https://github.com/KasterMist/repo-knowledge/actions/runs/39913035042) 构建及同包 Windows/Linux 安装通过，上传 415 已由 PR #14 修复。第二轮 [run 39915068551](https://github.com/KasterMist/repo-knowledge/actions/runs/39915068551) 在只读构建令牌读取私密草稿时返回 403，未进入上传，空草稿保持不变。已补只读令牌回放：预构建只检查公开状态和 CI，精确草稿校验留在原有写权限的发布任务，不扩大构建权限。下一步合并修复、确认新主分支 CI，再发起新手动运行；不能重跑旧代码代替。连接器无 Release 上传/工作流触发操作，操作入口限制不等于用户授权失败。T10/M1 仍未完成。详见[具体发布步骤](releasing.md)和 ADR 0004。
 5. **M2 工作台。** T11 → T12，并结合 T13 检索；先具备人工修订、候选审阅、发布和回退，再做模型生成。
 6. **M3 用户发起首次生成。** T14 → T15 → T16。用户决定是否生成、范围、语言与预算，结果走候选审阅流程。
 7. **M4 用户发起增量维护。** T17 → T18/T19 → T20；代码改变可被识别，但模型更新必须由用户发起。

@@ -84,6 +84,10 @@ Local full checks passed 15 unit tests and 2 integration tests, including releas
 
 [Run 39913035042](https://github.com/KasterMist/repo-knowledge/actions/runs/39913035042) passed the actual build and identical-payload Windows/Linux install jobs. Publication created an empty draft but failed on the first asset POST with HTTP 415. No public tag/assets exist, and public installation jobs were skipped. The uploader incorrectly requested a binary response for the POST; changing only that Accept negotiation to JSON turns the deterministic offline real-script replay from failure to success. Draft recovery guards reject published/nonempty/mismatched-source drafts, including an independently listed asset that is absent from embedded metadata. This is regression evidence, not a successful real publication; a fresh corrected-source release run is still required. See ADR 0004 and the releasing guide.
 
+## Second publication attempt — read-only draft gate
+
+[Run 39915068551](https://github.com/KasterMist/repo-knowledge/actions/runs/39915068551) used corrected source c29d7c5 but stopped before build/upload: the build job's contents-read token returned HTTP 403 reading the private recovery draft. No assets/source metadata were changed. An offline real-script gate with a simulated read-only token reproduced the same 403; deferring private inspection to the existing contents-write publish job turns it green while preserving all nonempty/published/source-conflict rejection tests. Workflow permissions are unchanged. Local full checks pass 15 unit and 3 integration tests; actual corrected publication remains pending.
+
 ## References
 
 - [Codex MCP configuration](https://learn.chatgpt.com/docs/extend/mcp)

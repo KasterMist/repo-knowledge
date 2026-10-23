@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Keep the release build gate read-only: defer private draft inspection to the existing contents-write publish job. Add read-only token replay for the second-run HTTP 403 failure.
+
 - Fix GitHub asset upload HTTP 415 by requesting JSON responses for binary POST bodies; keep binary response negotiation for GET downloads. Add offline publication replay and exact empty-draft recovery guards (ADR 0004).
 
 ## 0.1.0-alpha.1 — release preparation
