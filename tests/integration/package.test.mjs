@@ -7,6 +7,10 @@ import yauzl from 'yauzl';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
 import { fixture, root } from '../helpers.mjs';
+import {
+  artifactName,
+  manifest as product,
+} from '../../scripts/release-config.mjs';
 
 async function entries(path) {
   return new Promise((resolve, reject) => {
@@ -40,7 +44,7 @@ test(
   'actual VSIX contains only intended files and its extracted server runs without node_modules',
   { timeout: 30000 },
   async () => {
-    const path = join(root, 'dist/repo-knowledge-0.0.0.vsix');
+    const path = join(root, 'dist', artifactName);
     const files = await entries(path);
     assert.ok(files.has('extension/LICENSE.txt'));
     assert.ok(files.has('extension/THIRD_PARTY_NOTICES.md'));
@@ -67,6 +71,7 @@ test(
     }
     const manifest = JSON.parse(files.get('extension/package.json').toString());
     assert.equal(manifest.main, './dist/extension.cjs');
+    assert.equal(manifest.version, product.version);
     assert.equal(manifest.contributes.commands.length, 6);
     const f = await fixture();
     try {
@@ -83,6 +88,7 @@ test(
       });
       try {
         await client.connect(transport);
+        assert.equal(client.getServerVersion().version, product.version);
         assert.equal((await client.listTools()).tools.length, 4);
         const result = await client.callTool({
           name: 'get_knowledge_status',
@@ -98,7 +104,7 @@ test(
         .digest('hex');
       assert.equal(
         await readFile(join(root, 'dist/SHA256SUMS'), 'utf8'),
-        `${hash}  repo-knowledge-0.0.0.vsix\n`,
+        `${hash}  ${artifactName}\n`,
       );
     } finally {
       await f.cleanup();

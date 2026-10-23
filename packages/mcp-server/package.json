@@ -1,13 +1,13 @@
 {
   "name": "@repo-knowledge/mcp-server",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "private": true,
   "type": "module",
   "license": "Apache-2.0",
   "exports": "./dist/index.js",
   "dependencies": {
     "@modelcontextprotocol/sdk": "1.32.1",
-    "@repo-knowledge/core": "0.0.0",
+    "@repo-knowledge/core": "0.1.0",
     "zod": "4.6.7"
   }
 }

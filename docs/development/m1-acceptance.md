@@ -76,6 +76,10 @@ After acceptance, the authorized temporary user-level acceptance table was remov
 
 T09 is complete for Windows-native Codex and Windows Remote SSH to Linux. M0 governance is complete with the evidence categories in the governance record. T10 remains pending versioning, release assets, checksums, public download and installation verification. Earlier pending statements above describe intermediate attempts and are superseded by this completion record. Native Linux desktop Codex remains unverified and excluded from this alpha claim.
 
+## 0.1.0 release preparation (not publication)
+
+Local full checks passed 15 unit tests and 2 integration tests, including release metadata rejection, tampered-payload detection, packaged manifest/server version 0.1.0 and immutable manual publication ordering. The actual 0.1.0 VSIX was installed in a disposable Windows VS Code 1.117.0 profile; activation, six commands, standalone MCP, all four error recoveries and non-overwriting initialization passed. This runner does not repeat or claim a new official Codex conversation. The GitHub release workflow and public download/install jobs still require actual execution before T10 is complete.
+
 ## References
 
 - [Codex MCP configuration](https://learn.chatgpt.com/docs/extend/mcp)

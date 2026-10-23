@@ -9,6 +9,7 @@ import {
   writeFile,
 } from 'node:fs/promises';
 import { resolve, join } from 'node:path';
+import { artifactName } from './release-config.mjs';
 
 const [codeExecutable, cliScript] = process.argv.slice(2);
 if (!codeExecutable || !cliScript)
@@ -47,7 +48,7 @@ const installed = spawnSync(
     '--extensions-dir',
     extensions,
     '--install-extension',
-    resolve('dist/repo-knowledge-0.0.0.vsix'),
+    resolve('dist', artifactName),
   ],
   {
     env: { ...process.env, ELECTRON_RUN_AS_NODE: '1' },

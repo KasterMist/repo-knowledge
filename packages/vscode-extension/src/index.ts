@@ -205,7 +205,7 @@ export function activate(context: vscode.ExtensionContext): void {
     });
     const client = new Client({
       name: 'repo-knowledge-diagnostics',
-      version: '0.0.0',
+      version: '0.1.0',
     });
     const deadline = setTimeout(() => {
       void transport.close();

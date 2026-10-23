@@ -1,0 +1,131 @@
+name: Publish GitHub alpha
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: github-alpha-release
+  cancel-in-progress: false
+
+jobs:
+  build:
+    if: github.repository == 'KasterMist/repo-knowledge' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
+        with:
+          node-version-file: .nvmrc
+          package-manager-cache: false
+      - name: Require successful exact-source main CI and an unused tag
+        run: node scripts/github-release.mjs gate
+        env:
+          GH_TOKEN: ${{ github.token }}
+      - run: npm install --global npm@12.2.1 --ignore-scripts
+      - run: npm ci
+      - name: Build and check the release VSIX once
+        run: npm run check
+      - run: node scripts/github-release.mjs prepare
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: alpha-release-payload
+          path: |
+            dist/repo-knowledge-*.vsix
+            dist/SHA256SUMS
+            dist/release-info.json
+          if-no-files-found: error
+          retention-days: 7
+
+  install:
+    needs: build
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
+        with:
+          node-version-file: .nvmrc
+          package-manager-cache: false
+      - run: npm install --global npm@12.2.1 --ignore-scripts
+      - run: npm ci
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: alpha-release-payload
+          path: dist
+      - run: node scripts/github-release.mjs verify
+      - name: Check extracted release service without rebuilding
+        run: node --test tests/integration/package.test.mjs
+      - name: Install this identical payload in real VS Code
+        run: node scripts/run-ci-host-check.mjs
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: alpha-install-${{ matrix.os }}
+          path: .tmp/editor-host-result.json
+          if-no-files-found: error
+          retention-days: 7
+
+  publish:
+    needs: install
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+      actions: read
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
+        with:
+          node-version-file: .nvmrc
+          package-manager-cache: false
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: alpha-release-payload
+          path: dist
+      - name: Verify draft bytes, then publish GitHub prerelease
+        run: node scripts/github-release.mjs publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+  public-install:
+    needs: publish
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
+        with:
+          node-version-file: .nvmrc
+          package-manager-cache: false
+      - run: npm install --global npm@12.2.1 --ignore-scripts
+      - run: npm ci
+      - name: Download public assets without authentication and verify provenance
+        run: node scripts/github-release.mjs download
+      - run: node --test tests/integration/package.test.mjs
+      - run: node scripts/run-ci-host-check.mjs
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: alpha-public-install-${{ matrix.os }}
+          path: .tmp/editor-host-result.json
+          if-no-files-found: error
+          retention-days: 7
