@@ -9,11 +9,11 @@
 
 已实现知识卡片运行时校验、源码过期检查、词法搜索、独立 STDIO MCP 服务、不可变更新候选，以及 VS Code 搜索、诊断和 Codex 配置引导命令。附带三张自主编写的演示卡片。
 
-从 GitHub Release 下载 [v0.1.0-alpha.1](https://github.com/KasterMist/repo-knowledge/releases/tag/v0.1.0-alpha.1)，使用“从 VSIX 安装”安装 repo-knowledge-0.1.0.vsix。**M1 已完成 Windows 原生 Codex 与 Windows Remote SSH 到 Linux 的接入预览**，并通过 Windows/Linux 公开包下载安装验证。插件产品版本为 0.1.0，知识 schema 为 1。 Linux 原生编辑器宿主 CI 与 Linux 桌面 Codex 是不同证据；后者尚未验证，不纳入首个 alpha 的兼容声明。协议测试不能代替真实 Codex 对话验收。暂无 Wiki 生成、候选审阅发布界面或 Marketplace 版本。参见[项目任务与进度总表](docs/development/project-status.zh-CN.md)、[M1 验收清单](docs/development/m1-acceptance.md)与[任务路线图](docs/product/roadmap.md)。
+从 GitHub Release 下载 [v0.1.0-alpha.1](https://github.com/KasterMist/repo-knowledge/releases/tag/v0.1.0-alpha.1)，使用“从 VSIX 安装”安装 repo-knowledge-0.1.0.vsix。**M1 已完成 Windows 原生 Codex 与 Windows Remote SSH 到 Linux 的接入预览**，并通过 Windows/Linux 公开包下载安装验证。插件产品版本为 0.1.0，知识 schema 为 1。 Linux 原生编辑器宿主 CI 与 Linux 桌面 Codex 是不同证据；后者尚未验证，不纳入首个 alpha 的兼容声明。协议测试不能代替真实 Codex 对话验收。已发布的 M1 包不含 Wiki 生成或候选审阅发布界面；尚无 Marketplace 版本。参见[项目任务与进度总表](docs/development/project-status.zh-CN.md)、[M1 验收清单](docs/development/m1-acceptance.md)与[任务路线图](docs/product/roadmap.md)。
 
 ## 计划体验
 
-当前正在开发 M2：按源码范围组织的 Wiki/卡片工作台、证据跳转、人工草稿、候选差异、确认发布与修订递增的回退，尚未包含在已发布的 M1 包中。操作见[工作台指南](docs/user/workbench.zh-CN.md)，验证状态见 [M2 验收记录](docs/development/m2-acceptance.md)；新增 Remote SSH 界面验收与自动化测试分别记录。
+M2 实现与本次范围验收已完成：按源码范围组织的 Wiki/卡片浏览、证据跳转、人工 JSON 草稿、候选差异、确认发布与修订递增的回退。Windows 原生/Remote SSH 界面反馈、独立历史与正文核对及 Windows/Linux 实际编辑器 CI 见 [M2 验收记录](docs/development/m2-acceptance.md)。这些功能尚未包含在公开 M1 包中，也尚无单独的 M2 Release。操作见[工作台指南](docs/user/workbench.zh-CN.md)；用户主动发起生成属于 M3。
 
 由用户决定是否生成 Wiki 和知识卡片，并主动选择范围、发起生成。用户通过 Wiki 阅读和修订项目知识，Codex 通过 MCP 检索带源码证据的知识卡片。源码改变后可检查过期状态；重新生成和增量更新也由用户主动发起，生成候选后经用户审阅确认再发布。保留人工判断与来源版本。“学习”是持久化和复用项目知识，不是训练模型。
 
