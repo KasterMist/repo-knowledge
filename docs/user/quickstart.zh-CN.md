@@ -31,4 +31,6 @@ Agent 使用 `read_knowledge` 返回的 snapshotRevision 和卡片 revision 调�
 
 ## 卸载与恢复
 
+诊断失败时先看具体提示：knowledge.json 不可读时，核对当前宿主的 storeDirectory，必要时用初始化命令创建新的空知识目录；schemaVersion 1 校验失败时，修复或恢复该快照，不要用初始化覆盖原文件；nodeExecutable/连接提示出现时，核对执行宿主上的 Node 路径和扩展安装。修正后重新运行诊断，无需清空知识或重装整个 VS Code。Remote SSH 的设置必须指向 Linux 路径。
+
 卸载前备份外部知识目录。移除 Codex 中对应 MCP 表即可停止服务接入。扩展卸载不保证自动删除外部目录；知识备份和删除由用户管理。M1 不自动迁移未知 schemaVersion；版本回退应同时恢复匹配的快照备份。

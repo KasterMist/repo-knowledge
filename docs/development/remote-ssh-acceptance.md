@@ -49,7 +49,9 @@ The maintainer subsequently completed the same stale-recovery scenario in an off
 
 ## Still required
 
-- In a real Remote SSH editor, verify demo remains remote, snapshot URI routing and all six commands.
+On 2026-10-23 the maintainer confirmed actual Search Cards with Chinese query and card selection, Open Knowledge Snapshot and Show Codex MCP Setup all opened their expected content while the window remained connected to SSH. Together with the prior real diagnostic, these cover four command interactions. This feedback predates the diagnostic recovery improvement; it does not claim a remote run of the new isolated recovery suite.
+
+- In a real Remote SSH editor, verify Open Three-Card Demo preserves the remote connection in its new window, and Initialize External Store preserves an existing snapshot.
 - Retain the native Linux editor gate from M1 where applicable; Linux CI and an SSH protocol test alone do not establish every editor configuration.
 - Release alpha only after the actual host/agent gates in [M1 acceptance](m1-acceptance.md).
 

@@ -184,6 +184,9 @@ export function activate(context: vscode.ExtensionContext): void {
   register('diagnostics', async () => {
     const target = await selected();
     if (!target) return;
+    // A startup validation failure closes STDIO before MCP can return an error.
+    // Surface the actionable store error instead of only "Connection closed".
+    await target.knowledge.snapshot();
     const command = nodeCommand(
       target.configuration.get<string>('nodeExecutable', 'node'),
       target.host.kind === 'ssh-remote',
@@ -208,7 +211,13 @@ export function activate(context: vscode.ExtensionContext): void {
       void transport.close();
     }, 15000);
     try {
-      await client.connect(transport);
+      try {
+        await client.connect(transport);
+      } catch {
+        throw new Error(
+          'Standalone MCP could not connect. Check repoKnowledge.nodeExecutable on this host and the bundled server installation.',
+        );
+      }
       const tools = await client.listTools();
       const status = await client.callTool({
         name: 'get_knowledge_status',

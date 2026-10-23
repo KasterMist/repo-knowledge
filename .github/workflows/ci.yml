@@ -70,3 +70,37 @@ jobs:
           package-manager-cache: false
       - name: Exercise bundled service under remote runtime baseline
         run: node --test tests/integration/mcp.test.mjs
+
+  editor-host:
+    name: editor host (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest]
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
+        with:
+          node-version-file: .nvmrc
+          package-manager-cache: false
+      - name: Install pinned npm
+        run: npm install --global npm@12.2.1 --ignore-scripts
+      - name: Install locked dependencies
+        run: npm ci
+      - name: Build actual VSIX
+        run: |
+          npm run build
+          npm run package:vsix
+      - name: Run isolated VS Code 1.117.0 and error recovery
+        run: node scripts/run-ci-host-check.mjs
+      - name: Upload sanitized editor-host evidence
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: repo-knowledge-editor-host-${{ matrix.os }}
+          path: .tmp/editor-host-result.json
+          if-no-files-found: error
+          retention-days: 7

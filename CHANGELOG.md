@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Diagnose unavailable/malformed knowledge stores before MCP startup so validation failures remain actionable; failed connections now point to the host's nodeExecutable setting and bundled server.
+- Add isolated editor error/recovery and non-overwriting initialization checks, with pinned VS Code 1.117.0 Windows/Linux host CI and sanitized result artifacts.
+
 - Fix Remote SSH diagnostics and editor opening when VS Code exposes file URIs inside the remote extension host; delegate authority mapping to VS Code instead of requiring or fabricating it.
 
 - Remote SSH implementation preview: preserve remote editor URI authority, isolate host filesystem paths and use the existing remote VS Code Server Node for independent MCP startup.

@@ -9,7 +9,7 @@
 
 已实现知识卡片运行时校验、源码过期检查、词法搜索、独立 STDIO MCP 服务、不可变更新候选，以及 VS Code 搜索、诊断和 Codex 配置引导命令。附带三张自主编写的演示卡片。
 
-可以按下面的命令构建本地 VSIX 候选包。**正式 alpha 发布仍须补齐 Windows 和 Linux 的官方 Codex IDE 真实验收；协议测试不能代替该验收。** 暂无 Wiki 生成、候选审阅发布界面或 Marketplace 版本。参见[项目任务与进度总表](docs/development/project-status.zh-CN.md)、[M1 验收清单](docs/development/m1-acceptance.md)与[任务路线图](docs/product/roadmap.md)。
+可以按下面的命令构建本地 VSIX 候选包。**首个 alpha 的目标场景是 Windows 原生 Codex 与 Windows Remote SSH 到 Linux，剩余验收仍是发布门槛。** Linux 原生编辑器宿主 CI 与 Linux 桌面 Codex 是不同证据；后者尚未验证，不纳入首个 alpha 的兼容声明。协议测试不能代替真实 Codex 对话验收。暂无 Wiki 生成、候选审阅发布界面或 Marketplace 版本。参见[项目任务与进度总表](docs/development/project-status.zh-CN.md)、[M1 验收清单](docs/development/m1-acceptance.md)与[任务路线图](docs/product/roadmap.md)。
 
 ## 计划体验
 
