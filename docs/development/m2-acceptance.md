@@ -26,11 +26,10 @@ The actual maintainer-authorized Linux SSH server ran a separate self-authored f
 
 Unreleased development VSIX SHA-256: `d50bae139c88caa12a68870bf329f9905a969265977da1693d6b4038ae6ca53c`. Local and uploaded remote bytes matched. This is not a new public release; its internal version remains 0.1.0 during development, so identify it by source/hash rather than confusing it with the immutable M1 release. Windows new-UI acceptance uses a separate profile and extensions directory; it does not add temporary global MCP configuration.
 
-The follow-up packaged-host fixture starts a real two-folder workspace with the same card ID in distinct stores. Local VS Code 1.117.0 passed distinct-body reads, a pinned first node after reading the second, and source navigation to the second root. CI now runs both single-root recovery/editing and multi-root isolation; combined sanitized reports preserve the separate evidence. Starting with a workspace file avoids interactive workspace-composition changes in the test runner.
+The follow-up [PR #20](https://github.com/KasterMist/repo-knowledge/pull/20) starts a real two-folder workspace with the same card ID in distinct stores. Local VS Code 1.117.0 passed distinct-body reads, a pinned first node after reading the second, and source navigation to the second root. CI runs both single-root recovery/editing and multi-root isolation; combined sanitized reports preserve separate evidence. Starting with a workspace file avoids interactive workspace-composition changes in the test runner. The PR must pass its exact-head checks before merging; final run IDs are tracked in Issue #17.
 
 ## Remaining gates
 
-- Follow-up multi-root packaged-host fixture and its exact-head CI: two stores with the same card ID must remain isolated.
 - New workbench UI in Windows and Remote SSH: cancel/confirm publication, view history, confirm monotonic rollback and verify MCP observes matching revisions. M1's completed Codex tests remain valid and are not repeated wholesale.
 - Maintainer click results remain pending in both prepared environments; public M1 assets remain immutable.
 - Update task status after evidence. No M2 completion or new release is claimed while these gates remain open. Installation/steps are in the [workbench guide](../user/workbench.zh-CN.md).
