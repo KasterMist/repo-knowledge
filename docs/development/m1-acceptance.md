@@ -34,7 +34,7 @@ Record OS/architecture, VS Code version, official openai.chatgpt extension versi
 | Official Codex four-tool loop          | Passed: maintainer report and saved proposal check | Unverified; deferred for first alpha             |
 | Official Codex new-conversation reuse  | Passed: maintainer report                          | Unverified; deferred for first alpha             |
 | Official Codex stale/recovery          | Passed: direct MCP report, independent byte check  | Unverified; deferred for first alpha             |
-| Alpha VSIX release                     | Pending versioning and publication                 | Desktop Codex excluded from alpha claim          |
+| Alpha VSIX release                     | Passed: public 0.1.0 VSIX download/install         | Desktop Codex excluded from alpha claim          |
 
 Do not close T09/T10 before the scoped alpha gates are complete, or label this as Qoder-equivalent integration. In the table above, native Linux desktop Codex Pending means unverified and deferred under the explicit scope decision, rather than an additional first-alpha gate. A local candidate package is not an alpha release. No scheduled work, paid model CI or user credential collection is required.
 
@@ -87,6 +87,14 @@ Local full checks passed 15 unit tests and 2 integration tests, including releas
 ## Second publication attempt — read-only draft gate
 
 [Run 39915068551](https://github.com/KasterMist/repo-knowledge/actions/runs/39915068551) used corrected source c29d7c5 but stopped before build/upload: the build job's contents-read token returned HTTP 403 reading the private recovery draft. No assets/source metadata were changed. An offline real-script gate with a simulated read-only token reproduced the same 403; deferring private inspection to the existing contents-write publish job turns it green while preserving all nonempty/published/source-conflict rejection tests. Workflow permissions are unchanged. Local full checks pass 15 unit and 3 integration tests; actual corrected publication remains pending.
+
+## Final T10 publication and public verification — 2026-10-23
+
+[Release v0.1.0-alpha.1](https://github.com/KasterMist/repo-knowledge/releases/tag/v0.1.0-alpha.1) is public, prerelease=true/draft=false, on exact source `872c4a49fd5084dcd3bae5a711a421fe19e5319b`. [Run 39916665531](https://github.com/KasterMist/repo-knowledge/actions/runs/39916665531) passed all six jobs: build, identical-payload Windows/Linux install, draft upload/byte verification/publication, and anonymous public Windows/Linux download/install. Assets are repo-knowledge-0.1.0.vsix, SHA256SUMS and release-info.json. VSIX SHA-256: `b2c10ce88485abdaf43d5a7d323b59e712ef59df5c55bd3aa233a6960cb92745`.
+
+An additional local anonymous download verified all asset digests, checksum and exact-source provenance; the public VSIX installed in isolated Windows VS Code 1.117.0 and passed activation, six commands, standalone MCP and error recovery. No normal profile or Codex configuration was modified. This is public-package evidence, not a new official Codex conversation; prior Windows/Remote SSH conversation evidence remains as recorded. Native Linux desktop Codex remains unverified and excluded.
+
+T10 and M1 are complete for the approved scope. The earlier pending/failed paragraphs are chronological history superseded by this final successful run. No Wiki generation, complete Wiki tree or review/publication UI is claimed; the next work is M2. Public tags/assets were not replaced or deleted.
 
 ## References
 

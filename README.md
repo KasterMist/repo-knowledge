@@ -5,11 +5,11 @@
 Shared repository knowledge for developers and coding agents, targeting VS Code on **Windows and Linux**.
 Windows VS Code **Remote SSH to Linux is a required workflow**. See the [Remote SSH setup and acceptance guide](docs/user/remote-ssh.zh-CN.md).
 
-## Status: M1 implementation preview
+## Status: M1 alpha available
 
 Implemented: runtime-validated knowledge cards, source freshness checks, lexical search, standalone STDIO MCP tools, immutable update proposals and VS Code commands for browsing, diagnostics and Codex configuration. Includes a self-authored three-card demo.
 
-Build a local VSIX candidate with the commands below. **The first alpha targets Windows-native Codex and Windows Remote SSH to Linux; scoped editor/Codex acceptance is complete; the versioned alpha release is still pending.** Native Linux editor-host CI is separate from native Linux desktop Codex, which remains unverified and outside the first alpha's compatibility claim. Protocol tests alone do not establish Codex integration. No Wiki generation, proposal review/publication UI or Marketplace release is available. See the [project task/status checkpoint](docs/development/project-status.zh-CN.md), [M1 acceptance](docs/development/m1-acceptance.md) and the [roadmap](docs/product/roadmap.md).
+Download [v0.1.0-alpha.1](https://github.com/KasterMist/repo-knowledge/releases/tag/v0.1.0-alpha.1) from GitHub Releases and install repo-knowledge-0.1.0.vsix using Install from VSIX. **M1 is complete for Windows-native Codex and Windows Remote SSH to Linux**, including public-package verification on Windows/Linux. VSIX/product version: 0.1.0; knowledge schema: 1. Native Linux editor-host CI is separate from native Linux desktop Codex, which remains unverified and outside the first alpha's compatibility claim. Protocol tests alone do not establish Codex integration. No Wiki generation, proposal review/publication UI or Marketplace release is available. See the [project task/status checkpoint](docs/development/project-status.zh-CN.md), [M1 acceptance](docs/development/m1-acceptance.md) and the [roadmap](docs/product/roadmap.md).
 
 ## Planned workflow
 
@@ -29,7 +29,7 @@ npm run package:vsix
 
 Install the resulting `dist/repo-knowledge-0.1.0.vsix` through VS Code's Install from VSIX command. Run **Repo Knowledge: Open Three-Card Demo**, trust the self-authored demo, then **Search Cards**, **Diagnose Standalone MCP** and **Show Codex MCP Setup**. Merge the generated table into Codex config.toml and restart Codex. The command previews configuration and does not overwrite existing settings. See the [Chinese setup guide](docs/user/quickstart.zh-CN.md).
 
-Native preview uses an external Node 24.19.x executable. On Remote SSH, the default uses the remote VS Code Server Node in a separate process (remote MCP tested on Node 22.22.1), so npm/system installation is unnecessary. An absolute `repoKnowledge.nodeExecutable` overrides the default. The declared VS Code minimum is provisional; real Remote SSH editor/Codex acceptance remains a release gate.
+Native preview uses an external Node 24.19.x executable. On Remote SSH, the default uses the remote VS Code Server Node in a separate process (remote MCP tested on Node 22.22.1), so npm/system installation is unnecessary. An absolute `repoKnowledge.nodeExecutable` overrides the default. The declared VS Code minimum is provisional; the validated editor baseline is 1.117.0. See the acceptance record for official Codex and Remote SSH evidence.
 
 ## Architecture
 

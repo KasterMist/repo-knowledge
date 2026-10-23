@@ -8,12 +8,12 @@ Create a VS Code plugin that presents repository Wiki pages to people and provid
 
 Current task states and resumption steps are maintained in the [project status](../development/project-status.zh-CN.md).
 
-| Environment                               | Requirement                                | M0 validation                                         |
-| ----------------------------------------- | ------------------------------------------ | ----------------------------------------------------- |
-| Windows native x64                        | Required from the first functional preview | Local checks and CI job                               |
-| Linux native x64 (Ubuntu runner baseline) | Required from the first functional preview | CI job; actual remote result must be recorded         |
-| Windows VS Code Remote SSH to Linux x64   | Required for the first functional preview  | Remote MCP verified; actual editor/agent gate remains |
-| WSL / macOS / ARM64                       | Not claimed supported yet                  | Separate future acceptance                            |
+| Environment                               | Requirement                                      | M1 evidence                                                  |
+| ----------------------------------------- | ------------------------------------------------ | ------------------------------------------------------------ |
+| Windows native x64                        | Required from the first functional preview       | Official Codex report; public VSIX download/install verified |
+| Linux native x64 (Ubuntu runner baseline) | Required editor baseline; desktop Codex deferred | Actual VS Code/public VSIX CI; desktop Codex unverified      |
+| Windows VS Code Remote SSH to Linux x64   | Required for the first functional preview        | Actual remote commands/Codex and recovery accepted           |
+| WSL / macOS / ARM64                       | Not claimed supported yet                        | Separate future acceptance                                   |
 
 Cross-platform support is a release gate, not a later optional polish task. Add case-sensitive file paths, Unicode and spaces, separator handling, process cancellation and line endings to future functional acceptance. Windows success alone does not establish Linux support.
 

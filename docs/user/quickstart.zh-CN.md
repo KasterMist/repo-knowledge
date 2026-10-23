@@ -4,8 +4,8 @@
 
 ## 安装与演示
 
-1. 开发机准备 Node 24.19.0 / npm 12.2.1，执行 `npm ci`、`npm run check`、`npm run build`、`npm run package:vsix`。
-2. VS Code 命令面板选择“从 VSIX 安装”，安装 dist 中的候选包。无需管理员权限。扩展不在商店发布。
+1. 从 [GitHub Release v0.1.0-alpha.1](https://github.com/KasterMist/repo-knowledge/releases/tag/v0.1.0-alpha.1) 下载 repo-knowledge-0.1.0.vsix 和 SHA256SUMS，先核对 SHA-256。使用者无需 npm 构建；原生 MCP 需要 Node 24.19.x，Remote SSH 可直接使用服务器现有 Node。开发者自行构建时再准备 Node 24.19.0 / npm 12.2.1，并执行 `npm ci`、`npm run check`。
+2. VS Code 命令面板选择“从 VSIX 安装”，安装下载的 0.1.0 VSIX。无需管理员权限。扩展不在商店发布。
    也可以从对应 PR 的成功 Actions 运行中下载 `repo-knowledge-candidate-windows-latest` 或 `repo-knowledge-candidate-ubuntu-latest`，解压后按 SHA256SUMS 核对 VSIX。两者是同一跨平台实现的测试候选，保留 7 天，不是正式 Release。
 3. 运行 `Repo Knowledge: Open Three-Card Demo`。它将内置的自主编写示例复制到扩展外部存储，在新窗口打开；已有演示目录不会覆盖。演示源码只供读取。
 4. 信任演示文件夹，运行 `Repo Knowledge: Search Cards`，搜索“读取”“缓存”或 `Cache.get`，查看卡片与证据状态。
