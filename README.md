@@ -9,11 +9,11 @@ Windows VS Code **Remote SSH to Linux is a required workflow**. See the [Remote 
 
 Implemented: runtime-validated knowledge cards, source freshness checks, lexical search, standalone STDIO MCP tools, immutable update proposals and VS Code commands for browsing, diagnostics and Codex configuration. Includes a self-authored three-card demo.
 
-Build a local VSIX candidate with the commands below. **Official Codex IDE acceptance on Windows and Linux is still required before an alpha release.** Protocol tests alone do not establish that integration. No Wiki generation, automatic publication or Marketplace release is available. See [M1 acceptance](docs/development/m1-acceptance.md) and the [roadmap](docs/product/roadmap.md).
+Build a local VSIX candidate with the commands below. **Remaining official Codex IDE acceptance on Windows and Linux is required before an alpha release.** Protocol tests alone do not establish that integration. No Wiki generation, proposal review/publication UI or Marketplace release is available. See the [project task/status checkpoint](docs/development/project-status.zh-CN.md), [M1 acceptance](docs/development/m1-acceptance.md) and the [roadmap](docs/product/roadmap.md).
 
 ## Planned workflow
 
-Read a structured Wiki, correct shared knowledge cards, let Codex retrieve evidence through MCP, and review incremental updates when source files change. Human edits and source versions must be preserved. This means persistent project knowledge, not model training.
+The user decides whether to generate Wiki pages and knowledge cards, selects the scope and explicitly starts generation. Read a structured Wiki, correct shared cards and let Codex retrieve evidence through MCP. Source changes can be checked for staleness; regeneration and incremental updates are also user-initiated and produce candidates for user review and confirmed publication. Human edits and source versions must be preserved. This means persistent project knowledge, not model training.
 
 ## Development
 
