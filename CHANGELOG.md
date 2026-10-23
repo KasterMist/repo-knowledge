@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- M2 browsing development: source-scope Wiki/card trees, immutable card documents and validated Unicode source navigation. No new release or model generation.
+- Improve Chinese/code-symbol lexical ranking and add a 15-card Top-5 evaluation with documented semantic misses.
+
 ## 0.1.0-alpha.1 — 2026-10-23
 
 - First [GitHub-only alpha](https://github.com/KasterMist/repo-knowledge/releases/tag/v0.1.0-alpha.1); product/VSIX 0.1.0, knowledge schemaVersion 1. No Marketplace publication.

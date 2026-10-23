@@ -7,3 +7,4 @@
 !dist/extension.cjs
 !dist/server.cjs
 !demo/**
+!media/knowledge.svg

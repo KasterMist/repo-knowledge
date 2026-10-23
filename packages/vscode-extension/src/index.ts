@@ -7,8 +7,9 @@ import { resolveHost, codexConfiguration, nodeCommand } from './host.js';
 import { KnowledgeStore } from '@repo-knowledge/core';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
+import { KnowledgeWorkbench } from './workbench.js';
 
-export function activate(context: vscode.ExtensionContext): void {
+export function activate(context: vscode.ExtensionContext) {
   const output = vscode.window.createOutputChannel('Repo Knowledge');
   context.subscriptions.push(output);
   const register = (name: string, action: () => Promise<unknown>) => {
@@ -31,14 +32,15 @@ export function activate(context: vscode.ExtensionContext): void {
       }),
     );
   };
-  const selected = async () => {
+  const selected = async (selectedFolder?: vscode.WorkspaceFolder) => {
     const folders = vscode.workspace.workspaceFolders;
     if (!folders?.length)
       throw new Error('Open a native or Remote SSH repository folder first.');
     const folder =
-      folders.length === 1
+      selectedFolder ??
+      (folders.length === 1
         ? folders[0]
-        : await vscode.window.showWorkspaceFolderPick();
+        : await vscode.window.showWorkspaceFolderPick());
     if (!folder) return;
     const configuration = vscode.workspace.getConfiguration(
       'repoKnowledge',
@@ -70,6 +72,8 @@ export function activate(context: vscode.ExtensionContext): void {
       uriForFile: (path: string) => vscode.Uri.file(path),
     };
   };
+  const workbench = new KnowledgeWorkbench(selected);
+  context.subscriptions.push(workbench);
   register('initialize', async () => {
     const target = await selected();
     if (!target) return;
@@ -293,4 +297,5 @@ export function activate(context: vscode.ExtensionContext): void {
       true,
     );
   });
+  return { workbench };
 }

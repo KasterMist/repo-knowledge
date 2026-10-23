@@ -47,6 +47,22 @@
       {
         "command": "repoKnowledge.openDemo",
         "title": "Repo Knowledge: Open Three-Card Demo"
+      },
+      {
+        "command": "repoKnowledge.openWorkbench",
+        "title": "Repo Knowledge: Open Knowledge Workbench"
+      },
+      {
+        "command": "repoKnowledge.refreshKnowledge",
+        "title": "Repo Knowledge: Refresh Knowledge"
+      },
+      {
+        "command": "repoKnowledge.openCard",
+        "title": "Repo Knowledge: Open Card"
+      },
+      {
+        "command": "repoKnowledge.openEvidence",
+        "title": "Repo Knowledge: Open Source Evidence"
       }
     ],
     "configuration": {
@@ -65,6 +81,43 @@
           "description": "Absolute directory containing knowledge.json. Empty uses per-repository extension storage outside the target repository."
         }
       }
+    },
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "repoKnowledge",
+          "title": "Repo Knowledge",
+          "icon": "media/knowledge.svg"
+        }
+      ]
+    },
+    "views": {
+      "repoKnowledge": [
+        {
+          "id": "repoKnowledge.wiki",
+          "name": "Repo Wiki \u00b7 \u6309\u6e90\u7801\u8303\u56f4"
+        },
+        {
+          "id": "repoKnowledge.cards",
+          "name": "\u77e5\u8bc6\u5361\u7247 \u00b7 Cards"
+        }
+      ]
+    },
+    "menus": {
+      "view/title": [
+        {
+          "command": "repoKnowledge.refreshKnowledge",
+          "when": "view == repoKnowledge.wiki || view == repoKnowledge.cards",
+          "group": "navigation"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "repoKnowledge.openCard",
+          "when": "viewItem == knowledge-card",
+          "group": "inline"
+        }
+      ]
     }
   },
   "version": "0.1.0",

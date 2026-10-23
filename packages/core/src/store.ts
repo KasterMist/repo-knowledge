@@ -1,3 +1,4 @@
+import { rankCards } from './search.js';
 import { createHash, randomUUID } from 'node:crypto';
 import { open, realpath, mkdir, lstat } from 'node:fs/promises';
 import { resolve, relative, isAbsolute, join } from 'node:path';
@@ -102,10 +103,10 @@ export class KnowledgeStore {
           const text = (await boundedRead(path)).replaceAll('\r\n', '\n');
           const lines = text.split('\n');
           const status =
-            fingerprint(text) !== evidence.sha256
-              ? 'changed'
-              : evidence.endLine > lines.length
-                ? 'invalid-range'
+            evidence.endLine > lines.length
+              ? 'invalid-range'
+              : fingerprint(text) !== evidence.sha256
+                ? 'changed'
                 : 'current';
           const excerpt = lines
             .slice(evidence.startLine - 1, evidence.endLine)
@@ -154,34 +155,40 @@ export class KnowledgeStore {
         'Use a non-empty query up to 200 characters and limit 1–20',
       );
     const { snapshot, snapshotRevision } = await this.snapshot();
-    const terms = [...new Set(query.toLocaleLowerCase().trim().split(/\s+/u))];
-    const results = snapshot.cards
-      .map((card) => {
-        const title =
-          `${card.title} ${card.tags.join(' ')} ${card.id}`.toLocaleLowerCase();
-        const body = `${card.body} ${card.scope.join(' ')}`.toLocaleLowerCase();
-        const score = terms.reduce(
-          (sum, term) =>
-            sum +
-            (title.includes(term) ? 3 : 0) +
-            (body.includes(term) ? 1 : 0),
-          0,
-        );
-        return {
-          id: card.id,
-          title: card.title,
-          revision: card.revision,
-          kind: card.kind,
-          score,
-        };
-      })
-      .filter((card) => card.score > 0)
-      .sort((a, b) => b.score - a.score || a.id.localeCompare(b.id))
-      .slice(0, limit);
+    const results = rankCards(snapshot.cards, query, limit);
     return {
       snapshotRevision,
       results,
       freshness: 'Call read_knowledge to verify source evidence',
+    };
+  }
+  async evidenceLocation(id: string, index: number, baseSnapshot: string) {
+    const result = await this.read(id);
+    if (result.snapshotRevision !== baseSnapshot)
+      throw new KnowledgeError(
+        'REVISION_CONFLICT',
+        'Knowledge changed; refresh the workbench before opening evidence',
+      );
+    const evidence = result.evidence[index];
+    if (
+      !Number.isInteger(index) ||
+      index < 0 ||
+      !evidence ||
+      !['current', 'changed'].includes(evidence.status)
+    )
+      throw new KnowledgeError(
+        'INVALID_EVIDENCE',
+        'Source evidence is unavailable or outside the repository',
+      );
+    const root = await realpath(this.repositoryRoot);
+    const path = await realpath(resolve(root, evidence.path));
+    if (!within(root, path))
+      throw new KnowledgeError('PATH_ESCAPE', 'Evidence escapes repository');
+    return {
+      path,
+      startLine: evidence.startLine,
+      endLine: evidence.endLine,
+      status: evidence.status,
     };
   }
   async status() {
