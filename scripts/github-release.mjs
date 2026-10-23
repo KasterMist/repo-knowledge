@@ -105,7 +105,7 @@ async function verifyInfo() {
   return info;
 }
 
-async function unusedTagOrEmptyDraft() {
+async function unusedTagOrEmptyDraft({ checkPrivateDraft = true } = {}) {
   if (await api(`/git/ref/tags/${release.tag}`, { allow404: true }))
     throw new Error('Release tag already exists; refusing replacement');
   const existing = await api(`/releases/tags/${release.tag}`, {
@@ -123,6 +123,11 @@ async function unusedTagOrEmptyDraft() {
     !/^[a-f0-9]{40}$/u.test(recovery.previousSourceCommit ?? '')
   )
     throw new Error('Invalid reviewed draft recovery metadata');
+  if (!checkPrivateDraft) {
+    if (existing && existing.draft !== true)
+      throw new Error('Public release already exists; refusing replacement');
+    return null;
+  }
   const draft = await api(`/releases/${recovery.emptyDraftId}`);
   if (
     (existing && existing.id !== draft.id) ||
@@ -146,10 +151,10 @@ async function unusedTagOrEmptyDraft() {
 
 if (mode === 'gate') {
   await checkedMain();
-  const recovery = await unusedTagOrEmptyDraft();
+  await unusedTagOrEmptyDraft({ checkPrivateDraft: false });
   console.log(
-    recovery
-      ? 'Exact main CI and reviewed empty draft recovery verified'
+    release.recovery
+      ? 'Exact main CI/public tag verified; private draft checks deferred to the publish job'
       : 'Exact main CI and unused release tag verified',
   );
 } else if (mode === 'prepare') {

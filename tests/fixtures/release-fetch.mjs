@@ -10,6 +10,11 @@ globalThis.fetch = async (input, options = {}) => {
   const url = new URL(input);
   const path = url.pathname;
   const method = options.method ?? 'GET';
+  if (
+    options.headers.Authorization === 'Bearer offline-read-only' &&
+    method !== 'GET'
+  )
+    return json({}, 403);
   if (path.endsWith('/branches/main'))
     return json({ protected: true, commit: { sha: process.env.GITHUB_SHA } });
   if (path.endsWith('/ci.yml/runs'))
@@ -34,6 +39,9 @@ globalThis.fetch = async (input, options = {}) => {
       id: draftId,
       upload_url: `https://uploads.github.com/repos/KasterMist/repo-knowledge/releases/${draftId}/assets{?name,label}`,
     });
+  if (path.endsWith(`/releases/${draftId}`) && method === 'GET')
+    if (options.headers.Authorization === 'Bearer offline-read-only')
+      return json({}, 403);
   if (path.endsWith(`/releases/${draftId}`) && method === 'GET')
     return json({
       id: draftId,
