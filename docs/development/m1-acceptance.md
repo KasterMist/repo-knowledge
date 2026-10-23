@@ -41,6 +41,18 @@ The Remote SSH official Codex proposal/conflict check was reported successful. R
 
 Remote SSH from Windows to Linux is an additional required execution path, not implied by Linux runner success. See [Remote SSH evidence](remote-ssh-acceptance.md) and its [manual guide](../user/remote-ssh.zh-CN.md). The actual Remote SSH extension diagnostic also passed. These results do not establish native Windows or native Linux Codex acceptance. The remaining editor/error-recovery checks and native-platform gates remain open, so T09/T10 are not complete.
 
+## Editor error/recovery checks (2026-10-23)
+
+An expanded real Windows VS Code 1.117.0 isolated-profile test first reproduced a diagnostic failure: a missing store returned only MCP error -32000: Connection closed, while Open Knowledge Snapshot correctly identified knowledge.json. Preflight snapshot validation now preserves the store error before starting MCP. Missing Node independently reproduced the same generic message; failed connections now point to repoKnowledge.nodeExecutable on the execution host and the bundled server installation. No raw child stderr, environment variables or user configuration are printed.
+
+The actual rebuilt VSIX passed missing-store, malformed JSON, unknown schemaVersion and missing-node checks. Each case returned an actionable error and reconnected successfully after restoring its setting. Initialize External Store created an empty snapshot; a second initialization was rejected without changing bytes. Final configuration restoration and byte-identical original demo knowledge were checked. The full shared check also passed 12 unit and 2 integration tests.
+
+Machine-scoped test settings may be changed only when REPO_KNOWLEDGE_ISOLATED_PROFILE=1 is set by the disposable-profile runner; remote fallback tests do not change a maintainer's global settings. The profile disables unrelated extensions, updates and AI features. No models, accounts or target-project code are involved. This validates command execution in a real editor host, not an official Codex conversation.
+
+The editor-host CI matrix runs scripts/run-ci-host-check.mjs on Windows and Ubuntu: the pinned @vscode/test-electron 3.1.0 downloads VS Code 1.117.0, installs the actual VSIX into an isolated profile and runs the same host checks. Linux uses xvfb-run. Only sanitized result JSON is uploaded as a seven-day artifact; CI results must be checked before marking native Linux host acceptance complete. This follows Microsoft's [extension testing](https://code.visualstudio.com/api/working-with-extensions/testing-extension) and [headless CI](https://code.visualstudio.com/api/working-with-extensions/continuous-integration) guidance.
+
+The maintainer also confirmed actual Remote SSH Search Cards (query “读取” and card selection), Open Knowledge Snapshot and Show Codex MCP Setup all opened their expected content while remaining connected to SSH. Open Three-Card Demo's new-window behavior and remote initialization still need explicit evidence. The maintainer confirmed there is no separate Linux desktop; the existing server/Remote SSH evidence does not satisfy the original native Linux Codex desktop gate. Any change to that release gate requires an explicit scope decision.
+
 ## References
 
 - [Codex MCP configuration](https://learn.chatgpt.com/docs/extend/mcp)

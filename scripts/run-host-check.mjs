@@ -21,6 +21,17 @@ const profile = join(directory, 'profile');
 const extensions = join(directory, 'extensions');
 const demo = join(directory, 'demo');
 const resultPath = join(directory, 'result.json');
+await mkdir(join(profile, 'User'), { recursive: true });
+await writeFile(
+  join(profile, 'User/settings.json'),
+  JSON.stringify({
+    'extensions.autoUpdate': false,
+    'extensions.autoCheckUpdates': false,
+    'chat.disableAIFeatures': true,
+    'update.mode': 'none',
+    'telemetry.telemetryLevel': 'off',
+  }),
+);
 await cp('examples/demo', demo, { recursive: true });
 await mkdir(join(demo, '.vscode'), { recursive: true });
 await writeFile(
@@ -54,7 +65,11 @@ if (!name)
   throw new Error(
     'VSIX was not installed into the isolated extension directory',
   );
-const environment = { ...process.env, REPO_KNOWLEDGE_HOST_RESULT: resultPath };
+const environment = {
+  ...process.env,
+  REPO_KNOWLEDGE_HOST_RESULT: resultPath,
+  REPO_KNOWLEDGE_ISOLATED_PROFILE: '1',
+};
 delete environment.ELECTRON_RUN_AS_NODE;
 const child = spawn(
   codeExecutable,
@@ -73,6 +88,7 @@ const child = spawn(
     '--skip-welcome',
     '--skip-release-notes',
     '--disable-telemetry',
+    '--disable-extensions',
   ],
   { env: environment, stdio: ['ignore', 'pipe', 'pipe'] },
 );
@@ -89,6 +105,11 @@ try {
   if (code !== 0) throw new Error(`Isolated extension host exited ${code}`);
   const result = JSON.parse(await readFile(resultPath, 'utf8'));
   if (result.passed !== true) throw new Error('Missing successful host result');
+  if (process.env.REPO_KNOWLEDGE_HOST_REPORT)
+    await writeFile(
+      process.env.REPO_KNOWLEDGE_HOST_REPORT,
+      JSON.stringify(result, null, 2),
+    );
   console.log(JSON.stringify({ ...result, evidencePath: resultPath }, null, 2));
 } finally {
   clearTimeout(timer);
