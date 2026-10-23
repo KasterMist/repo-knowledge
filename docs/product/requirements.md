@@ -6,6 +6,8 @@ Create a VS Code plugin that presents repository Wiki pages to people and provid
 
 ## Required platforms
 
+Current task states and resumption steps are maintained in the [project status](../development/project-status.zh-CN.md).
+
 | Environment                               | Requirement                                | M0 validation                                         |
 | ----------------------------------------- | ------------------------------------------ | ----------------------------------------------------- |
 | Windows native x64                        | Required from the first functional preview | Local checks and CI job                               |
@@ -22,6 +24,12 @@ Development uses Node 24.19.0 and npm 12.2.1. VS Code engine declaration in the 
 Independent source repository, license, contribution files, module boundaries, deterministic checks, lockfile and Windows/Linux CI. Governance, Issues and milestone setup are tracked separately from local engineering completion.
 
 M0 has no product features, model calls, credentials, background services or VSIX. M1 validates Codex retrieval and knowledge proposals before investing in generation. Later milestones add initial generation, dependency invalidation, three-way conflict protection and incremental updates.
+
+## User-controlled generation and updates
+
+The user decides whether to scan and generate Wiki pages or knowledge cards, which repository/scope/language to use, and whether to regenerate or update them. These operations are explicitly user-initiated. Repository opening, file saves, branch changes and source changes do not silently start model requests, generation, rewriting or publication. Freshness reporting is separate from generation.
+
+Generation and incremental model updates produce reviewable candidates. The user reviews and confirms publication; human edits and rationale must be preserved. Model requests must have an explicit bounded scope and budget, cancellation and recoverable failure handling. M3 is user-initiated first knowledge generation; M4 adds user-initiated incremental maintenance. Neither milestone is an unattended background writer.
 
 ## Data and evidence
 

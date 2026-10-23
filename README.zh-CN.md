@@ -9,11 +9,11 @@
 
 已实现知识卡片运行时校验、源码过期检查、词法搜索、独立 STDIO MCP 服务、不可变更新候选，以及 VS Code 搜索、诊断和 Codex 配置引导命令。附带三张自主编写的演示卡片。
 
-可以按下面的命令构建本地 VSIX 候选包。**正式 alpha 发布仍须通过 Windows 和 Linux 的官方 Codex IDE 真实验收；协议测试不能代替该验收。** 暂无 Wiki 自动生成、候选自动发布或 Marketplace 版本。参见[M1 验收清单](docs/development/m1-acceptance.md)与[任务路线图](docs/product/roadmap.md)。
+可以按下面的命令构建本地 VSIX 候选包。**正式 alpha 发布仍须补齐 Windows 和 Linux 的官方 Codex IDE 真实验收；协议测试不能代替该验收。** 暂无 Wiki 生成、候选审阅发布界面或 Marketplace 版本。参见[项目任务与进度总表](docs/development/project-status.zh-CN.md)、[M1 验收清单](docs/development/m1-acceptance.md)与[任务路线图](docs/product/roadmap.md)。
 
 ## 计划体验
 
-用户通过 Wiki 阅读和修订项目知识，Codex 通过 MCP 检索带源码证据的知识卡片；源码改变后标记过期、生成更新候选并审阅发布。保留人工判断与来源版本。“学习”是持久化和复用项目知识，不是训练模型。
+由用户决定是否生成 Wiki 和知识卡片，并主动选择范围、发起生成。用户通过 Wiki 阅读和修订项目知识，Codex 通过 MCP 检索带源码证据的知识卡片。源码改变后可检查过期状态；重新生成和增量更新也由用户主动发起，生成候选后经用户审阅确认再发布。保留人工判断与来源版本。“学习”是持久化和复用项目知识，不是训练模型。
 
 ## 本地开发
 

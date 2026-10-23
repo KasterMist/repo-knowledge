@@ -37,6 +37,6 @@ propose_knowledge_update，保持 ID 并把 revision 加一。
 
 “Install Repo Knowledge on the SSH host”表示运行位置不匹配；Windows 存储路径报错表示把客户端路径用于远端；STORE_UNAVAILABLE 表示所选知识目录缺少有效 knowledge.json。缺少工具时先核对 Codex 当前后端和配置层，再重启扩展。协议诊断成功但 Codex 不调用工具，应检查 Codex 的工具可用性与权限，不能把插件诊断当作 Codex 已接入。
 
-目前只接受原生工作区与 Linux Remote SSH；WSL、容器、其他虚拟文件系统和跨主机 MCP 代理没有经过验收。完整的 Wiki 页面、仓库自动生成和增量维护仍按 M2–M4 推进。
+目前只接受原生工作区与 Linux Remote SSH；WSL、容器、其他虚拟文件系统和跨主机 MCP 代理没有经过验收。完整的 Wiki 页面、用户主动发起的首次知识生成和增量维护仍按 M2–M4 推进；是否生成及更新由用户决定。
 
 [VS Code 远程扩展架构](https://code.visualstudio.com/api/advanced-topics/remote-extensions) · [官方 Codex MCP 配置](https://learn.chatgpt.com/docs/extend/mcp)
