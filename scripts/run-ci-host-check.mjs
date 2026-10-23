@@ -1,5 +1,5 @@
 import { downloadAndUnzipVSCode } from '@vscode/test-electron';
-import { access, mkdir, readdir } from 'node:fs/promises';
+import { access, mkdir, readdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 import { spawnSync } from 'node:child_process';
 
@@ -26,19 +26,40 @@ for (const candidate of candidates) {
   }
 }
 if (!cli) throw new Error('Downloaded VS Code CLI script was not found');
-const args = ['scripts/run-host-check.mjs', executable, cli];
 const command = process.platform === 'linux' ? 'xvfb-run' : process.execPath;
-const result = spawnSync(
-  command,
-  process.platform === 'linux' ? ['-a', process.execPath, ...args] : args,
-  {
-    stdio: 'inherit',
-    timeout: 180000,
-    env: {
-      ...process.env,
-      REPO_KNOWLEDGE_HOST_REPORT: resolve('.tmp/editor-host-result.json'),
+for (const mode of ['single', 'multi-root']) {
+  const args = [
+    'scripts/run-host-check.mjs',
+    executable,
+    cli,
+    ...(mode === 'multi-root' ? ['--multi-root'] : []),
+  ];
+  const result = spawnSync(
+    command,
+    process.platform === 'linux' ? ['-a', process.execPath, ...args] : args,
+    {
+      stdio: 'inherit',
+      timeout: 180000,
+      env: {
+        ...process.env,
+        REPO_KNOWLEDGE_HOST_REPORT: resolve(
+          mode === 'single'
+            ? '.tmp/editor-host-result.json'
+            : '.tmp/editor-host-multi-root-result.json',
+        ),
+      },
     },
-  },
+  );
+  if (result.error) throw result.error;
+  if (result.status !== 0) process.exit(result.status ?? 1);
+}
+const single = JSON.parse(
+  await readFile('.tmp/editor-host-result.json', 'utf8'),
 );
-if (result.error) throw result.error;
-if (result.status !== 0) process.exit(result.status ?? 1);
+single.multiRoot = JSON.parse(
+  await readFile('.tmp/editor-host-multi-root-result.json', 'utf8'),
+);
+await writeFile(
+  '.tmp/editor-host-result.json',
+  JSON.stringify(single, null, 2),
+);

@@ -3,11 +3,66 @@ const fs = require('node:fs/promises');
 const path = require('node:path');
 const vscode = require('vscode');
 
+async function runMultiRoot(extension) {
+  const workbench = extension.exports.workbench;
+  const roots = await workbench.cards.getChildren();
+  assert.equal(roots.length, 2);
+  const firstCards = await workbench.cards.getChildren(roots[0]);
+  const secondCards = await workbench.cards.getChildren(roots[1]);
+  const first = firstCards.find((node) => node.cardId === 'read-fallback');
+  const second = secondCards.find((node) => node.cardId === 'read-fallback');
+  assert.ok(first);
+  assert.ok(second);
+  assert.notEqual(first.target.store, second.target.store);
+  assert.notEqual(first.target.root, second.target.root);
+  const secondView = await vscode.commands.executeCommand(
+    'repoKnowledge.openCard',
+    second,
+  );
+  assert.match(
+    (await vscode.workspace.openTextDocument(secondView)).getText(),
+    /SECOND_ROOT_SENTINEL/u,
+  );
+  const firstView = await vscode.commands.executeCommand(
+    'repoKnowledge.openCard',
+    first,
+  );
+  assert.doesNotMatch(
+    (await vscode.workspace.openTextDocument(firstView)).getText(),
+    /SECOND_ROOT_SENTINEL/u,
+  );
+  const evidence = await workbench.cards.getChildren(second);
+  const source = await vscode.commands.executeCommand(
+    'repoKnowledge.openEvidence',
+    evidence[0],
+  );
+  assert.equal(
+    await fs.realpath(source.fsPath),
+    await fs.realpath(path.join(second.target.root, 'src/读取.ts')),
+  );
+  await fs.writeFile(
+    process.env.REPO_KNOWLEDGE_HOST_RESULT,
+    JSON.stringify({
+      passed: true,
+      vscodeVersion: vscode.version,
+      platform: process.platform,
+      evidence: [
+        'two real workspace folders',
+        'same card ID uses distinct configured stores',
+        'pinned first node remains isolated after second read',
+        'second-root evidence opens its own source',
+      ],
+    }),
+  );
+}
+
 exports.run = async function run() {
   const extension = vscode.extensions.getExtension('KasterMist.repo-knowledge');
   assert.ok(extension, 'Packaged extension must be discoverable');
   await extension.activate();
   assert.equal(extension.isActive, true);
+  if (process.env.REPO_KNOWLEDGE_MULTI_ROOT === '1')
+    return runMultiRoot(extension);
   const commands = await vscode.commands.getCommands(true);
   for (const command of extension.packageJSON.contributes.commands)
     assert.ok(commands.includes(command.command), command.command);
