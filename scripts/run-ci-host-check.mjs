@@ -1,9 +1,10 @@
 import { downloadAndUnzipVSCode } from '@vscode/test-electron';
-import { access, readdir } from 'node:fs/promises';
+import { access, mkdir, readdir } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 import { spawnSync } from 'node:child_process';
 
 // Match the real Windows acceptance version; do not silently follow latest.
+await mkdir(resolve('.tmp/vscode-test'), { recursive: true });
 const executable = await downloadAndUnzipVSCode({
   version: '1.117.0',
   cachePath: resolve('.tmp/vscode-test'),
