@@ -22,6 +22,7 @@ const profile = join(directory, 'profile');
 const extensions = join(directory, 'extensions');
 const demo = join(directory, 'demo');
 const resultPath = join(directory, 'result.json');
+const multiRoot = process.argv.includes('--multi-root');
 await mkdir(join(profile, 'User'), { recursive: true });
 await writeFile(
   join(profile, 'User/settings.json'),
@@ -39,6 +40,28 @@ await writeFile(
   join(demo, '.vscode/settings.json'),
   JSON.stringify({ 'repoKnowledge.storeDirectory': join(demo, 'knowledge') }),
 );
+let workspacePath = demo;
+if (multiRoot) {
+  const second = join(directory, 'second root 中文');
+  const store = join(directory, 'second external store');
+  await cp('examples/demo', second, { recursive: true });
+  await cp(join(second, 'knowledge'), store, { recursive: true });
+  const snapshot = JSON.parse(
+    await readFile(join(store, 'knowledge.json'), 'utf8'),
+  );
+  snapshot.cards.find((card) => card.id === 'read-fallback').body +=
+    '\nSECOND_ROOT_SENTINEL';
+  await writeFile(join(store, 'knowledge.json'), JSON.stringify(snapshot));
+  await writeFile(
+    join(second, '.vscode/settings.json'),
+    JSON.stringify({ 'repoKnowledge.storeDirectory': store }),
+  );
+  workspacePath = join(directory, 'two-roots.code-workspace');
+  await writeFile(
+    workspacePath,
+    JSON.stringify({ folders: [{ path: demo }, { path: second }] }),
+  );
+}
 const installed = spawnSync(
   codeExecutable,
   [
@@ -70,12 +93,13 @@ const environment = {
   ...process.env,
   REPO_KNOWLEDGE_HOST_RESULT: resultPath,
   REPO_KNOWLEDGE_ISOLATED_PROFILE: '1',
+  REPO_KNOWLEDGE_MULTI_ROOT: multiRoot ? '1' : '0',
 };
 delete environment.ELECTRON_RUN_AS_NODE;
 const child = spawn(
   codeExecutable,
   [
-    demo,
+    workspacePath,
     '--new-window',
     '--user-data-dir',
     profile,
