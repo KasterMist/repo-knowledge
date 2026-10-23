@@ -27,13 +27,13 @@ Record OS/architecture, VS Code version, official openai.chatgpt extension versi
 7. Edit only the copied demo source. Confirm changed/stale evidence. Confirm an update citing the old source hash is rejected. Restore the copied source afterward.
 8. Test missing Node, unavailable store and malformed snapshot recovery. Record explicit tool calls separately from optional natural agent retrieval.
 
-| Gate                                   | Windows native                 | Linux native                                     |
-| -------------------------------------- | ------------------------------ | ------------------------------------------------ |
-| Automated checks                       | Passed: CI run 39740920964     | Passed: CI run 39740920964                       |
-| Packaged extension isolated activation | Passed: VS Code 1.117.0, win32 | Passed: VS Code 1.117.0, Xvfb CI run 39894411784 |
-| Official Codex four-tool loop          | Pending                        | Unverified; deferred for first alpha             |
-| Official Codex new-conversation reuse  | Pending                        | Unverified; deferred for first alpha             |
-| Alpha VSIX release                     | Blocked on scoped acceptance   | Desktop Codex excluded from alpha claim          |
+| Gate                                   | Windows native                                     | Linux native                                     |
+| -------------------------------------- | -------------------------------------------------- | ------------------------------------------------ |
+| Automated checks                       | Passed: CI run 39740920964                         | Passed: CI run 39740920964                       |
+| Packaged extension isolated activation | Passed: VS Code 1.117.0, win32                     | Passed: VS Code 1.117.0, Xvfb CI run 39894411784 |
+| Official Codex four-tool loop          | Passed: maintainer report and saved proposal check | Unverified; deferred for first alpha             |
+| Official Codex new-conversation reuse  | Passed: maintainer report                          | Unverified; deferred for first alpha             |
+| Alpha VSIX release                     | Blocked on scoped acceptance                       | Desktop Codex excluded from alpha claim          |
 
 Do not close T09/T10 before the scoped alpha gates are complete, or label this as Qoder-equivalent integration. In the table above, native Linux desktop Codex Pending means unverified and deferred under the explicit scope decision, rather than an additional first-alpha gate. A local candidate package is not an alpha release. No scheduled work, paid model CI or user credential collection is required.
 
@@ -58,6 +58,12 @@ The actual Linux editor-host job passed on implementation head 25908c6ed38c6bcf0
 The maintainer also confirmed actual Remote SSH Search Cards (query “读取” and card selection), Open Knowledge Snapshot and Show Codex MCP Setup all opened their expected content while remaining connected to SSH. Open Three-Card Demo's new-window behavior and remote initialization still need explicit evidence. The maintainer confirmed there is no separate Linux desktop; the existing server/Remote SSH evidence does not satisfy the original native Linux Codex desktop gate. Any change to that release gate requires an explicit scope decision.
 
 That scope decision was subsequently supplied as recorded at the start of this document. A Windows-native four-tool report was explicitly described as a direct STDIO protocol check, not use of tools exposed in an official Codex conversation; it therefore does not complete Windows-native Codex acceptance. Project-only configuration did not appear in the inspected CLI catalog; an explicit one-off server override did. The maintainer authorized a temporary user-level table restricted to the self-authored demo, with backup and removal after acceptance. This temporary handoff is not a plugin feature or an automatic edit of user settings. No claim is made that project trust alone explains the configuration-loading failure.
+
+## Windows-native official Codex follow-up (2026-10-23)
+
+After the maintainer-approved temporary MCP table was discovered by the official CLI and the Windows acceptance window was reloaded, the maintainer explicitly reported direct use of the conversation-exposed MCP tools, without a shell/SDK/STDIO substitute: status, Chinese search, all three current revision-1 cards, a pending revision-2 read-fallback proposal and REVISION_CONFLICT for baseRevision 2. The separate attempt with baseRevision 0 was rejected by parameter validation, not counted as the revision-conflict case. Independent filesystem inspection found proposal 3a962454-b279-4320-bb90-6025bc07b807 and confirmed the canonical revision-1 snapshot is byte-identical to the original fixture.
+
+The maintainer also confirmed successful direct-tool retrieval in a separate new Windows conversation: read-fallback revision 1, stale=false/current. That conversation initially did not edit source because the acceptance wording restricted it to knowledge MCP tools, which intentionally have no source-write operation. This is an acceptance-instruction limitation, not a product stale-detection failure; the Windows IDE stale scenario remains pending until explicitly exercised. Native Linux desktop Codex remains excluded under the approved first-alpha scope.
 
 ## References
 

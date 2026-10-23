@@ -47,12 +47,12 @@ An official SDK client connected over the authenticated SSH transport to the rem
 
 The maintainer subsequently completed the same stale-recovery scenario in an official Codex IDE conversation: status and read returned stale=true/changed after the temporary demo edit; propose_knowledge_update using the saved original evidence returned STALE_EVIDENCE; after restoring the original file, read returned stale=false/current. The maintainer reports no source execution, builds, tests or direct knowledge.json changes. An independent read-only SFTP check then confirmed the source matches the saved original bytes, the canonical snapshot matches the original fixture bytes, and three pending proposal files remain. The error and intermediate tool states are maintainer-reported; the restored bytes and final storage state were independently checked. This passes the Remote SSH official Codex stale-recovery gate.
 
-## Still required
+## Remote editor command acceptance completed (2026-10-23)
 
 On 2026-10-23 the maintainer confirmed actual Search Cards with Chinese query and card selection, Open Knowledge Snapshot and Show Codex MCP Setup all opened their expected content while the window remained connected to SSH. Together with the prior real diagnostic, these cover four command interactions. This feedback predates the diagnostic recovery improvement; it does not claim a remote run of the new isolated recovery suite.
 
-- In a real Remote SSH editor, verify Open Three-Card Demo preserves the remote connection in its new window, and Initialize External Store preserves an existing snapshot.
-- Retain the native Linux editor gate from M1 where applicable; Linux CI and an SSH protocol test alone do not establish every editor configuration.
-- Release alpha only after the actual host/agent gates in [M1 acceptance](m1-acceptance.md).
+The maintainer then ran the two remaining commands. Initialize External Store rejected the existing store with the expected “Store already exists or is not writable” message. Open Three-Card Demo opened a new window still connected to SSH, and Open Knowledge Snapshot displayed three cards there. A subsequent independent SFTP read confirmed the original acceptance demo source and canonical snapshot match their baseline bytes; its pending proposal count remains three. Together with prior search/snapshot/setup/diagnostic checks, all six remote command interactions have maintainer evidence.
+
+The Remote SSH-specific work package is complete. Windows-native acceptance, repository governance and alpha asset publication remain tracked in [M1 acceptance](m1-acceptance.md); completing this remote work package does not close M1 or create a Release. The maintainer explicitly excluded unverified Linux desktop Codex from the first-alpha compatibility claim while retaining real native Linux editor-host CI and this Remote SSH coverage.
 
 Use the [Remote SSH guide](../user/remote-ssh.zh-CN.md) for manual steps. Local helper paths and private server coordinates are kept outside tracked source. The plugin itself does not read credentials or implement an SSH client.
