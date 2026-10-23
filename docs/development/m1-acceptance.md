@@ -25,13 +25,13 @@ Record OS/architecture, VS Code version, official openai.chatgpt extension versi
 7. Edit only the copied demo source. Confirm changed/stale evidence. Confirm an update citing the old source hash is rejected. Restore the copied source afterward.
 8. Test missing Node, unavailable store and malformed snapshot recovery. Record explicit tool calls separately from optional natural agent retrieval.
 
-| Gate                                   | Windows native                 | Linux native               |
-| -------------------------------------- | ------------------------------ | -------------------------- |
-| Automated checks                       | Passed: CI run 39740920964     | Passed: CI run 39740920964 |
-| Packaged extension isolated activation | Passed: VS Code 1.117.0, win32 | Pending                    |
-| Official Codex four-tool loop          | Pending                        | Pending                    |
-| Official Codex new-conversation reuse  | Pending                        | Pending                    |
-| Alpha VSIX release                     | Blocked on host acceptance     | Blocked on host acceptance |
+| Gate                                   | Windows native                 | Linux native                                     |
+| -------------------------------------- | ------------------------------ | ------------------------------------------------ |
+| Automated checks                       | Passed: CI run 39740920964     | Passed: CI run 39740920964                       |
+| Packaged extension isolated activation | Passed: VS Code 1.117.0, win32 | Passed: VS Code 1.117.0, Xvfb CI run 39894411784 |
+| Official Codex four-tool loop          | Pending                        | Pending                                          |
+| Official Codex new-conversation reuse  | Pending                        | Pending                                          |
+| Alpha VSIX release                     | Blocked on host acceptance     | Blocked on host acceptance                       |
 
 Do not close T09/T10 or label this as Qoder-equivalent integration before these results are recorded. A local candidate package is not an alpha release. No scheduled work, paid model CI or user credential collection is required.
 
@@ -50,6 +50,8 @@ The actual rebuilt VSIX passed missing-store, malformed JSON, unknown schemaVers
 Machine-scoped test settings may be changed only when REPO_KNOWLEDGE_ISOLATED_PROFILE=1 is set by the disposable-profile runner; remote fallback tests do not change a maintainer's global settings. The profile disables unrelated extensions, updates and AI features. No models, accounts or target-project code are involved. This validates command execution in a real editor host, not an official Codex conversation.
 
 The editor-host CI matrix runs scripts/run-ci-host-check.mjs on Windows and Ubuntu: the pinned @vscode/test-electron 3.1.0 downloads VS Code 1.117.0, installs the actual VSIX into an isolated profile and runs the same host checks. Linux uses xvfb-run. Only sanitized result JSON is uploaded as a seven-day artifact; CI results must be checked before marking native Linux host acceptance complete. This follows Microsoft's [extension testing](https://code.visualstudio.com/api/working-with-extensions/testing-extension) and [headless CI](https://code.visualstudio.com/api/working-with-extensions/continuous-integration) guidance.
+
+The actual Linux editor-host job passed on implementation head 25908c6ed38c6bcf08d437c1829e232dd3e67cb4 in [run 39894411784](https://github.com/KasterMist/repo-knowledge/actions/runs/39894411784), including VSIX installation, real host commands, all recovery cases and non-overwriting initialization. Two CI setup failures were corrected first: create the download-cache parent in clean checkouts, and use the official test runner's Electron sandbox flags only for the disposable Linux GitHub Actions process. Product runtime and user sandbox settings are unchanged. This establishes native Linux packaged-editor acceptance; it does not establish native Linux official Codex conversation acceptance.
 
 The maintainer also confirmed actual Remote SSH Search Cards (query “读取” and card selection), Open Knowledge Snapshot and Show Codex MCP Setup all opened their expected content while remaining connected to SSH. Open Three-Card Demo's new-window behavior and remote initialization still need explicit evidence. The maintainer confirmed there is no separate Linux desktop; the existing server/Remote SSH evidence does not satisfy the original native Linux Codex desktop gate. Any change to that release gate requires an explicit scope decision.
 
