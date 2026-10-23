@@ -34,6 +34,12 @@ The [release notes](../releases/v0.1.0-alpha.1.md) describe installation, limits
 
 The current GitHub connector can manage source/PRs but exposes no release-asset upload or workflow-dispatch operation. A maintainer can start the prepared workflow using the page above; this capability gap is separate from repository authorization. No token should be sent in chat.
 
+### Interrupted first-run recovery
+
+Run 39913035042 passed build and both identical-payload installation jobs, created an empty draft, then the first asset upload failed with HTTP 415. No assets or public tag were created. Binary POST uploads must request JSON responses; only binary GET downloads use the octet-stream Accept header. This is a publishing-client defect, not a repository authorization failure.
+
+The reviewed recovery entry in .github/release.json permits only that exact empty, unpublished draft with its recorded previous source. Embedded and separately queried asset lists must both be empty; public tags, published/nonempty drafts and source mismatches are rejected. See [ADR 0004](../architecture/adr/0004-empty-release-draft-recovery.md). Do not delete the draft, replace assets or re-run the old failed job. After the corrected source and main CI pass, explicitly run Publish GitHub alpha on main again. The old job keeps its original buggy source; a fresh dispatch is required to use the fix. T10 remains open until real publication and public installation verification pass.
+
 ## References
 
 - [GitHub repository creation](https://docs.github.com/en/repositories/creating-and-managing-repositories/creating-a-new-repository)

@@ -1,5 +1,9 @@
 {
   "version": "0.1.0",
   "tag": "v0.1.0-alpha.1",
-  "prerelease": true
+  "prerelease": true,
+  "recovery": {
+    "emptyDraftId": 421525331,
+    "previousSourceCommit": "da2e4a452679a059d95e4ca2a89d39bec18cfaad"
+  }
 }
