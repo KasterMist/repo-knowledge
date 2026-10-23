@@ -47,3 +47,7 @@ The second run, 39915068551, stopped at the pre-build gate with HTTP 403 while r
 - [GitHub repository creation](https://docs.github.com/en/repositories/creating-and-managing-repositories/creating-a-new-repository)
 - [GitHub releases](https://docs.github.com/en/repositories/releasing-projects-on-github/managing-releases-in-a-repository)
 - [VS Code packaging and publishing](https://code.visualstudio.com/api/working-with-extensions/publishing-extension)
+
+## First-alpha completion evidence
+
+The third explicit run [39916665531](https://github.com/KasterMist/repo-knowledge/actions/runs/39916665531) completed all six jobs successfully and published [v0.1.0-alpha.1](https://github.com/KasterMist/repo-knowledge/releases/tag/v0.1.0-alpha.1) from `872c4a49fd5084dcd3bae5a711a421fe19e5319b`. SHA-256 for repo-knowledge-0.1.0.vsix: `b2c10ce88485abdaf43d5a7d323b59e712ef59df5c55bd3aa233a6960cb92745`. Public Windows/Linux download/install jobs and a separate local anonymous download/Windows install passed. Earlier interrupted-run instructions are historical; do not rerun this published version or recovery entry. Prepare a new version and remove the consumed recovery entry in the next release-preparation PR. Published tag/assets stay unchanged.

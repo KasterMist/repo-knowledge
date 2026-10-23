@@ -2,7 +2,7 @@
 
 更新：2026-10-23。所有者：KasterMist。许可证：Apache-2.0。仓库名 repo-knowledge。Windows 与 Linux 均为必需平台。
 
-当前状态：M0 工程与治理已完成；main 保护和五项必需 CI 已独立核对，其余管理细节与私密漏洞报告由维护者确认保存。M1 核心实现完成；Remote SSH 官方 Codex 的四工具、新对话复用及过期证据恢复已有人工验收和独立文件核对，Windows 原生 Codex 和 alpha 发布进展见续接总表。维护者已明确首个 alpha 聚焦 Windows 原生与 Remote SSH 到 Linux；Linux 真实编辑器宿主由 CI 验证，Linux 桌面 Codex 保留未验证、不纳入本次兼容声明。任务状态与续接步骤统一见[项目任务与进度总表](../development/project-status.zh-CN.md)，详细证据见 [Issue #3](https://github.com/KasterMist/repo-knowledge/issues/3) 和 [验收记录](../development/m1-acceptance.md)。任务 ID 是规划编号，不能当作 GitHub Issue 编号。
+当前状态：M0 工程与治理已完成；main 保护和五项必需 CI 已独立核对，其余管理细节与私密漏洞报告由维护者确认保存。M1 已完成，已公开发布 [v0.1.0-alpha.1](https://github.com/KasterMist/repo-knowledge/releases/tag/v0.1.0-alpha.1)，Windows 原生/Remote SSH 官方 Codex 与 Windows/Linux 公开包安装均有验收记录；下一项为 T11 知识工作台。维护者已明确首个 alpha 聚焦 Windows 原生与 Remote SSH 到 Linux；Linux 真实编辑器宿主由 CI 验证，Linux 桌面 Codex 保留未验证、不纳入本次兼容声明。任务状态与续接步骤统一见[项目任务与进度总表](../development/project-status.zh-CN.md)，详细证据见 [Issue #3](https://github.com/KasterMist/repo-knowledge/issues/3) 和 [验收记录](../development/m1-acceptance.md)。任务 ID 是规划编号，不能当作 GitHub Issue 编号。
 
 生成边界：由用户决定是否生成 Wiki/卡片，并主动发起扫描、首次生成、重新生成和增量更新。代码变化不得静默触发模型调用或知识重写；生成候选经用户审阅确认后发布。
 

@@ -5,11 +5,11 @@
 供开发者与编码 Agent 共同使用的代码库知识系统，面向 **Windows 和 Linux 上的 VS Code**。
 **Windows VS Code 通过 Remote SSH 连接 Linux 是必需场景**，见[远程接入与验收指南](docs/user/remote-ssh.zh-CN.md)。
 
-## 当前状态：M1 实现预览
+## 当前状态：M1 alpha 已发布
 
 已实现知识卡片运行时校验、源码过期检查、词法搜索、独立 STDIO MCP 服务、不可变更新候选，以及 VS Code 搜索、诊断和 Codex 配置引导命令。附带三张自主编写的演示卡片。
 
-可以按下面的命令构建本地 VSIX 候选包。**首个 alpha 的目标场景是 Windows 原生 Codex 与 Windows Remote SSH 到 Linux，本次范围内的编辑器/Codex 验收已完成，版本化 alpha 仍待发布。** Linux 原生编辑器宿主 CI 与 Linux 桌面 Codex 是不同证据；后者尚未验证，不纳入首个 alpha 的兼容声明。协议测试不能代替真实 Codex 对话验收。暂无 Wiki 生成、候选审阅发布界面或 Marketplace 版本。参见[项目任务与进度总表](docs/development/project-status.zh-CN.md)、[M1 验收清单](docs/development/m1-acceptance.md)与[任务路线图](docs/product/roadmap.md)。
+从 GitHub Release 下载 [v0.1.0-alpha.1](https://github.com/KasterMist/repo-knowledge/releases/tag/v0.1.0-alpha.1)，使用“从 VSIX 安装”安装 repo-knowledge-0.1.0.vsix。**M1 已完成 Windows 原生 Codex 与 Windows Remote SSH 到 Linux 的接入预览**，并通过 Windows/Linux 公开包下载安装验证。插件产品版本为 0.1.0，知识 schema 为 1。 Linux 原生编辑器宿主 CI 与 Linux 桌面 Codex 是不同证据；后者尚未验证，不纳入首个 alpha 的兼容声明。协议测试不能代替真实 Codex 对话验收。暂无 Wiki 生成、候选审阅发布界面或 Marketplace 版本。参见[项目任务与进度总表](docs/development/project-status.zh-CN.md)、[M1 验收清单](docs/development/m1-acceptance.md)与[任务路线图](docs/product/roadmap.md)。
 
 ## 计划体验
 
@@ -29,7 +29,7 @@ npm run package:vsix
 
 在 VS Code 中通过“从 VSIX 安装”选择 `dist/repo-knowledge-0.1.0.vsix`。依次运行 **Repo Knowledge: Open Three-Card Demo**、信任自主编写的演示目录，然后运行 **Search Cards**、**Diagnose Standalone MCP**、**Show Codex MCP Setup**。将生成的配置合并到 Codex config.toml，重启 Codex。引导命令只展示配置，不覆盖已有设置。具体步骤见[使用指南](docs/user/quickstart.zh-CN.md)。
 
-原生预览使用外部 Node 24.19.x；Remote SSH 默认以服务器上的 VS Code Server Node 启动独立 MCP 子进程，远端 MCP 已在 Node 22.22.1 验证，不要求 npm 或系统级安装。设置 `repoKnowledge.nodeExecutable` 的绝对路径可覆盖默认行为。声明的 VS Code 最低版本仍为暂定值，真实 Remote SSH 编辑器与 Codex 验收仍是发布门槛。
+原生预览使用外部 Node 24.19.x；Remote SSH 默认以服务器上的 VS Code Server Node 启动独立 MCP 子进程，远端 MCP 已在 Node 22.22.1 验证，不要求 npm 或系统级安装。设置 `repoKnowledge.nodeExecutable` 的绝对路径可覆盖默认行为。声明的 VS Code 最低版本仍为暂定值，已验证编辑器基线为 1.117.0；官方 Codex 与 Remote SSH 证据见验收记录。
 
 ## 工程边界
 
