@@ -89,6 +89,11 @@ const child = spawn(
     '--skip-release-notes',
     '--disable-telemetry',
     '--disable-extensions',
+    // Match the official test-electron runner on disposable Linux CI only.
+    // The downloaded archive cannot install a root-owned setuid helper there.
+    ...(process.platform === 'linux' && process.env.GITHUB_ACTIONS === 'true'
+      ? ['--no-sandbox', '--disable-gpu-sandbox']
+      : []),
   ],
   { env: environment, stdio: ['ignore', 'pipe', 'pipe'] },
 );
