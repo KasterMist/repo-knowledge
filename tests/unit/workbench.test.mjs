@@ -15,7 +15,10 @@ test('source navigation binds snapshot, validates ranges and refuses missing sou
       0,
       read.snapshotRevision,
     );
-    assert.equal(location.path, await realpath(join(f.repository, 'src/读取.ts')));
+    assert.equal(
+      location.path,
+      await realpath(join(f.repository, 'src/读取.ts')),
+    );
     assert.equal(location.startLine, 1);
     await assert.rejects(
       store.evidenceLocation('read-fallback', -1, read.snapshotRevision),
