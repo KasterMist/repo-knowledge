@@ -1,6 +1,8 @@
 # GitHub 治理设置交接
 
-2026-10-23 核对：main 的公开分支元数据仍为 protected=false。当前连接器能写源码和 PR，但没有管理设置写入接口；浏览器设置页多次读取超时。以下配置尚未完成，不能仅凭 CI 文件存在就记为已启用。跟踪 [Issue #1](https://github.com/KasterMist/repo-knowledge/issues/1)。
+2026-10-23 保存后核对：main 公开分支元数据已返回 protected=true，五项必需检查名称全部匹配下表，来源均为 GitHub Actions（app_id=15368）。维护者确认两项设置已保存、五项 CI 已选。PR 要求、禁止强推/删除、无需第二位审批人与私密漏洞报告按维护者保存确认记录；管理详情读取接口返回 403，不能将这些细节标成独立 API 核验。治理退出条件已满足，跟踪 [Issue #1](https://github.com/KasterMist/repo-knowledge/issues/1)。
+
+以下保留为维护与复核步骤，不表示仍需重复操作。当前必需检查 enforcement_level=non_admins；管理员仍可能绕过检查，日常交付继续使用 PR 并等待五项 CI，不使用管理员绕过。
 
 ## main 分支保护
 

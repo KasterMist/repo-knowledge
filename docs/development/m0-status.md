@@ -7,7 +7,7 @@ Date: 2026-10-22. Maintainer: KasterMist. Required targets: Windows and Linux.
 - T01: independent npm workspace, lockfile, pinned tools, strict TypeScript package boundaries.
 - T02: Apache-2.0 license, bilingual README, contribution/support/security/conduct files.
 - T03: shared checks, negative policy tests, Unicode/space-path process test, Windows/Linux CI.
-- T04: public repository exists, GitHub authorization is repaired and the [M0 tracking issue](https://github.com/KasterMist/repo-knowledge/issues/1) is open. Source is public on main; Windows/Linux CI and label/milestone initialization passed. Branch protection and private vulnerability reporting remain open.
+- T04: public repository exists, GitHub authorization is repaired, Windows/Linux CI and label/milestone initialization passed. Governance is complete with independently observed branch/check metadata and maintainer-confirmed administration settings; see the [M0 tracking issue](https://github.com/KasterMist/repo-knowledge/issues/1).
 
 ## Actual local evidence
 
@@ -28,10 +28,10 @@ The maintainer completed GitHub app/repository authorization. The connection now
 
 ## Required repository settings
 
-After both CI jobs have reported, protect main using required contexts `check (windows-latest)` and `check (ubuntu-latest)` with PR-based changes and no force push/deletion. Do not require an unavailable second reviewer in a one-maintainer project. Configure type/area/priority labels, M0–M5 milestones and private security reporting. Verification of these settings is separate from checking workflow files.
+Protect main using all five current CI contexts listed in the [governance record](github-governance.zh-CN.md), with PR-based changes and no force push/deletion. Do not require an unavailable second reviewer in a one-maintainer project. Configure type/area/priority labels, M0–M5 milestones and private security reporting. Verification of these settings is separate from checking workflow files.
 
 ## Publication follow-up
 
-Rechecked on 2026-10-23: the public main branch metadata reports protected=false. The connector has no administration write operation, and browser settings retrieval timed out again. Neither protection nor private vulnerability reporting is claimed complete. The [maintainer handoff](github-governance.zh-CN.md) lists the exact five required CI contexts and settings to save; it does not request a token.
+Rechecked after maintainer settings were saved on 2026-10-23: public main metadata reports protected=true and all five required CI contexts match, with GitHub Actions app_id=15368. Administration-detail reads return 403; PR requirements, force-push/deletion restrictions, single-maintainer approval settings and private vulnerability reporting are recorded from the maintainer's explicit confirmation, not independently observed API details. Required-check enforcement is non_admins; routine delivery still waits for all checks through a PR without an administrator bypass.
 
-[Repository setup run 39714766445](https://github.com/KasterMist/repo-knowledge/actions/runs/39714766445) succeeded and initialized the configured labels and M0–M5 milestones. The browser branch-protection form repeatedly timed out before saving; protection is not claimed as enabled. Private vulnerability reporting has not been verified. Keep M0 Issue #1 open for these governance items. [M1 Issue #3](https://github.com/KasterMist/repo-knowledge/issues/3) tracks real Codex IDE integration acceptance before an alpha VSIX release.
+[Repository setup run 39714766445](https://github.com/KasterMist/repo-knowledge/actions/runs/39714766445) succeeded and initialized the configured labels and M0–M5 milestones. The earlier browser timeout and protected=false observation are superseded by the saved-settings evidence above. M0 exit conditions are complete. [M1 Issue #3](https://github.com/KasterMist/repo-knowledge/issues/3) remains separate and tracks real Codex IDE integration acceptance before an alpha VSIX release.
