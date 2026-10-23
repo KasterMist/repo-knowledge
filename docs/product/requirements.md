@@ -17,6 +17,8 @@ Current task states and resumption steps are maintained in the [project status](
 
 Cross-platform support is a release gate, not a later optional polish task. Add case-sensitive file paths, Unicode and spaces, separator handling, process cancellation and line endings to future functional acceptance. Windows success alone does not establish Linux support.
 
+First-alpha scope decision (explicitly confirmed by the maintainer on 2026-10-23): Windows-native official Codex and Windows Remote SSH to Linux are the required user workflows. Native Linux packaged-editor behavior is validated in real VS Code CI with Xvfb. Native Linux desktop Codex remains unverified and outside this alpha's compatibility claim; it is retained as a future acceptance item rather than blocking this scoped preview. This does not relax the Windows-native Codex, Remote SSH, recovery, artifact or governance gates.
+
 Development uses Node 24.19.0 and npm 12.2.1. VS Code engine declaration in the scaffold is a provisional floor, not an established compatibility claim. Decide actual end-user runtimes and supported editor/Codex versions through M1 acceptance.
 
 ## M0 scope
