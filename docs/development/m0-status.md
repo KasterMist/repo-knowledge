@@ -32,4 +32,6 @@ After both CI jobs have reported, protect main using required contexts `check (w
 
 ## Publication follow-up
 
+Rechecked on 2026-10-23: the public main branch metadata reports protected=false. The connector has no administration write operation, and browser settings retrieval timed out again. Neither protection nor private vulnerability reporting is claimed complete. The [maintainer handoff](github-governance.zh-CN.md) lists the exact five required CI contexts and settings to save; it does not request a token.
+
 [Repository setup run 39714766445](https://github.com/KasterMist/repo-knowledge/actions/runs/39714766445) succeeded and initialized the configured labels and M0–M5 milestones. The browser branch-protection form repeatedly timed out before saving; protection is not claimed as enabled. Private vulnerability reporting has not been verified. Keep M0 Issue #1 open for these governance items. [M1 Issue #3](https://github.com/KasterMist/repo-knowledge/issues/3) tracks real Codex IDE integration acceptance before an alpha VSIX release.

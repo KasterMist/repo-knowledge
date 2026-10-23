@@ -34,7 +34,7 @@
 | T05 / M1   | 知识 schema、稳定 ID/修订、范围/证据、三卡片 | 实现完成                 | 运行时校验及相关边界测试                                                                  |
 | T06 / M1   | 独立 STDIO MCP                               | 实现完成                 | status/search/read 已经实际远端 Codex 调用                                                |
 | T07 / M1   | 最小扩展、六命令、诊断、配置引导、打包       | 实现完成，宿主测试推进中 | Windows 隔离安装及恢复通过；Linux 真实编辑器宿主与恢复在 CI run 39894411784 通过          |
-| T07R / M1  | 必需的 Remote SSH                            | 核心通过，整体待收尾     | 远端执行、URI 修复、Node、真实 Codex 已验证；#5 剩余编辑器门禁                            |
+| T07R / M1  | 必需的 Remote SSH                            | 已通过本次接入验收       | Linux 执行、URI、六命令、真实 Codex、新对话、冲突、stale 恢复与文件保护均有证据           |
 | T08 / M1   | 带基础版本的不可变候选与冲突拒绝             | 实现完成                 | 真实 Codex 提交和冲突反馈；独立核对候选及原快照                                           |
 | T09 / M1   | 官方 Codex 真实验收                          | 部分通过                 | Remote SSH 核心场景通过；Windows 原生与剩余门禁未齐；Linux 桌面 Codex 不在首个 alpha 声明 |
 | T10 / M1   | 第一次版本化 alpha 发布                      | 未完成                   | 待 T09 和宿主门禁齐全；现有 0.0.0 候选不是正式 alpha                                      |
@@ -74,11 +74,13 @@
 
 ## 5. 下一轮按此顺序推进
 
+下段保留的是较早的独立协议验收反馈，后续官方 Codex 的实际进展以下方编号项及验收记录为准。
+
 2026-10-23 本机补充证据：通过演示项目配置指向的已安装独立 MCP 服务，以 STDIO JSON-RPC 实际调用四工具。status 的三卡片均 revision 1、stale=false；搜索“读取”命中 read-fallback/cache-storage；逐一读取三卡片，证据均 current。基于实际读取的快照及源码 hash，为 read-fallback 提交一句空字符串语义澄清（revision 2），返回 pending-review；错误 baseRevision=2 返回 REVISION_CONFLICT。前后 knowledge.json 字节相同，SHA-256 为 `2079e0d56b253b5e9e199592411f464df8094deb2d70998b068bd64bd88301e9`。未运行演示源码、构建或测试。此证据是独立 MCP 协议验收，不计作官方 Codex 扩展对话验收；T09 仍部分通过，下一步仍为原生官方 Codex 对话、新会话及恢复门禁。
 
-1. **补齐 M1 门禁。** 2026-10-23 已完成真实 Windows 编辑器中缺失 Node、不可用存储、损坏 JSON/未知 schema 的提示与逐项恢复，以及初始化不覆盖检查；已修复原先只显示 Connection closed 的诊断。维护者也确认远端搜索、快照和配置预览均正常且仍连接 SSH。剩余远端演示新窗口与已有存储初始化行为，详见验收记录。原生 Linux 真实 VS Code 1.117.0 宿主与恢复检查已在 CI run 39894411784 通过；原生 Codex 对话另行验收。
-2. **补 Windows 原生 Codex 验收。** 维护者于 2026-10-23 明确同意首个 alpha 范围为 Windows 原生与 Windows Remote SSH 到 Linux；Linux 原生编辑器宿主通过真实 CI，Linux 桌面 Codex 保留为未验证、不纳入此次 alpha 兼容声明。Windows 原生四工具、新对话与恢复仍需官方 Codex 会话直接使用已暴露工具；另一个 Agent 启动 STDIO 脚本的结果不计入该门禁。已获维护者许可临时加入仅指向自编演示的用户级 MCP 表，结束验收后必须移除新增表，保留其他配置；备份和清理记录仅在忽略的本机交接资料中。
-3. **收尾 M0 治理。** 核实 main PR/必需 CI 保护、禁止 force push/deletion，以及私密漏洞报告；不把标签初始化当作保护设置已保存。
+1. **宿主与 Remote SSH 接入已收尾。** 已完成真实 Windows/Linux 编辑器中缺失 Node、不可用存储、损坏 JSON/未知 schema 的提示与逐项恢复，以及初始化不覆盖检查；已修复原先只显示 Connection closed 的诊断。维护者确认远端六命令均完成对应操作，演示新窗口仍为 SSH，已有快照初始化被拒绝且原始字节未变。PR #10 已合并，五项 CI 在 run 39896028637 全部通过。
+2. **补 Windows 原生 Codex 最后的恢复场景。** 首个 alpha 范围经维护者确认是 Windows 原生与 Remote SSH 到 Linux，Linux 桌面 Codex 不纳入本次兼容声明。Windows 官方 Codex 直接四工具调用、冲突和独立新对话已有反馈，候选及原快照也已独立核对；此前仅启动 STDIO 脚本的结果仍单列为协议证据。Windows stale 恢复尚待完成；第一次受“只准使用 MCP”措辞限制而未改文件，不算失败或通过，已明确允许仅对自编演示文件使用文件工具。结束验收后必须移除经维护者批准临时添加的演示 MCP 表，保留其他配置；备份和清理记录仅在忽略的本机交接资料中。
+3. **收尾 M0 治理。** main 元数据仍为 protected=false，管理写入接口不可用且浏览器设置页超时；[精确设置交接](github-governance.zh-CN.md)已准备给维护者保存。需核实五项必需 CI、PR、禁止 force push/deletion 和私密漏洞报告；不把标签初始化当作保护设置已保存。
 4. **完成 T10 alpha。** 满足门禁后按下节发布；不因文档合并就宣布 M1 完成。
 5. **M2 工作台。** T11 → T12，并结合 T13 检索；先具备人工修订、候选审阅、发布和回退，再做模型生成。
 6. **M3 用户发起首次生成。** T14 → T15 → T16。用户决定是否生成、范围、语言与预算，结果走候选审阅流程。
