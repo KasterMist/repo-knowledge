@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFile, writeFile, rm } from 'node:fs/promises';
+import { readFile, writeFile, rm, realpath } from 'node:fs/promises';
 import { join } from 'node:path';
 import { KnowledgeStore } from '../../packages/core/dist/index.js';
 import { fixture } from '../helpers.mjs';
@@ -15,7 +15,7 @@ test('source navigation binds snapshot, validates ranges and refuses missing sou
       0,
       read.snapshotRevision,
     );
-    assert.equal(location.path, join(f.repository, 'src/读取.ts'));
+    assert.equal(location.path, await realpath(join(f.repository, 'src/读取.ts')));
     assert.equal(location.startLine, 1);
     await assert.rejects(
       store.evidenceLocation('read-fallback', -1, read.snapshotRevision),
