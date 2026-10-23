@@ -33,7 +33,8 @@ Record OS/architecture, VS Code version, official openai.chatgpt extension versi
 | Packaged extension isolated activation | Passed: VS Code 1.117.0, win32                     | Passed: VS Code 1.117.0, Xvfb CI run 39894411784 |
 | Official Codex four-tool loop          | Passed: maintainer report and saved proposal check | Unverified; deferred for first alpha             |
 | Official Codex new-conversation reuse  | Passed: maintainer report                          | Unverified; deferred for first alpha             |
-| Alpha VSIX release                     | Blocked on scoped acceptance                       | Desktop Codex excluded from alpha claim          |
+| Official Codex stale/recovery          | Passed: direct MCP report, independent byte check  | Unverified; deferred for first alpha             |
+| Alpha VSIX release                     | Pending versioning and publication                 | Desktop Codex excluded from alpha claim          |
 
 Do not close T09/T10 before the scoped alpha gates are complete, or label this as Qoder-equivalent integration. In the table above, native Linux desktop Codex Pending means unverified and deferred under the explicit scope decision, rather than an additional first-alpha gate. A local candidate package is not an alpha release. No scheduled work, paid model CI or user credential collection is required.
 
@@ -41,7 +42,7 @@ Do not close T09/T10 before the scoped alpha gates are complete, or label this a
 
 The Remote SSH official Codex proposal/conflict check was reported successful. Read-only server verification confirmed the saved revision-2 candidate and byte-identical revision-1 canonical snapshot. The maintainer then reported successful retrieval of the revision-1 card in response to an explicit new-conversation test. Both the remote four-tool loop and new-conversation reuse are recorded. A separate remote SDK check verified stale detection, STALE_EVIDENCE rejection, exact source restoration and no snapshot/proposal mutation. The maintainer subsequently reported the same successful stale detection/rejection/restoration sequence in official Codex; a further independent SFTP check confirmed the restored source and unchanged canonical snapshot. These reports pass the remote official Codex retrieval, proposal/conflict, new-conversation and stale-recovery scenarios, with raw intermediate tool states remaining maintainer-reported.
 
-Remote SSH from Windows to Linux is an additional required execution path, not implied by Linux runner success. See [Remote SSH evidence](remote-ssh-acceptance.md) and its [manual guide](../user/remote-ssh.zh-CN.md). The actual Remote SSH extension diagnostic also passed. These results do not establish native Windows or native Linux Codex acceptance. Windows-native Codex and remaining scoped editor/recovery gates remain open, so T09/T10 are not complete.
+Remote SSH from Windows to Linux is an additional required execution path, not implied by Linux runner success. See [Remote SSH evidence](remote-ssh-acceptance.md) and its [manual guide](../user/remote-ssh.zh-CN.md). The actual Remote SSH extension diagnostic also passed. These results do not establish native Windows or native Linux Codex acceptance. Windows-native evidence is recorded in the follow-up below; T10 remains open until the versioned artifact is published and verified.
 
 ## Editor error/recovery checks (2026-10-23)
 
@@ -64,6 +65,16 @@ That scope decision was subsequently supplied as recorded at the start of this d
 After the maintainer-approved temporary MCP table was discovered by the official CLI and the Windows acceptance window was reloaded, the maintainer explicitly reported direct use of the conversation-exposed MCP tools, without a shell/SDK/STDIO substitute: status, Chinese search, all three current revision-1 cards, a pending revision-2 read-fallback proposal and REVISION_CONFLICT for baseRevision 2. The separate attempt with baseRevision 0 was rejected by parameter validation, not counted as the revision-conflict case. Independent filesystem inspection found proposal 3a962454-b279-4320-bb90-6025bc07b807 and confirmed the canonical revision-1 snapshot is byte-identical to the original fixture.
 
 The maintainer also confirmed successful direct-tool retrieval in a separate new Windows conversation: read-fallback revision 1, stale=false/current. That conversation initially did not edit source because the acceptance wording restricted it to knowledge MCP tools, which intentionally have no source-write operation. This is an acceptance-instruction limitation, not a product stale-detection failure; the Windows IDE stale scenario remains pending until explicitly exercised. Native Linux desktop Codex remains excluded under the approved first-alpha scope.
+
+### Windows stale/recovery completion and cleanup
+
+The initial file-I/O attempts made no changes: the acceptance shell could not resolve the local demo path. The local maintainer tool therefore saved original bytes and temporarily changed only the self-authored fixture from ?? to ||. The official Codex conversation directly called MCP status/read and reported stale=true, changed evidence and the || excerpt; a proposal carrying the previously saved source hash returned STALE_EVIDENCE. No SDK/STDIO substitute was used for these Codex calls.
+
+The maintainer tool restored the original bytes. An independent filesystem check confirmed the source matches the fixture, canonical knowledge.json still has SHA-256 2079e0d56b253b5e9e199592411f464df8094deb2d70998b068bd64bd88301e9 and the proposal count remains two (the prior protocol proposal and accepted Codex proposal). Codex then directly read read-fallback and confirmed revision=1, stale=false/current and the restored ?? excerpt. Intermediate MCP outcomes are maintainer-reported, while final byte/proposal checks were independently performed. No demo source was executed.
+
+After acceptance, the authorized temporary user-level acceptance table was removed with a concurrency guard and parsed verification that unrelated configuration is preserved. The original private backup remains outside the repository. A fresh official CLI catalog returned success and no longer listed the acceptance server. This is cleanup evidence, not a fresh Codex conversation test. The temporary user-level handoff is not automatic plugin configuration; users still explicitly configure MCP.
+
+T09 is complete for Windows-native Codex and Windows Remote SSH to Linux. M0 governance is complete with the evidence categories in the governance record. T10 remains pending versioning, release assets, checksums, public download and installation verification. Earlier pending statements above describe intermediate attempts and are superseded by this completion record. Native Linux desktop Codex remains unverified and excluded from this alpha claim.
 
 ## References
 
