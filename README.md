@@ -9,7 +9,7 @@ Windows VS Code **Remote SSH to Linux is a required workflow**. See the [Remote 
 
 Implemented: runtime-validated knowledge cards, source freshness checks, lexical search, standalone STDIO MCP tools, immutable update proposals and VS Code commands for browsing, diagnostics and Codex configuration. Includes a self-authored three-card demo.
 
-Build a local VSIX candidate with the commands below. **The first alpha targets Windows-native Codex and Windows Remote SSH to Linux; remaining acceptance still gates release.** Native Linux editor-host CI is separate from native Linux desktop Codex, which remains unverified and outside the first alpha's compatibility claim. Protocol tests alone do not establish Codex integration. No Wiki generation, proposal review/publication UI or Marketplace release is available. See the [project task/status checkpoint](docs/development/project-status.zh-CN.md), [M1 acceptance](docs/development/m1-acceptance.md) and the [roadmap](docs/product/roadmap.md).
+Build a local VSIX candidate with the commands below. **The first alpha targets Windows-native Codex and Windows Remote SSH to Linux; scoped editor/Codex acceptance is complete; the versioned alpha release is still pending.** Native Linux editor-host CI is separate from native Linux desktop Codex, which remains unverified and outside the first alpha's compatibility claim. Protocol tests alone do not establish Codex integration. No Wiki generation, proposal review/publication UI or Marketplace release is available. See the [project task/status checkpoint](docs/development/project-status.zh-CN.md), [M1 acceptance](docs/development/m1-acceptance.md) and the [roadmap](docs/product/roadmap.md).
 
 ## Planned workflow
 
