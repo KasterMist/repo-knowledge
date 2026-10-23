@@ -4,6 +4,7 @@
 
 - M2 browsing development: source-scope Wiki/card trees, immutable card documents and validated Unicode source navigation. No new release or model generation.
 - Improve Chinese/code-symbol lexical ranking and add a 15-card Top-5 evaluation with documented semantic misses.
+- Add durable human drafts, dirty-editor guards, immutable candidate diffs and explicitly confirmed single-card publication. Recheck bases/evidence, serialize writers and atomically replace the canonical snapshot with immutable history; support monotonic rollback and explicit prepared-marker recovery. Keep schemaVersion 1 and the four MCP tools unchanged.
 
 ## 0.1.0-alpha.1 — 2026-10-23
 

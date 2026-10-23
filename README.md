@@ -13,7 +13,7 @@ Download [v0.1.0-alpha.1](https://github.com/KasterMist/repo-knowledge/releases/
 
 ## Planned workflow
 
-M2 development adds a source-scope Wiki/card workbench and evidence navigation. It is not included in the published M1 package yet. See [M2 acceptance](docs/development/m2-acceptance.md) for implementation/verification status; reviewed publication and rollback are still being built.
+M2 development adds a source-scope Wiki/card workbench, evidence navigation, durable human drafts, proposal diffs, confirmed publication and monotonic rollback. It is not included in the published M1 package yet. See the [workbench guide](docs/user/workbench.zh-CN.md) and [M2 acceptance](docs/development/m2-acceptance.md) for verification status; new Remote SSH UI acceptance remains separate from automated tests.
 
 The user decides whether to generate Wiki pages and knowledge cards, selects the scope and explicitly starts generation. Read a structured Wiki, correct shared cards and let Codex retrieve evidence through MCP. Source changes can be checked for staleness; regeneration and incremental updates are also user-initiated and produce candidates for user review and confirmed publication. Human edits and source versions must be preserved. This means persistent project knowledge, not model training.
 

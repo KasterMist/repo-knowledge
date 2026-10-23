@@ -1,56 +1,11 @@
+import { boundedRead, within, fingerprint, KnowledgeError } from './files.js';
+export { fingerprint, KnowledgeError } from './files.js';
 import { rankCards } from './search.js';
-import { createHash, randomUUID } from 'node:crypto';
+import { randomUUID } from 'node:crypto';
 import { open, realpath, mkdir, lstat } from 'node:fs/promises';
-import { resolve, relative, isAbsolute, join } from 'node:path';
+import { resolve, isAbsolute, join } from 'node:path';
 import { snapshotSchema, proposalInputSchema, type Card } from './schema.js';
 
-const MAX_BYTES = 1024 * 1024;
-export class KnowledgeError extends Error {
-  constructor(
-    public readonly code: string,
-    message: string,
-  ) {
-    super(message);
-  }
-}
-export const fingerprint = (text: string): string =>
-  createHash('sha256').update(text.replaceAll('\r\n', '\n')).digest('hex');
-const within = (root: string, path: string): boolean => {
-  const rel = relative(root, path);
-  return (
-    rel === '' ||
-    (!isAbsolute(rel) &&
-      rel !== '..' &&
-      !rel.startsWith('..\\') &&
-      !rel.startsWith('../'))
-  );
-};
-async function boundedRead(path: string): Promise<string> {
-  const handle = await open(path, 'r');
-  try {
-    if (!(await handle.stat()).isFile())
-      throw new KnowledgeError('INVALID_FILE', 'Expected a regular file');
-    const bytes = Buffer.alloc(MAX_BYTES + 1);
-    let bytesRead = 0;
-    while (bytesRead < bytes.length) {
-      const chunk = await handle.read(
-        bytes,
-        bytesRead,
-        bytes.length - bytesRead,
-        bytesRead,
-      );
-      if (chunk.bytesRead === 0) break;
-      bytesRead += chunk.bytesRead;
-    }
-    if (bytesRead > MAX_BYTES)
-      throw new KnowledgeError('LIMIT', 'File exceeds 1 MiB');
-    return new TextDecoder('utf-8', { fatal: true }).decode(
-      bytes.subarray(0, bytesRead),
-    );
-  } finally {
-    await handle.close();
-  }
-}
 export class KnowledgeStore {
   constructor(
     readonly repositoryRoot: string,
@@ -209,7 +164,7 @@ export class KnowledgeStore {
       cards,
     };
   }
-  async propose(input: unknown) {
+  async validateProposal(input: unknown) {
     const parsed = proposalInputSchema.safeParse(input);
     if (!parsed.success)
       throw new KnowledgeError(
@@ -243,6 +198,10 @@ export class KnowledgeStore {
         'STALE_EVIDENCE',
         'Proposed evidence must match current source',
       );
+    return { proposal, snapshot, snapshotRevision };
+  }
+  async propose(input: unknown) {
+    const { proposal, snapshotRevision } = await this.validateProposal(input);
     const store = await realpath(this.storeRoot);
     const directory = join(store, 'proposals');
     await mkdir(directory, { recursive: true });
