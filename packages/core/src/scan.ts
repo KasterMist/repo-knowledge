@@ -387,7 +387,11 @@ export async function saveScanPlan(
   signal?: AbortSignal,
 ) {
   const root = await realpath(repository);
-  if (!isAbsolute(store) || within(root, resolve(store)))
+  if (
+    !isAbsolute(store) ||
+    within(resolve(repository), resolve(store)) ||
+    within(root, resolve(store))
+  )
     throw new KnowledgeError(
       'INVALID_PATH',
       'Scan plans require a store outside the target repository',
