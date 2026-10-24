@@ -10,7 +10,19 @@ Local full check: 28 unit tests and 4 integration tests passed. Six new static-s
 
 Actual local VS Code 1.117.0 installed the candidate VSIX and passed command registration, immutable two-source scan preview and explicit external plan save without canonical changes. Actual Linux SSH Node 22.22.1 passed a separate fresh fixture: two selected sources, immutable external save, changed-source rejection, cancellation and unchanged canonical bytes, with zero model requests. [PR #23](https://github.com/KasterMist/repo-knowledge/pull/23) merged as 36d36849f12d251cf2d4e20e156a24f4c64cf3c8 after exact head eeb70a5502bffe1e01d74cb468915e2a5a3ba6db passed all five jobs in [run 40054942294](https://github.com/KasterMist/repo-knowledge/actions/runs/40054942294). The initial Windows run caught short/long-path error classification; the fix preserves containment and makes the rejection consistent.
 
-Fresh native and remote wizard demos are prepared, with a separate external store and no changes to prior M2 acceptance data or user-level Codex configuration. Uploaded/installed T14 development VSIX SHA-256: `7fd290fc9f245bf714f03341e3532d1abcfc02d88b365afd0bac4bc1cb77025d`. Remaining T14 gate: maintainer scope/language/limits wizard and explicit save feedback, followed by independent saved-plan inspection. These UI steps never start a model. Do not close M3 from this slice.
+Fresh native and remote wizard demos use separate external stores, without changes to prior M2 acceptance data or user-level Codex configuration. Uploaded/installed T14 development VSIX SHA-256: `7fd290fc9f245bf714f03341e3532d1abcfc02d88b365afd0bac4bc1cb77025d`.
+
+On 2026-10-24 the maintainer reported that both scope/language/limits wizards and explicit plan saves succeeded. Independent read-only inspection used the core verifyScanPlan boundary against the current source files and confirmed:
+
+| Check                                  | Windows native                       | Remote SSH to Linux                  |
+| -------------------------------------- | ------------------------------------ | ------------------------------------ |
+| Valid saved plans                      | 1                                    | 2                                    |
+| Included paths in every plan           | src/cache.ts, src/读取.ts            | src/cache.ts, src/读取.ts            |
+| Language / maximum files / total bytes | zh-CN / 10 / 131072                  | zh-CN / 10 / 131072                  |
+| Coverage and source revalidation       | limited=false, current               | limited=false, current               |
+| Canonical knowledge bytes              | Equal to original self-authored demo | Equal to original self-authored demo |
+
+UI interaction is maintainer-reported; saved metadata, manifest/source revalidation and canonical byte comparisons were independently inspected. Both saved stores are external to their respective target demo roots; remote plans were inspected over SSH, not through a local path. Multiple saved plans are retained as immutable UUID files. No target source was executed or modified by this inspection. T14 meets its scoped exit conditions; no T14 manual gate remains. These steps do not start a model, generate knowledge or publish. T15/T16 and M3 remain incomplete.
 
 ## T15/T16 integration boundary
 
@@ -24,7 +36,7 @@ The independent SSH app-server probe initialized and read configuration, but acc
 
 ## Next implementation order
 
-1. Finish the small T14 wizard check; keep this separate from generation acceptance.
+1. T14 is accepted; retain this evidence and do not repeat the wizard or M2 publication acceptance without a relevant change. Continue from T15 below, keeping planning separate from generation acceptance.
 2. Implement an editor-independent bounded app-server client and explicit generation-backend diagnostic, including fragmented messages, early exit, cancellation and RPC errors. Preserve configured model/provider and avoid private extension session APIs.
 3. Define the source-packet and structured-output contract, new-card candidate schema and review UI. Bind every reference to the selected file hash/range and reject changed sources, duplicate IDs or existing-card overwrite. Do not present a saved candidate as published knowledge.
 4. Before enabling first-generation publication, add an ADR and shared-lock/recovery tests covering new-card creation and rollback, without regressing M2's revision or human-content protection.
