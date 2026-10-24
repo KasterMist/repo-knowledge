@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Start M3/T14 with user-invoked bounded static scan planning, POSIX include/exclude scope, language selection, coverage/skip counters, cancellation and immutable external metadata-only plan save/revalidation. No model call or knowledge generation yet.
+
 - Complete scoped M2 acceptance: Windows-native and Remote SSH publication/rollback, matching MCP r3/current, independent history/content verification and Windows/Linux packaged multi-root isolation. This remains unreleased; generation is M3.
 
 - M2 browsing development: source-scope Wiki/card trees, immutable card documents and validated Unicode source navigation. No new release or model generation.
