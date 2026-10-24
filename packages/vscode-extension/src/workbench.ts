@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { KnowledgeStore, type Card } from '@repo-knowledge/core';
 import { KnowledgeDocuments } from './documents.js';
 import { PublicationWorkbench } from './publication-workbench.js';
+import { ScanWorkbench } from './scan-workbench.js';
 
 export interface KnowledgeTarget {
   root: string;
@@ -173,10 +174,13 @@ export class KnowledgeWorkbench implements vscode.Disposable {
   readonly wiki: KnowledgeTree;
   readonly cards: KnowledgeTree;
   readonly publication: PublicationWorkbench;
+  readonly scanning: ScanWorkbench;
   private readonly disposables: vscode.Disposable[] = [];
   constructor(private readonly resolve: ResolveTarget) {
     this.wiki = new KnowledgeTree('wiki', resolve);
     this.cards = new KnowledgeTree('cards', resolve);
+    this.scanning = new ScanWorkbench(resolve, this.documents);
+    this.disposables.push(this.scanning);
     this.publication = new PublicationWorkbench(resolve, this.documents, () =>
       this.refresh(),
     );

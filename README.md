@@ -17,6 +17,8 @@ M2 implementation and scoped acceptance are complete: source-scope Wiki/card bro
 
 The user decides whether to generate Wiki pages and knowledge cards, selects the scope and explicitly starts generation. Read a structured Wiki, correct shared cards and let Codex retrieve evidence through MCP. Source changes can be checked for staleness; regeneration and incremental updates are also user-initiated and produce candidates for user review and confirmed publication. Human edits and source versions must be preserved. This means persistent project knowledge, not model training.
 
+M3/T14 development now provides explicitly invoked include/exclude/language/byte-limited static scan previews and external metadata-only plans. It does not call a model or generate knowledge. See the [generation guide](docs/user/generation.zh-CN.md) and [M3 checkpoint](docs/development/m3-acceptance.md).
+
 ## Development
 
 Use Node.js **24.19.0** and npm **12.2.1** on Windows or Linux:

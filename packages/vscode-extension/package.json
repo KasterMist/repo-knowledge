@@ -95,6 +95,14 @@
       {
         "command": "repoKnowledge.recoverPublication",
         "title": "Repo Knowledge: Recover Publication Marker"
+      },
+      {
+        "command": "repoKnowledge.planGeneration",
+        "title": "Repo Knowledge: Plan Knowledge Generation"
+      },
+      {
+        "command": "repoKnowledge.saveGenerationPlan",
+        "title": "Repo Knowledge: Save Generation Plan"
       }
     ],
     "configuration": {
@@ -185,6 +193,16 @@
           "command": "repoKnowledge.recoverPublication",
           "when": "viewItem == knowledge-history",
           "group": "knowledge"
+        },
+        {
+          "command": "repoKnowledge.planGeneration",
+          "when": "viewItem == knowledge-repository",
+          "group": "planning"
+        },
+        {
+          "command": "repoKnowledge.saveGenerationPlan",
+          "when": "viewItem == knowledge-repository",
+          "group": "planning"
         }
       ]
     }

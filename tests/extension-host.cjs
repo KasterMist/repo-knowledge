@@ -190,6 +190,31 @@ exports.run = async function run() {
     0,
   );
   const recovery = [];
+  const scanOptions = {
+    include: ['src/**/*.ts'],
+    exclude: [],
+    language: 'zh-CN',
+    maxFiles: 10,
+    maxFileBytes: 65536,
+    maxTotalBytes: 131072,
+  };
+  const scan = await vscode.commands.executeCommand(
+    'repoKnowledge.planGeneration',
+    roots[0],
+    scanOptions,
+  );
+  assert.equal(scan.uri.scheme, 'repo-knowledge');
+  assert.deepEqual(
+    scan.plan.files.map((file) => file.path),
+    ['src/cache.ts', 'src/读取.ts'],
+  );
+  assert.equal(scan.plan.summary.limited, false);
+  assert.equal(
+    JSON.parse((await vscode.workspace.openTextDocument(scan.uri)).getText())
+      .manifestRevision,
+    scan.plan.manifestRevision,
+  );
+  assert.deepEqual(await fs.readFile(snapshotPath), beforeDraft);
   // Only the runner-owned disposable profile may change a machine setting.
   // The remote fallback runner must never modify a maintainer's real profile.
   if (process.env.REPO_KNOWLEDGE_ISOLATED_PROFILE === '1') {
@@ -219,6 +244,33 @@ exports.run = async function run() {
       assert.equal(result?.protocolConnected, true, result?.message);
     };
     try {
+      const planStore = path.join(
+        path.dirname(folder.uri.fsPath),
+        'scan-plan-external',
+      );
+      await selectStore(planStore);
+      const externalPlan = await vscode.commands.executeCommand(
+        'repoKnowledge.planGeneration',
+        roots[0],
+        scanOptions,
+      );
+      assert.equal(externalPlan.plan.files.length, 2);
+      const savedPlan = await vscode.commands.executeCommand(
+        'repoKnowledge.saveGenerationPlan',
+        roots[0],
+      );
+      assert.equal(
+        await fs.realpath(path.dirname(path.dirname(savedPlan.path))),
+        await fs.realpath(planStore),
+      );
+      assert.equal(
+        JSON.parse(await fs.readFile(savedPlan.path, 'utf8')).id,
+        externalPlan.plan.id,
+      );
+      await selectStore(storeSetting);
+      recovery.push(
+        'scan plan: explicit bounded preview and external save; canonical bytes unchanged',
+      );
       for (const [name, content, expected] of [
         ['missing-store', undefined, /knowledge\.json/u],
         ['malformed-store', '{', /schemaVersion 1/u],
@@ -314,6 +366,7 @@ exports.run = async function run() {
           'command registrations and two knowledge trees',
           'read-only knowledge document and validated source navigation',
           'durable draft, dirty-editor rejection and saved candidate diff without publication',
+          'bounded user-invoked scan plan preview without model calls',
           'snapshot editor access',
           'Codex TOML preview',
           'actual standalone MCP diagnostics from extension host',
