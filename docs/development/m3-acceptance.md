@@ -1,6 +1,6 @@
 # M3 generation acceptance checkpoint
 
-Tracking: [Issue #22](https://github.com/KasterMist/repo-knowledge/issues/22). M2 is complete; M3 is in progress. Date: 2026-10-24.
+Tracking: [Issue #22](https://github.com/KasterMist/repo-knowledge/issues/22). M2 is complete; M3 is in progress. Updated: 2026-10-26.
 
 ## T14 static plan implementation
 
@@ -41,3 +41,17 @@ The independent SSH app-server probe initialized and read configuration, but acc
 3. Define the source-packet and structured-output contract, new-card candidate schema and review UI. Bind every reference to the selected file hash/range and reject changed sources, duplicate IDs or existing-card overwrite. Do not present a saved candidate as published knowledge.
 4. Before enabling first-generation publication, add an ADR and shared-lock/recovery tests covering new-card creation and rollback, without regressing M2's revision or human-content protection.
 5. Add bounded real generation, cancellation/checkpoints/retry and Windows/Remote SSH acceptance. Only then close T15/T16 and M3; release remains a separately versioned task.
+
+## T15 client/diagnostic implementation (2026-10-26)
+
+The bounded editor-independent CodexStdioClient and the explicit Diagnose Generation Backend command are implemented. Protocol/resource/privacy details are in [the client boundary](codex-client.md); settings and safe result interpretation are in [the user guide](../user/codex-backend.zh-CN.md). This is a T15 foundation slice, not a complete generation adapter: no turn output collection, source packet, structured new-card candidate or generation/publication command is enabled.
+
+The repository-pinned Node 24.19.0 full check passed 34 unit and 4 integration tests. The local managed runtime cache had advanced to 24.22.1; a portable official 24.19.0 binary was verified against its published SHA-256 manifest and used for the pinned check. Existing unit/integration behavior remained passing. Six new protocol-peer tests validate streaming UTF-8, response correlation, denied server requests, safe report shape, error categories, process/deadline/cancel behavior and resource limits. Peer fixtures never contact a model.
+
+Actual Windows VS Code 1.117.0 installed the candidate, registered all commands and passed an explicit missing-host-executable error path, restoring the test-only setting. Existing planning, draft, source navigation and MCP recovery also passed; this host runner does not claim the new live backend GUI path passed.
+
+The implemented core client also ran against real Codex without creating a thread: native Windows reported configured, shellToolsDisabled=true, accountRead=true, account=present/authMode=chatgpt; actual Linux SSH Node 22.22.1 reported initialized/configurationRead/shellToolsDisabled=true but REQUEST_TIMEOUT at account/read. Both report generationVerified=false, modelRequests=0 and threadCreated=false. The SSH timeout is an actionable unverified diagnostic, not proof that the existing IDE login is absent.
+
+The maintainer also ran the prepared diagnostic candidate (`78cbefc2a3833e005e66e29e276f871fc3048349937574f818446493f2109b0c`) from both actual extension hosts. Windows used the explicit test-profile setting, Remote SSH discovered the installed host extension binary; both reported configured, initialized/configurationRead/shellToolsDisabled/accountRead=true, account=present/authMode=chatgpt, error=null, generationVerified=false, modelRequests=0 and threadCreated=false. These GUI results are maintainer-reported, separate from the independent core probes. The actual remote-host success supersedes the independent SSH probe as the current host-readiness evidence; it does not establish the root cause of the earlier probe timeout or prove model access.
+
+Storage parent canonicalization was subsequently shared with the existing T14 helper, so the diagnostic rejects parent aliases into the target before directory creation; the pinned full suite, including the existing alias boundary tests, passed. No account/model configuration was changed for that hardening. Remaining client/diagnostic gate: exact-head five CI jobs. T14/M2 and the successful host diagnostics need not be repeated without relevant changes. Continue the source-packet/new-card candidate and publication contracts before attempting real generation. M3 stays open.

@@ -103,6 +103,10 @@
       {
         "command": "repoKnowledge.saveGenerationPlan",
         "title": "Repo Knowledge: Save Generation Plan"
+      },
+      {
+        "command": "repoKnowledge.diagnoseGenerationBackend",
+        "title": "Repo Knowledge: Diagnose Generation Backend"
       }
     ],
     "configuration": {
@@ -119,6 +123,12 @@
           "default": "",
           "scope": "resource",
           "description": "Absolute directory containing knowledge.json. Empty uses per-repository extension storage outside the target repository."
+        },
+        "repoKnowledge.codexExecutable": {
+          "type": "string",
+          "default": "",
+          "scope": "machine",
+          "description": "Absolute host-side Codex executable for explicit generation-backend diagnostics. Empty tries the installed official Codex extension on this host. No login/provider settings or tokens are copied; diagnostics do not start model threads."
         }
       }
     },
@@ -201,6 +211,11 @@
         },
         {
           "command": "repoKnowledge.saveGenerationPlan",
+          "when": "viewItem == knowledge-repository",
+          "group": "planning"
+        },
+        {
+          "command": "repoKnowledge.diagnoseGenerationBackend",
           "when": "viewItem == knowledge-repository",
           "group": "planning"
         }

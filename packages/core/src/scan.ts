@@ -7,9 +7,15 @@ import {
   open,
   unlink,
 } from 'node:fs/promises';
-import { join, resolve, isAbsolute, dirname, basename } from 'node:path';
+import { join, resolve, isAbsolute } from 'node:path';
 import { z } from 'zod';
-import { boundedBytes, fingerprint, within, KnowledgeError } from './files.js';
+import {
+  boundedBytes,
+  fingerprint,
+  within,
+  KnowledgeError,
+  resolveStoragePath,
+} from './files.js';
 import { relativePath } from './schema.js';
 
 // Deliberately small POSIX glob grammar, independent of shell/OS glob expansion.
@@ -161,21 +167,6 @@ function cancelled(signal?: AbortSignal): void {
 }
 const repositoryId = (root: string) =>
   createHash('sha256').update(root).digest('hex');
-async function storagePath(path: string): Promise<string> {
-  const missing: string[] = [];
-  let current = resolve(path);
-  for (;;) {
-    try {
-      return join(await realpath(current), ...missing.reverse());
-    } catch (error) {
-      if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
-      const parent = dirname(current);
-      if (parent === current) throw error;
-      missing.push(basename(current));
-      current = parent;
-    }
-  }
-}
 const revision = (
   plan: Pick<ScanPlan, 'repositoryId' | 'options' | 'files' | 'summary'>,
 ) => fingerprint(JSON.stringify(plan));
@@ -193,7 +184,7 @@ export async function scanRepository(
       'Repository and store must be absolute',
     );
   const root = await realpath(repository);
-  const excludedStore = await storagePath(store);
+  const excludedStore = await resolveStoragePath(store);
   const includes = options.include.map(matcher),
     excludes = options.exclude.map(matcher);
   const skipped = Object.fromEntries(
@@ -396,7 +387,7 @@ export async function saveScanPlan(
       'INVALID_PATH',
       'Scan plans require a store outside the target repository',
     );
-  if (within(root, await storagePath(store)))
+  if (within(root, await resolveStoragePath(store)))
     throw new KnowledgeError(
       'PATH_ESCAPE',
       'Plan store resolves inside repository',
