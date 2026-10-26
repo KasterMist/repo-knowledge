@@ -8,6 +8,7 @@ import { KnowledgeStore } from '@repo-knowledge/core';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
 import { KnowledgeWorkbench } from './workbench.js';
+import { BackendWorkbench } from './backend-workbench.js';
 
 export function activate(context: vscode.ExtensionContext) {
   const output = vscode.window.createOutputChannel('Repo Knowledge');
@@ -74,6 +75,12 @@ export function activate(context: vscode.ExtensionContext) {
   };
   const workbench = new KnowledgeWorkbench(selected);
   context.subscriptions.push(workbench);
+  const backend = new BackendWorkbench(
+    selected,
+    workbench.documents,
+    context.globalStorageUri,
+  );
+  context.subscriptions.push(backend);
   register('initialize', async () => {
     const target = await selected();
     if (!target) return;
@@ -297,5 +304,5 @@ export function activate(context: vscode.ExtensionContext) {
       true,
     );
   });
-  return { workbench };
+  return { workbench, backend };
 }

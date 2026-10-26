@@ -1,0 +1,15 @@
+# Codex transport and diagnostic boundary
+
+Date: 2026-10-26. T15 foundation; not a completed generation adapter. Tracking: [Issue #22](https://github.com/KasterMist/repo-knowledge/issues/22).
+
+The editor-independent core client launches an explicit absolute executable/cwd with shell=false and windowsHide. JSONL is decoded as streaming fatal UTF-8; responses correlate numeric request IDs, unexpected/malformed envelopes fail closed, and server requests receive a fixed method-not-found reply. No login/token refresh or approval action is implemented. Raw stderr is discarded; raw RPC errors are reduced to numeric code, method phase and a fixed reason enum.
+
+Limits: eight in-flight requests, 256 KiB outgoing message, 1 MiB accumulated line buffer, 4 MiB total stdout, 256 KiB stderr, and a default 15-second per-request deadline (bounded test/API overrides up to 60 seconds). A timeout/cancel/transport failure settles all pending work. Normal close sends EOF and waits at most one second before forced termination of the owned process; this is not a general process-tree sandbox. Notifications are bounded and discarded in this diagnostic slice. It does not collect generated turn output.
+
+The diagnostic invokes initialize/initialized, config/read and account/read(refreshToken=false), closes the process and retains only a fixed report. It never invokes thread/start or turn/start and supplies no source text. Configured account state is distinct from model entitlement and successful generation. shell_tool=false is a diagnostic assertion, not proof of comprehensive generation tool isolation.
+
+The VS Code command requires workspace trust, resolves the target root explicitly, selects a configured executable or a current-host installed extension binary, and canonicalizes existing storage parents before checking that scratch storage is outside the target repository. It reuses T14's tested ancestor-alias resolver. It creates an immutable virtual report; no persisted knowledge schema changes. Missing executable reports are actionable before starting a process. Host-side settings keep local and SSH paths separate. The previous T14 plan and M2 publication boundaries remain unchanged.
+
+Official protocol references checked on 2026-10-26: [app-server](https://learn.chatgpt.com/docs/app-server) documents initialization, bidirectional requests and account/read. The transport is implemented as a development preview, not a promise that every Codex version/provider behaves identically. The client does not depend on private IDE session state or reuse the IDE conversation.
+
+Self-authored peer tests cover fragmented Unicode, concurrent/out-of-order responses, denied server requests, credential-shaped data redaction, account absence/external auth, malformed JSON/UTF-8/orphan IDs, timeouts, cancellation, startup/exit errors and resource bounds. Real Codex probes and actual editor-host checks are recorded separately in the [M3 checkpoint](m3-acceptance.md).

@@ -225,6 +225,7 @@ exports.run = async function run() {
     );
     const storeSetting = configuration.inspect('storeDirectory').workspaceValue;
     const nodeSetting = configuration.inspect('nodeExecutable').globalValue;
+    const backendSetting = configuration.inspect('codexExecutable').globalValue;
     const originalStore = configuration.get('storeDirectory');
     const originalSnapshot = await fs.readFile(
       path.join(originalStore, 'knowledge.json'),
@@ -314,6 +315,24 @@ exports.run = async function run() {
       );
       await restoredDiagnostic();
       recovery.push('missing-node: clear error and recovery');
+      await configuration.update(
+        'codexExecutable',
+        missingNode,
+        vscode.ConfigurationTarget.Global,
+      );
+      const missingBackend = await vscode.commands.executeCommand(
+        'repoKnowledge.diagnoseGenerationBackend',
+      );
+      assert.equal(missingBackend?.error, true);
+      assert.match(missingBackend.message, /Codex executable not found/u);
+      await configuration.update(
+        'codexExecutable',
+        backendSetting,
+        vscode.ConfigurationTarget.Global,
+      );
+      recovery.push(
+        'backend: missing host executable gives an explicit error; setting restored without starting a thread',
+      );
       const emptyStore = path.join(scratch, 'initialized-store');
       await selectStore(emptyStore);
       await vscode.commands.executeCommand('repoKnowledge.initialize');
@@ -332,6 +351,11 @@ exports.run = async function run() {
       );
       recovery.push('initialize: empty store created; repeat preserves bytes');
     } finally {
+      await configuration.update(
+        'codexExecutable',
+        backendSetting,
+        vscode.ConfigurationTarget.Global,
+      );
       await selectStore(storeSetting);
       await configuration.update(
         'nodeExecutable',

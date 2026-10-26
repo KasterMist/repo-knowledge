@@ -41,7 +41,7 @@ Native preview uses an external Node 24.19.x executable. On Remote SSH, the defa
 - `packages/mcp-server`: independently launched protocol service.
 - `packages/vscode-extension`: editor commands and bundled standalone server.
 
-No model requests or credential reads run in the plugin. Tools read the explicit knowledge store and cited source files. Update proposals write only to the store; they never publish themselves or modify target source. Card content is untrusted data. Do not put secrets in cards or upload private source to bug reports.
+No model requests run in the plugin yet. Explicit [Codex backend diagnostics](docs/user/codex-backend.zh-CN.md) read configuration/account metadata through Codex and retain only a redacted report; they do not read credential files, copy tokens or start model threads. Knowledge tools read the explicit store and cited source files. Update proposals write only to the store; they never publish themselves or modify target source. Card content is untrusted data. Do not put secrets in cards or upload private source to bug reports.
 
 ## Contributing and licensing
 
