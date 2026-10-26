@@ -5,3 +5,4 @@ export * from './publication.js';
 export * from './scan.js';
 export * from './codex-client.js';
 export { resolveStoragePath } from './files.js';
+export * from './generation.js';
