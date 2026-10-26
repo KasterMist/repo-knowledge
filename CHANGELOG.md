@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Add in-memory generation source/output contracts: revalidated selected-source packets, encoded byte limits, structured new-page schema, source-range/hash binding and rejection of existing IDs or changed human knowledge. No model invocation, candidate persistence or creation publication yet.
+
 - Add a bounded Codex STDIO client and explicit host-side Diagnose Generation Backend command, with cancellation, deadlines, streaming UTF-8, request correlation, server-request denial and redacted configuration/account reports. Diagnostics start no model thread; generation and new-card publication remain pending.
 
 - Start M3/T14 with user-invoked bounded static scan planning, POSIX include/exclude scope, language selection, coverage/skip counters, cancellation and immutable external metadata-only plan save/revalidation. No model call or knowledge generation yet.
