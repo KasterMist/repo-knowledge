@@ -19,6 +19,8 @@ M2 实现与本次范围验收已完成：按源码范围组织的 Wiki/卡片�
 
 M3/T14 开发代码已提供用户主动发起的范围、排除、语言与限额选择、静态扫描预览和外部元数据规划保存；尚不调用模型或生成知识。见[生成指南](docs/user/generation.zh-CN.md)与 [M3 进度](docs/development/m3-acceptance.md)。
 
+M3 开发版另已实现校验后的新卡片候选保存、整批审阅、确认创建/删除和 ID 保留。目前尚未启用真实模型生成或手动导入入口。历史兼容与降级限制见 [ADR 0007](docs/architecture/adr/0007-reviewed-creation.md)。
+
 ## 本地开发
 
 Windows 与 Linux 统一使用 Node.js **24.19.0**、npm **12.2.1**：

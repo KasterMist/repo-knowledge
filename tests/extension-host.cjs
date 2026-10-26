@@ -216,6 +216,39 @@ exports.run = async function run() {
   );
   assert.deepEqual(await fs.readFile(snapshotPath), beforeDraft);
   // Only the runner-owned disposable profile may change a machine setting.
+  if (process.env.REPO_KNOWLEDGE_CREATION_ID) {
+    const creationRoots = await workbench.publication.creations.getChildren();
+    const nodes = await workbench.publication.creations.getChildren(
+      creationRoots[0],
+    );
+    const node = nodes.find(
+      (entry) => entry.itemId === process.env.REPO_KNOWLEDGE_CREATION_ID,
+    );
+    assert.ok(node);
+    const firstPublish = await vscode.commands.executeCommand(
+      'repoKnowledge.publishCreation',
+      node,
+    );
+    assert.equal(firstPublish?.reviewRequired, true);
+    assert.deepEqual(await fs.readFile(snapshotPath), beforeDraft);
+    const diff = await vscode.commands.executeCommand(
+      'repoKnowledge.reviewCreation',
+      node,
+    );
+    assert.deepEqual(
+      JSON.parse(
+        (await vscode.workspace.openTextDocument(diff.before)).getText(),
+      ),
+      [],
+    );
+    const newCards = JSON.parse(
+      (await vscode.workspace.openTextDocument(diff.after)).getText(),
+    );
+    assert.equal(newCards[0].id, 'host-new-card');
+    assert.equal(newCards[0].revision, 1);
+    assert.equal(diff.before.scheme, 'repo-knowledge');
+    assert.equal(diff.after.scheme, 'repo-knowledge');
+  }
   // The remote fallback runner must never modify a maintainer's real profile.
   if (process.env.REPO_KNOWLEDGE_ISOLATED_PROFILE === '1') {
     const folder = vscode.workspace.workspaceFolders[0];
@@ -245,6 +278,52 @@ exports.run = async function run() {
       assert.equal(result?.protocolConnected, true, result?.message);
     };
     try {
+      if (process.env.REPO_KNOWLEDGE_CREATION_HISTORY_STORE) {
+        const historyStore = process.env.REPO_KNOWLEDGE_CREATION_HISTORY_STORE;
+        await selectStore(historyStore);
+        const bytes = await fs.readFile(
+          path.join(historyStore, 'knowledge.json'),
+        );
+        const roots = await workbench.publication.history.getChildren();
+        const entries = await workbench.publication.history.getChildren(
+          roots[0],
+        );
+        const node = entries.find(
+          (entry) =>
+            entry.itemId === process.env.REPO_KNOWLEDGE_CREATION_HISTORY_ID,
+        );
+        assert.ok(node);
+        assert.match(node.label, /host-history-card/u);
+        const history = await vscode.commands.executeCommand(
+          'repoKnowledge.openHistory',
+          node,
+        );
+        assert.equal(
+          JSON.parse(
+            (await vscode.workspace.openTextDocument(history.before)).getText(),
+          ).cards.length,
+          3,
+        );
+        assert.equal(
+          JSON.parse(
+            (await vscode.workspace.openTextDocument(history.after)).getText(),
+          ).cards.length,
+          4,
+        );
+        const removal = await vscode.commands.executeCommand(
+          'repoKnowledge.rollbackKnowledge',
+          node,
+        );
+        assert.equal(removal?.reviewRequired, true);
+        assert.deepEqual(
+          await fs.readFile(path.join(historyStore, 'knowledge.json')),
+          bytes,
+        );
+        await selectStore(storeSetting);
+        recovery.push(
+          'creation history: v2 snapshot diff and removal preview; no deletion without confirmation',
+        );
+      }
       const planStore = path.join(
         path.dirname(folder.uri.fsPath),
         'scan-plan-external',
@@ -391,6 +470,7 @@ exports.run = async function run() {
           'read-only knowledge document and validated source navigation',
           'durable draft, dirty-editor rejection and saved candidate diff without publication',
           'bounded user-invoked scan plan preview without model calls',
+          'new-card candidate tree and read-only batch diff; first publish invocation requires review',
           'snapshot editor access',
           'Codex TOML preview',
           'actual standalone MCP diagnostics from extension host',
