@@ -2,7 +2,8 @@ import * as vscode from 'vscode';
 import { relative, isAbsolute } from 'node:path';
 import {
   KnowledgePublication,
-  type KnowledgeReview,
+  type PublicationReview,
+  type CreationReview,
 } from '@repo-knowledge/core';
 import type { KnowledgeDocuments } from './documents.js';
 import type {
@@ -11,7 +12,13 @@ import type {
   KnowledgeNode,
 } from './workbench.js';
 
-type Mode = 'drafts' | 'proposals' | 'history';
+type Mode = 'drafts' | 'proposals' | 'creations' | 'history';
+const batch = (review: PublicationReview): review is CreationReview =>
+  review.operation === 'create' || review.operation === 'remove-created';
+const label = (review: PublicationReview) =>
+  batch(review)
+    ? `${review.operation === 'create' ? '新增 / Create' : '删除新增 / Remove'} ${(review.operation === 'create' ? review.after : review.before).map((card) => card.title).join(' · ')}`
+    : `${review.before.title} · r${review.before.revision} → r${review.after.revision}`;
 export class PublicationNode extends vscode.TreeItem {
   constructor(
     readonly mode: Mode,
@@ -37,7 +44,9 @@ export class PublicationNode extends vscode.TreeItem {
             ? 'repoKnowledge.openDraft'
             : mode === 'proposals'
               ? 'repoKnowledge.reviewProposal'
-              : 'repoKnowledge.openHistory',
+              : mode === 'creations'
+                ? 'repoKnowledge.reviewCreation'
+                : 'repoKnowledge.openHistory',
         title: 'Open',
         arguments: [this],
       };
@@ -75,11 +84,16 @@ class PublicationTree
         this.mode === 'history'
           ? (await publication.history()).map((h) => ({
               id: h.record.transactionId,
-              title: `${h.record.cardId} · r${h.record.beforeRevision} → r${h.record.afterRevision}`,
+              title:
+                h.record.schemaVersion === 1
+                  ? `${h.record.cardId} · r${h.record.beforeRevision} → r${h.record.afterRevision}`
+                  : h.record.cardIds.join(' · '),
               state: `${h.record.operation} · ${h.state}`,
               error: '',
             }))
-          : await publication.listCandidates(this.mode);
+          : this.mode === 'creations'
+            ? await publication.listCreations()
+            : await publication.listCandidates(this.mode);
       return entries.map((entry) => {
         const item = new PublicationNode(
           this.mode,
@@ -114,8 +128,9 @@ export class PublicationWorkbench implements vscode.Disposable {
   readonly drafts: PublicationTree;
   readonly proposals: PublicationTree;
   readonly history: PublicationTree;
+  readonly creations: PublicationTree;
   private readonly disposables: vscode.Disposable[] = [];
-  private readonly reviews = new Map<string, KnowledgeReview>();
+  private readonly reviews = new Map<string, PublicationReview>();
   constructor(
     private readonly resolve: ResolveTarget,
     private readonly documents: KnowledgeDocuments,
@@ -124,7 +139,13 @@ export class PublicationWorkbench implements vscode.Disposable {
     this.drafts = new PublicationTree('drafts', resolve);
     this.proposals = new PublicationTree('proposals', resolve);
     this.history = new PublicationTree('history', resolve);
-    for (const tree of [this.drafts, this.proposals, this.history])
+    this.creations = new PublicationTree('creations', resolve);
+    for (const tree of [
+      this.drafts,
+      this.proposals,
+      this.creations,
+      this.history,
+    ])
       this.disposables.push(
         tree,
         vscode.window.createTreeView(`repoKnowledge.${tree.mode}`, {
@@ -142,6 +163,12 @@ export class PublicationWorkbench implements vscode.Disposable {
     );
     this.command('reviewProposal', (node) =>
       this.reviewProposal(node as PublicationNode | undefined),
+    );
+    this.command('reviewCreation', (node) =>
+      this.reviewCreation(node as PublicationNode | undefined),
+    );
+    this.command('publishCreation', (node) =>
+      this.publishCreation(node as PublicationNode | undefined),
     );
     this.command('publishProposal', (node) =>
       this.publishProposal(node as PublicationNode | undefined),
@@ -176,7 +203,12 @@ export class PublicationWorkbench implements vscode.Disposable {
     );
   }
   refresh(): void {
-    for (const tree of [this.drafts, this.proposals, this.history])
+    for (const tree of [
+      this.drafts,
+      this.proposals,
+      this.creations,
+      this.history,
+    ])
       tree.refresh();
   }
   private clean(target: KnowledgeTarget): void {
@@ -205,11 +237,18 @@ export class PublicationWorkbench implements vscode.Disposable {
     const entries =
       mode === 'history'
         ? (await publication.history()).map((h) => ({
-            label: `${h.record.cardId} r${h.record.afterRevision}`,
+            label:
+              h.record.schemaVersion === 1
+                ? `${h.record.cardId} r${h.record.afterRevision}`
+                : `${h.record.operation}: ${h.record.cardIds.join(', ')}`,
             description: h.state,
             id: h.record.transactionId,
           }))
-        : (await publication.listCandidates(mode)).map((c) => ({
+        : (
+            await (mode === 'creations'
+              ? publication.listCreations()
+              : publication.listCandidates(mode))
+          ).map((c) => ({
             label: c.title,
             description: c.state,
             id: c.id,
@@ -222,23 +261,62 @@ export class PublicationWorkbench implements vscode.Disposable {
   private key(target: KnowledgeTarget, id: string): string {
     return JSON.stringify([target.root, target.store, id]);
   }
-  private async diff(target: KnowledgeTarget, review: KnowledgeReview) {
+  private async diff(target: KnowledgeTarget, review: PublicationReview) {
     const before = this.documents.create(
-      `${review.before.id}-before.json`,
+      `${review.itemId}-before.json`,
       JSON.stringify(review.before, null, 2),
     );
     const after = this.documents.create(
-      `${review.after.id}-after.json`,
+      `${review.itemId}-after.json`,
       JSON.stringify(review.after, null, 2),
     );
     await vscode.commands.executeCommand(
       'vscode.diff',
       before,
       after,
-      `${review.operation}: ${review.before.title} · r${review.before.revision} → r${review.after.revision}`,
+      `${review.operation}: ${label(review)}`,
     );
     this.reviews.set(this.key(target, review.itemId), review);
     return { before, after };
+  }
+  async reviewCreation(node?: PublicationNode) {
+    const chosen = await this.choose('creations', node);
+    if (!chosen) return;
+    this.clean(chosen.target);
+    return this.diff(
+      chosen.target,
+      await chosen.publication.previewCreation(chosen.id),
+    );
+  }
+  async publishCreation(node?: PublicationNode) {
+    const chosen = await this.choose('creations', node);
+    if (!chosen) return;
+    this.clean(chosen.target);
+    let review = this.reviews.get(this.key(chosen.target, chosen.id));
+    if (!review || review.operation !== 'create') {
+      review = await chosen.publication.previewCreation(chosen.id);
+      await this.diff(chosen.target, review);
+      void vscode.window.showInformationMessage(
+        '请检查全部新增卡片差异，然后再次运行 Publish Reviewed Creation / Review all new cards, then publish again.',
+      );
+      return { reviewRequired: true };
+    }
+    if (
+      (await vscode.window.showWarningMessage(
+        `${label(review)}？\n整批新增为 r1，不修改已有卡片或源码。请先核对正文和引用。`,
+        { modal: true },
+        '发布 / Publish',
+      )) !== '发布 / Publish'
+    )
+      return { cancelled: true };
+    this.clean(chosen.target);
+    const result = await chosen.publication.publishCreation(
+      chosen.id,
+      review.token,
+    );
+    this.reviews.delete(this.key(chosen.target, chosen.id));
+    this.refreshAll();
+    return result;
   }
   async editCard(node?: KnowledgeNode) {
     const target = node?.target ?? (await this.resolve(node?.folder));
@@ -333,7 +411,7 @@ export class PublicationWorkbench implements vscode.Disposable {
     if (!chosen) return;
     this.clean(chosen.target);
     let review = this.reviews.get(this.key(chosen.target, chosen.id));
-    if (!review || review.operation !== 'rollback') {
+    if (!review || !['rollback', 'remove-created'].includes(review.operation)) {
       review = await chosen.publication.previewRollback(chosen.id);
       await this.diff(chosen.target, review);
       void vscode.window.showInformationMessage(
@@ -343,7 +421,9 @@ export class PublicationWorkbench implements vscode.Disposable {
     }
     if (
       (await vscode.window.showWarningMessage(
-        `恢复 ${review.before.title} 的历史内容，并创建 r${review.after.revision}？源码不回退。`,
+        batch(review)
+          ? `${label(review)}？仅允许删除当前未修改的创建批次；ID 将永久保留，不可重用。源码不回退。`
+          : `恢复 ${review.before.title} 的历史内容，并创建 r${review.after.revision}？源码不回退。`,
         { modal: true },
         '回退 / Roll back',
       )) !== '回退 / Roll back'

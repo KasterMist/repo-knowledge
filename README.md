@@ -19,6 +19,8 @@ The user decides whether to generate Wiki pages and knowledge cards, selects the
 
 M3/T14 development now provides explicitly invoked include/exclude/language/byte-limited static scan previews and external metadata-only plans. It does not call a model or generate knowledge. See the [generation guide](docs/user/generation.zh-CN.md) and [M3 checkpoint](docs/development/m3-acceptance.md).
 
+M3 development also includes validated new-card candidate storage, batch review and confirmed creation/removal with retained IDs. No real model generation or manual import is enabled yet. See [ADR 0007](docs/architecture/adr/0007-reviewed-creation.md) for history compatibility and downgrade limits.
+
 ## Development
 
 Use Node.js **24.19.0** and npm **12.2.1** on Windows or Linux:

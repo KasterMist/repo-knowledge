@@ -107,6 +107,14 @@
       {
         "command": "repoKnowledge.diagnoseGenerationBackend",
         "title": "Repo Knowledge: Diagnose Generation Backend"
+      },
+      {
+        "command": "repoKnowledge.reviewCreation",
+        "title": "Repo Knowledge: Review New Cards"
+      },
+      {
+        "command": "repoKnowledge.publishCreation",
+        "title": "Repo Knowledge: Publish Reviewed Creation"
       }
     ],
     "configuration": {
@@ -158,6 +166,10 @@
         {
           "id": "repoKnowledge.proposals",
           "name": "待审阅 · Proposals"
+        },
+        {
+          "id": "repoKnowledge.creations",
+          "name": "新增待审阅 · New Cards"
         },
         {
           "id": "repoKnowledge.history",
@@ -218,6 +230,11 @@
           "command": "repoKnowledge.diagnoseGenerationBackend",
           "when": "viewItem == knowledge-repository",
           "group": "planning"
+        },
+        {
+          "command": "repoKnowledge.publishCreation",
+          "when": "viewItem == knowledge-creations",
+          "group": "knowledge"
         }
       ]
     }

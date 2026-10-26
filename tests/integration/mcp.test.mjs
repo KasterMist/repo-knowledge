@@ -9,10 +9,13 @@ import { fixture, root } from '../helpers.mjs';
 import {
   KnowledgeStore,
   KnowledgePublication,
+  scanRepository,
+  defaultScanOptions,
+  buildGenerationPacket,
 } from '../../packages/core/dist/index.js';
 
 test(
-  'running MCP reloads editor publications and monotonic rollbacks from the same canonical store',
+  'running MCP reloads editor updates, monotonic rollbacks and new-card creation/removal',
   { timeout: 30000 },
   async () => {
     const f = await fixture();
@@ -75,6 +78,46 @@ test(
       const restored = await call('read_knowledge', { id: 'read-fallback' });
       assert.equal(restored.card.revision, 3);
       assert.equal(restored.card.body, read.card.body);
+      const plan = await scanRepository(f.repository, f.store, {
+        ...defaultScanOptions,
+        include: ['src/**/*.ts'],
+        exclude: [],
+      });
+      const packet = await buildGenerationPacket(publication.knowledge, plan);
+      const saved = await publication.saveCreation(plan, packet, {
+        packetRevision: packet.packetRevision,
+        pages: [
+          {
+            id: 'new-mcp-reading',
+            title: '新增读取说明',
+            kind: 'fact',
+            body: '空字符串会保留。',
+            tags: ['读取'],
+            scope: ['src'],
+            evidence: [{ path: 'src/读取.ts', startLine: 1, endLine: 5 }],
+          },
+        ],
+      });
+      assert.equal((await call('get_knowledge_status')).cards.length, 3);
+      const creation = await publication.previewCreation(saved.candidateId);
+      const created = await publication.publishCreation(
+        saved.candidateId,
+        creation.token,
+      );
+      const newCard = await call('read_knowledge', { id: 'new-mcp-reading' });
+      assert.equal(newCard.card.revision, 1);
+      assert.equal(newCard.stale, false);
+      assert.equal(newCard.snapshotRevision, created.snapshotRevision);
+      assert.equal((await call('get_knowledge_status')).cards.length, 4);
+      const removal = await publication.previewRollback(created.transactionId);
+      await publication.rollback(created.transactionId, removal.token);
+      assert.equal((await call('get_knowledge_status')).cards.length, 3);
+      const missing = await client.callTool({
+        name: 'read_knowledge',
+        arguments: { id: 'new-mcp-reading' },
+      });
+      assert.equal(missing.isError, true);
+      assert.equal(JSON.parse(missing.content[0].text).code, 'NOT_FOUND');
     } finally {
       await client.close();
       await transport.close();
