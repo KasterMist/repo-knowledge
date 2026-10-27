@@ -205,6 +205,7 @@ export class KnowledgePublication {
     packet: GenerationPacket,
     output: unknown,
     signal?: AbortSignal,
+    candidateId: string = randomUUID(),
   ) {
     const cards = await validateCurrentGeneration(
       this.knowledge,
@@ -216,7 +217,7 @@ export class KnowledgePublication {
     await this.checkCreationIds(cards);
     const candidate = creationCandidate.parse({
       schemaVersion: 1,
-      candidateId: randomUUID(),
+      candidateId: uuid.parse(candidateId),
       createdAt: new Date().toISOString(),
       plan,
       packetRevision: packet.packetRevision,

@@ -102,6 +102,12 @@ exports.run = async function run() {
   );
   assert.equal(noPlan?.error, true);
   assert.match(noPlan.message, /Preview a plan/u);
+  const noJob = await vscode.commands.executeCommand(
+    'repoKnowledge.recoverGeneration',
+    roots[0],
+  );
+  assert.equal(noJob?.error, true);
+  assert.match(noJob.message, /No saved generation jobs/u);
   const cards = await workbench.cards.getChildren(roots[0]);
   assert.equal(cards.length, 3);
   const readNode = cards.find((card) => card.cardId === 'read-fallback');
