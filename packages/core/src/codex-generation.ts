@@ -264,8 +264,11 @@ export async function generateKnowledgeCandidate(options: {
   maxPages: number;
   timeoutMs: number;
   signal?: AbortSignal;
+  candidateId?: string;
+  expectedPacketRevision?: string;
 }) {
   const maxPages = z.int().min(1).max(8).parse(options.maxPages);
+  if (options.candidateId) z.uuid().parse(options.candidateId);
   const timeoutMs = z.int().min(1000).max(60000).parse(options.timeoutMs);
   const cwd = await realpath(options.cwd),
     root = await realpath(options.knowledge.repositoryRoot);
@@ -283,6 +286,14 @@ export async function generateKnowledgeCandidate(options: {
     options.plan,
     signal,
   );
+  if (
+    options.expectedPacketRevision &&
+    options.expectedPacketRevision !== packet.packetRevision
+  )
+    throw new KnowledgeError(
+      'GENERATION_BASE_CHANGED',
+      'Generation job source or knowledge changed; preview a fresh plan',
+    );
   const schema = generationOutputJsonSchema();
   const reserved = await new KnowledgePublication(
     options.knowledge,
@@ -344,7 +355,13 @@ export async function generateKnowledgeCandidate(options: {
     if (signal.aborted) throw error('CANCELLED');
     const candidate = await new KnowledgePublication(
       options.knowledge,
-    ).saveCreation(options.plan, packet, result.output, signal);
+    ).saveCreation(
+      options.plan,
+      packet,
+      result.output,
+      signal,
+      options.candidateId,
+    );
     return {
       ...candidate,
       pages: cards.length,

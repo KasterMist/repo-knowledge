@@ -119,6 +119,10 @@
       {
         "command": "repoKnowledge.generateKnowledge",
         "title": "Repo Knowledge: Generate Knowledge Candidate"
+      },
+      {
+        "command": "repoKnowledge.recoverGeneration",
+        "title": "Repo Knowledge: Recover or Retry Generation Job"
       }
     ],
     "configuration": {

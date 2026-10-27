@@ -2,9 +2,11 @@ import * as vscode from 'vscode';
 import { mkdir, mkdtemp, rmdir } from 'node:fs/promises';
 import { join, relative, isAbsolute } from 'node:path';
 import {
-  generateKnowledgeCandidate,
+  GenerationJobs,
+  runCodexGenerationJob,
   resolveStoragePath,
   CodexBackendError,
+  type GenerationJob,
 } from '@repo-knowledge/core';
 import type { BackendWorkbench } from './backend-workbench.js';
 import type { KnowledgeWorkbench, KnowledgeTarget } from './workbench.js';
@@ -26,7 +28,8 @@ const contains = (root: string, path: string) => {
   );
 };
 export class GenerationWorkbench implements vscode.Disposable {
-  private readonly command: vscode.Disposable;
+  private readonly commands: vscode.Disposable[];
+  private currentJobId: string | undefined;
   private busy = false;
   private readonly lifetime = new AbortController();
   private readonly changes: vscode.Disposable[];
@@ -38,22 +41,31 @@ export class GenerationWorkbench implements vscode.Disposable {
     private readonly backend: BackendWorkbench,
     private readonly storage: vscode.Uri,
   ) {
-    this.command = vscode.commands.registerCommand(
-      'repoKnowledge.generateKnowledge',
-      async (node?: { folder?: vscode.WorkspaceFolder }) => {
-        try {
-          return await this.generate(node?.folder);
-        } catch (error) {
-          const message =
-            error instanceof CodexBackendError
-              ? `${error.code} (${error.phase}; ${error.reason}; HTTP ${error.httpStatusCode ?? 'unavailable'})。未发布知识。请保留错误分类核对当前宿主的模型连接；不必据此重新登录。`
-              : error instanceof Error
-                ? error.message
-                : 'Generation failed';
-          void vscode.window.showErrorMessage(`Repo Knowledge: ${message}`);
-          return { error: true, message };
-        }
-      },
+    this.commands = [false, true].map((recover) =>
+      vscode.commands.registerCommand(
+        recover
+          ? 'repoKnowledge.recoverGeneration'
+          : 'repoKnowledge.generateKnowledge',
+        async (node?: { folder?: vscode.WorkspaceFolder }) => {
+          try {
+            return await this.generate(node?.folder, recover);
+          } catch (error) {
+            const message =
+              error instanceof CodexBackendError
+                ? `${error.code} (${error.phase}; ${error.reason}; HTTP ${error.httpStatusCode ?? 'unavailable'})。未发布知识。请保留错误分类核对当前宿主的模型连接；不必据此重新登录。`
+                : error instanceof Error
+                  ? error.message
+                  : 'Generation failed';
+            const receipt = this.currentJobId
+              ? `\n任务 ${this.currentJobId} 已保留。可运行 Recover or Retry Generation Job；重试需要再次确认，不会自动开始。`
+              : '';
+            void vscode.window.showErrorMessage(
+              `Repo Knowledge: ${message}${receipt}`,
+            );
+            return { error: true, message };
+          }
+        },
+      ),
     );
     const changed = () => {
       this.revision++;
@@ -66,7 +78,7 @@ export class GenerationWorkbench implements vscode.Disposable {
       vscode.workspace.onDidChangeWorkspaceFolders(changed),
     ];
   }
-  async generate(folder?: vscode.WorkspaceFolder) {
+  async generate(folder?: vscode.WorkspaceFolder, recover = false) {
     if (!vscode.workspace.isTrusted)
       throw new Error('Generation requires a trusted workspace.');
     if (this.busy)
@@ -74,17 +86,52 @@ export class GenerationWorkbench implements vscode.Disposable {
         '当前已有生成任务；请先完成或取消 / A generation task is already active.',
       );
     this.busy = true;
+    this.currentJobId = undefined;
     try {
-      return await this.run(folder);
+      return await this.run(folder, recover);
     } finally {
       this.busy = false;
     }
   }
-  private async run(folder?: vscode.WorkspaceFolder) {
+  private async run(
+    folder: vscode.WorkspaceFolder | undefined,
+    recover: boolean,
+  ) {
     const revision = this.revision;
     const target = await this.resolve(folder);
     if (!target) return;
-    const plan = this.workbench.scanning.generationPlan(target);
+    const jobs = new GenerationJobs(target.knowledge);
+    let savedJob: GenerationJob | undefined;
+    if (recover) {
+      const saved = await jobs.list();
+      if (!saved.length)
+        throw new Error(
+          '当前知识目录没有生成任务记录 / No saved generation jobs.',
+        );
+      const selected = await vscode.window.showQuickPick(
+        saved.map((job) => ({
+          label: job.createdAt,
+          description: job.jobId,
+          job,
+        })),
+        { title: '找回结果或显式重试 / Recover or retry a job' },
+      );
+      if (!selected) return { cancelled: true };
+      savedJob = selected.job;
+      this.currentJobId = savedJob.jobId;
+      const result = await jobs.result(savedJob.jobId);
+      if (result) {
+        this.workbench.refresh();
+        void vscode.window.showInformationMessage(
+          result.state === 'previously-published'
+            ? '此任务的候选已进入发布历史，不会再次生成或发布。'
+            : `已找回 ${result.pages} 张待审阅卡片；未启动模型、未发布。请打开 New Cards。`,
+        );
+        return result;
+      }
+    }
+    const plan =
+      savedJob?.plan ?? this.workbench.scanning.generationPlan(target);
     if (!plan)
       throw new Error(
         '请先运行 Plan Knowledge Generation 并检查当前仓库的只读规划 / Preview a plan for this repository first.',
@@ -105,19 +152,21 @@ export class GenerationWorkbench implements vscode.Disposable {
         );
     };
     clean();
-    const pages = await vscode.window.showQuickPick(
-      [2, 4, 8].map((value) => ({
-        label: `最多 ${value} 张 / Up to ${value} pages`,
-        value,
-      })),
-      { title: '生成候选数量 / Candidate pages' },
-    );
+    const pages = savedJob
+      ? { value: savedJob.maxPages }
+      : await vscode.window.showQuickPick(
+          [2, 4, 8].map((value) => ({
+            label: `最多 ${value} 张 / Up to ${value} pages`,
+            value,
+          })),
+          { title: '生成候选数量 / Candidate pages' },
+        );
     if (!pages) return { cancelled: true };
     const executable = await this.backend.executable(
       target.configuration.get<string>('codexExecutable', ''),
     );
     const choice = await vscode.window.showWarningMessage(
-      `将以下 ${plan.files.length} 个文件的已保存文本发送给当前宿主已配置的 Codex 模型/提供方：\n${plan.files.map((file) => file.path).join('\n')}\n语言：${plan.options.language}；最多 ${pages.value} 张；一次任务、总时限 60 秒、输出上限 64 KiB。用量统计可能延迟，并非精确费用上限。\n不运行源码；仅保存待审阅候选，不自动发布。确认开始？`,
+      `${savedJob ? '这是重新生成的一次新尝试，不会续接原模型对话，可能产生新的用量。\n' : ''}将以下 ${plan.files.length} 个文件的已保存文本发送给当前宿主已配置的 Codex 模型/提供方：\n${plan.files.map((file) => file.path).join('\n')}\n语言：${plan.options.language}；最多 ${pages.value} 张；一次任务、总时限 60 秒、输出上限 64 KiB。用量统计可能延迟，并非精确费用上限。\n不运行源码；仅保存待审阅候选，不自动发布。确认开始？`,
       { modal: true },
       '开始生成 / Generate',
     );
@@ -151,28 +200,35 @@ export class GenerationWorkbench implements vscode.Disposable {
               );
             if (token.isCancellationRequested) controller.abort();
             try {
-              return await generateKnowledgeCandidate({
+              const signal = AbortSignal.any([
+                AbortSignal.timeout(60000),
+                controller.signal,
+                this.lifetime.signal,
+                active.signal,
+              ]);
+              const job =
+                savedJob ??
+                (await jobs.create(plan, pages.value, 60000, signal));
+              this.currentJobId = job.jobId;
+              return await runCodexGenerationJob({
                 command: executable.command,
                 cwd: scratch,
                 knowledge: target.knowledge,
-                plan,
-                maxPages: pages.value,
-                timeoutMs: 60000,
-                signal: AbortSignal.any([
-                  controller.signal,
-                  this.lifetime.signal,
-                  active.signal,
-                ]),
+                jobId: job.jobId,
+                signal,
               });
             } finally {
               listener.dispose();
             }
           },
         );
-        this.workbench.scanning.consumeGenerationPlan(target);
+        if (!result.recovered)
+          this.workbench.scanning.consumeGenerationPlan(target);
         this.workbench.refresh();
         void vscode.window.showInformationMessage(
-          `已保存 ${result.pages} 张待审阅卡片；尚未发布。请打开 New Cards 检查全部差异，再单独确认发布。`,
+          result.state === 'previously-published'
+            ? '此任务的候选已进入发布历史，不会再次生成或发布。'
+            : `${result.recovered ? '已找回' : '已保存'} ${result.pages} 张待审阅卡片；尚未发布。请打开 New Cards 检查全部差异，再单独确认发布。`,
         );
         return result;
       } finally {
@@ -185,6 +241,6 @@ export class GenerationWorkbench implements vscode.Disposable {
   dispose(): void {
     this.lifetime.abort();
     this.changes.forEach((listener) => listener.dispose());
-    this.command.dispose();
+    this.commands.forEach((command) => command.dispose());
   }
 }

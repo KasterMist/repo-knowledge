@@ -19,7 +19,7 @@ The user decides whether to generate Wiki pages and knowledge cards, selects the
 
 M3/T14 development now provides explicitly invoked include/exclude/language/byte-limited static scan previews and external metadata-only plans. It does not call a model or generate knowledge. See the [generation guide](docs/user/generation.zh-CN.md) and [M3 checkpoint](docs/development/m3-acceptance.md).
 
-M3 development includes new-card candidate review/publication and an explicitly confirmed Generate Knowledge Candidate command with restricted Codex preflight. Real attempts have not produced an accepted result; successful Windows/Remote SSH generation, checkpoints and retry remain open. No manual import is enabled. See [the generation guide](docs/user/generation.zh-CN.md), [ADR 0007](docs/architecture/adr/0007-reviewed-creation.md) and [ADR 0008](docs/architecture/adr/0008-explicit-codex-generation.md).
+M3 development includes new-card candidate review/publication and an explicitly confirmed Generate Knowledge Candidate command with restricted Codex preflight. Self-authored Windows and Remote SSH editor generation succeeded and saved reviewable candidates with canonical knowledge unchanged. Metadata-only job receipts and explicit Recover or Retry Generation Job are implemented; actual recovery/cancellation and new-batch publication acceptance remain open. No manual import is enabled. See [the generation guide](docs/user/generation.zh-CN.md), [ADR 0007](docs/architecture/adr/0007-reviewed-creation.md) and [ADR 0008](docs/architecture/adr/0008-explicit-codex-generation.md).
 
 ## Development
 
