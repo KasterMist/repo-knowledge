@@ -192,16 +192,26 @@ export class KnowledgePublication {
         'Previously created IDs cannot be reused, including after removal',
       );
   }
+  async reservedCreationIds(): Promise<string[]> {
+    if ((await this.history()).some((entry) => entry.state === 'prepared'))
+      throw new KnowledgeError(
+        'RECOVERY_REQUIRED',
+        'Recover prepared history before starting another generation',
+      );
+    return [...(await this.reservedIds())].sort();
+  }
   async saveCreation(
     plan: ScanPlan,
     packet: GenerationPacket,
     output: unknown,
+    signal?: AbortSignal,
   ) {
     const cards = await validateCurrentGeneration(
       this.knowledge,
       plan,
       packet,
       output,
+      signal,
     );
     await this.checkCreationIds(cards);
     const candidate = creationCandidate.parse({
@@ -220,7 +230,29 @@ export class KnowledgePublication {
     if ((await this.names('creations')).length >= 200)
       throw new KnowledgeError('LIMIT', 'Too many creation candidates');
     const path = join(directory, candidate.candidateId + '.json');
-    await writeExclusive(path, text);
+    const cancelled = () => {
+      if (signal?.aborted)
+        throw new KnowledgeError(
+          'GENERATION_CANCELLED',
+          'Generation cancelled before candidate save',
+        );
+    };
+    cancelled();
+    const handle = await open(path, 'wx', 0o600);
+    let completed = false;
+    try {
+      await handle.writeFile(text);
+      await handle.sync();
+      cancelled();
+      completed = true;
+    } finally {
+      try {
+        await handle.close();
+      } finally {
+        if (!completed || signal?.aborted) await unlink(path);
+      }
+    }
+    cancelled();
     return {
       candidateId: candidate.candidateId,
       state: 'pending-review',

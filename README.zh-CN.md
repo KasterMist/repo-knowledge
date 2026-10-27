@@ -19,7 +19,7 @@ M2 实现与本次范围验收已完成：按源码范围组织的 Wiki/卡片�
 
 M3/T14 开发代码已提供用户主动发起的范围、排除、语言与限额选择、静态扫描预览和外部元数据规划保存；尚不调用模型或生成知识。见[生成指南](docs/user/generation.zh-CN.md)与 [M3 进度](docs/development/m3-acceptance.md)。
 
-M3 开发版另已实现校验后的新卡片候选保存、整批审阅、确认创建/删除和 ID 保留。目前尚未启用真实模型生成或手动导入入口。历史兼容与降级限制见 [ADR 0007](docs/architecture/adr/0007-reviewed-creation.md)。
+M3 开发版已接入校验后的新卡片审阅/发布，以及明确确认后执行的 Generate Knowledge Candidate 命令。真实尝试尚未取得通过验收的结果；两端成功生成、检查点与重试仍待完成。手动导入未启用。详见[生成指南](docs/user/generation.zh-CN.md)、[ADR 0007](docs/architecture/adr/0007-reviewed-creation.md) 与 [ADR 0008](docs/architecture/adr/0008-explicit-codex-generation.md)。
 
 ## 本地开发
 
@@ -43,7 +43,7 @@ npm run package:vsix
 - `packages/mcp-server`：独立启动的协议服务。
 - `packages/vscode-extension`：编辑器命令与打包后的独立服务。
 
-插件当前不调用模型。显式[后端诊断](docs/user/codex-backend.zh-CN.md)通过 Codex 查询配置/账户元数据，仅保留脱敏报告，不读取凭据文件、复制令牌或创建模型对话。知识工具读取明确配置的知识库和被引用源码；更新候选仅写入知识目录，不自行发布或修改目标源码。卡片文本属于不可信数据。不要在卡片中放置秘密，也不要向 Issue 上传私有源码。
+开发版生成命令只在确认后发送明确选定的已保存源码包，使用独立受限 Codex 任务，保存待审阅候选而不自动发布。显式[后端诊断](docs/user/codex-backend.zh-CN.md)仍只查询配置/账户元数据，不创建线程或调用模型。两种流程均不复制令牌、不改登录或提供方配置。知识工具读取明确配置的知识库和被引用源码；更新候选仅写入知识目录，不自行发布或修改目标源码。卡片文本属于不可信数据。不要在卡片中放置秘密，也不要向 Issue 上传私有源码。
 
 ## 参与和许可证
 

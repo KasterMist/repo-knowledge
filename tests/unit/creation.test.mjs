@@ -98,6 +98,10 @@ test('new-card batch is saved without source text, reviewed, atomically publishe
       JSON.parse(original),
     );
     await assert.rejects(f.knowledge.read('new-reading'), code('NOT_FOUND'));
+    assert.deepEqual(await f.publication.reservedCreationIds(), [
+      'new-cache',
+      'new-reading',
+    ]);
     await assert.rejects(
       f.publication.previewRollback(removed.transactionId),
       code('INVALID_HISTORY'),
@@ -399,4 +403,17 @@ test('creation removal cannot cross an intervening create/remove round trip even
       f.publication.previewRollback(first.transactionId),
       code('REVISION_CONFLICT'),
     );
+  }));
+
+test('cancelled generation cannot save a new creation candidate or alter canonical knowledge', () =>
+  setup(async (f) => {
+    const original = await readFile(f.path);
+    const controller = new globalThis.AbortController();
+    controller.abort();
+    await assert.rejects(
+      f.publication.saveCreation(f.plan, f.packet, f.output, controller.signal),
+      code('GENERATION_CANCELLED'),
+    );
+    assert.deepEqual(await readFile(f.path), original);
+    assert.equal((await f.publication.listCreations()).length, 0);
   }));

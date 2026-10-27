@@ -15,6 +15,7 @@ interface ScanNode {
 }
 export class ScanWorkbench implements vscode.Disposable {
   private readonly pending = new Map<string, ScanPlan>();
+  private readonly reviewed = new Map<string, ScanPlan>();
   private readonly disposables: vscode.Disposable[] = [];
   constructor(
     private readonly resolve: ResolveTarget,
@@ -46,9 +47,15 @@ export class ScanWorkbench implements vscode.Disposable {
       );
     this.disposables.push(
       vscode.workspace.onDidChangeConfiguration((event) => {
-        if (event.affectsConfiguration('repoKnowledge')) this.pending.clear();
+        if (event.affectsConfiguration('repoKnowledge')) {
+          this.pending.clear();
+          this.reviewed.clear();
+        }
       }),
-      vscode.workspace.onDidChangeWorkspaceFolders(() => this.pending.clear()),
+      vscode.workspace.onDidChangeWorkspaceFolders(() => {
+        this.pending.clear();
+        this.reviewed.clear();
+      }),
     );
   }
   private key(target: KnowledgeTarget): string {
@@ -144,6 +151,7 @@ export class ScanWorkbench implements vscode.Disposable {
         : scanOptionsSchema.parse(input);
     if (!options) return;
     this.pending.delete(this.key(target));
+    this.reviewed.delete(this.key(target));
     const plan = await this.cancellable(
       'Repo Knowledge: 静态扫描规划 / Scan plan',
       (signal) => scanRepository(target.root, target.store, options, signal),
@@ -157,6 +165,7 @@ export class ScanWorkbench implements vscode.Disposable {
       { preview: true },
     );
     this.pending.set(this.key(target), plan);
+    this.reviewed.set(this.key(target), plan);
     void vscode.window.showInformationMessage(
       `扫描规划：${plan.files.length} 文件，${plan.summary.selectedBytes} bytes${plan.summary.limited ? '，达到限额或存在未覆盖内容' : ''}。未调用模型、未生成知识；检查后可运行 Save Generation Plan。`,
     );
@@ -183,5 +192,13 @@ export class ScanWorkbench implements vscode.Disposable {
   dispose(): void {
     this.disposables.forEach((disposable) => disposable.dispose());
     this.pending.clear();
+    this.reviewed.clear();
+  }
+  generationPlan(target: KnowledgeTarget): ScanPlan | undefined {
+    const plan = this.reviewed.get(this.key(target));
+    return plan ? structuredClone(plan) : undefined;
+  }
+  consumeGenerationPlan(target: KnowledgeTarget): void {
+    this.reviewed.delete(this.key(target));
   }
 }

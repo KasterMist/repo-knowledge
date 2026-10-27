@@ -16,6 +16,7 @@ export class CodexBackendError extends Error {
     readonly phase: string,
     readonly rpcCode: number | null = null,
     readonly reason: BackendReason = 'unknown',
+    readonly httpStatusCode: number | null = null,
   ) {
     super(`${code}: ${phase}`);
   }
