@@ -41,4 +41,4 @@
 
 客户端依照官方 app-server 的 STDIO JSONL 接口实现，该接口仍在演进；以实际测试版本与运行结果为准。请求、消息和输出量均有上限，失败/取消后不把部分结果描述为成功。配置诊断也不证明其他工具均已禁用，不能单凭 shell_tool=false 就开始不受限的生成。
 
-开发候选已增加独立的 [Generate Knowledge Candidate](generation.zh-CN.md) 受限生成通路与新卡片审阅/确认发布，Windows/Remote SSH 已真实生成候选；T16 任务找回/显式重试已实现，新命令的实际界面验收仍待完成。该生成命令会在用户明确确认后另做严格的版本/模型/配置检查；不能用本诊断的 configured 状态替代。没有“生成后自动发布”的路径。
+开发候选已增加独立的 [Generate Knowledge Candidate](generation.zh-CN.md) 受限生成通路与新卡片审阅/确认发布，Windows/Remote SSH 已真实生成候选；T16 任务找回/显式重试已实现，结果找回界面已通过，无结果重试/进度取消仍待验收。该生成命令会在用户明确确认后另做严格的版本/模型/配置检查；不能用本诊断的 configured 状态替代。没有“生成后自动发布”的路径。
