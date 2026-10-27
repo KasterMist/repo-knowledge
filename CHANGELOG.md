@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Add an explicit single-turn JSON collector with scoped early events, authoritative output checks, byte/event/deadline/observed-usage limits and best-effort interruption. Forced transport cleanup targets owned wrapper descendants on Windows/Linux. No generation command, checkpoint, automatic retry or real model invocation is enabled yet; observed usage is not a hard cost cap.
+
 - Add validated new-card candidate storage, batch diff/confirmation, shared-lock creation publication, current-head batch removal and retained IDs against replay/reuse. Keep canonical schema 1 and existing-card revision semantics; add version-2 creation history with explicit marker recovery and upgrade/downgrade guidance. Real model generation remains pending.
 
 - Add in-memory generation source/output contracts: revalidated selected-source packets, encoded byte limits, structured new-page schema, source-range/hash binding and rejection of existing IDs or changed human knowledge. No model invocation.
