@@ -1,5 +1,9 @@
-import { spawn, type ChildProcessWithoutNullStreams } from 'node:child_process';
-import { isAbsolute } from 'node:path';
+import {
+  spawn,
+  execFile,
+  type ChildProcessWithoutNullStreams,
+} from 'node:child_process';
+import { isAbsolute, join } from 'node:path';
 import { z } from 'zod';
 
 const record = z.record(z.string(), z.unknown());
@@ -53,6 +57,13 @@ export class CodexStdioClient {
   private denials = 0;
   private terminal: CodexBackendError | undefined;
   private initialized = false;
+  private termination?: Promise<void>;
+  private observer:
+    | {
+        notification: (method: string, params: unknown) => void;
+        failure: (error: CodexBackendError) => void;
+      }
+    | undefined;
   private readonly timeoutMs: number;
   private readonly abort: () => void;
   private readonly closed: Promise<void>;
@@ -77,6 +88,7 @@ export class CodexStdioClient {
       cwd: options.cwd,
       shell: false,
       windowsHide: true,
+      detached: process.platform !== 'win32',
       stdio: ['pipe', 'pipe', 'pipe'],
     });
     this.closed = new Promise((resolve) => this.child.once('close', resolve));
@@ -94,7 +106,7 @@ export class CodexStdioClient {
     });
     this.child.on('close', () => {
       if (!this.terminal)
-        this.fail(new CodexBackendError('PROCESS_EXITED', this.phase()));
+        this.fail(new CodexBackendError('PROCESS_EXITED', this.phase()), false);
       options.signal?.removeEventListener('abort', this.abort);
     });
     this.abort = () =>
@@ -113,10 +125,48 @@ export class CodexStdioClient {
       task.reject(error);
     }
     this.pending.clear();
+    try {
+      this.observer?.failure(error);
+    } catch {
+      /* Teardown must continue even if a consumer throws. */
+    }
     if (terminate) {
       this.child.stdin.destroy();
-      this.child.kill();
+      void this.terminate();
     } else this.child.stdin.end();
+  }
+  private terminate(): Promise<void> {
+    if (this.termination) return this.termination;
+    const pid = this.child.pid;
+    if (!pid || this.child.exitCode !== null || this.child.signalCode !== null)
+      return Promise.resolve();
+    if (process.platform === 'win32') {
+      const systemRoot = process.env.SystemRoot;
+      const command = join(
+        systemRoot && isAbsolute(systemRoot) ? systemRoot : 'C:\\Windows',
+        'System32',
+        'taskkill.exe',
+      );
+      this.termination = new Promise<void>((resolve) => {
+        execFile(
+          command,
+          ['/PID', String(pid), '/T', '/F'],
+          { windowsHide: true, timeout: 1000, maxBuffer: 8192 },
+          () => {
+            this.child.kill('SIGKILL');
+            resolve();
+          },
+        );
+      });
+    } else {
+      try {
+        process.kill(-pid, 'SIGKILL');
+      } catch {
+        this.child.kill('SIGKILL');
+      }
+      this.termination = Promise.resolve();
+    }
+    return this.termination;
   }
   private send(message: unknown): void {
     if (this.terminal) throw this.terminal;
@@ -147,6 +197,11 @@ export class CodexStdioClient {
         if (typeof message.method === 'string') {
           methodName.parse(message.method);
           if (message.id !== undefined) {
+            if (this.observer)
+              throw new CodexBackendError(
+                'SERVER_REQUEST_BLOCKED',
+                this.phase(),
+              );
             if (
               !(
                 typeof message.id === 'string' ||
@@ -162,8 +217,8 @@ export class CodexStdioClient {
                 message: 'This client does not handle server requests',
               },
             });
-          }
-          // Notifications are bounded and discarded; diagnostics never retain session data.
+          } else this.observer?.notification(message.method, message.params);
+          // Diagnostics have no observer and never retain session data.
           continue;
         }
         if (!Number.isSafeInteger(message.id))
@@ -215,6 +270,20 @@ export class CodexStdioClient {
     record.parse(result);
     this.send({ method: 'initialized' });
   }
+  observe(
+    notification: (method: string, params: unknown) => void,
+    failure: (error: CodexBackendError) => void,
+  ): () => void {
+    if (this.terminal) throw this.terminal;
+    if (!this.initialized)
+      throw new CodexBackendError('NOT_INITIALIZED', 'observe');
+    if (this.observer) throw new CodexBackendError('OBSERVER_BUSY', 'observe');
+    const observer = { notification, failure };
+    this.observer = observer;
+    return () => {
+      if (this.observer === observer) this.observer = undefined;
+    };
+  }
   request(method: string, params: unknown): Promise<unknown> {
     methodName.parse(method);
     if (!this.initialized || this.terminal)
@@ -250,8 +319,7 @@ export class CodexStdioClient {
         this.closed,
         new Promise<void>((resolve) => {
           force = setTimeout(() => {
-            this.child.kill('SIGKILL');
-            resolve();
+            void this.terminate().then(resolve);
           }, 1000);
         }),
       ]);
