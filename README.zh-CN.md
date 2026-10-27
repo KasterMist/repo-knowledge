@@ -19,7 +19,7 @@ M2 实现与本次范围验收已完成：按源码范围组织的 Wiki/卡片�
 
 M3/T14 开发代码已提供用户主动发起的范围、排除、语言与限额选择、静态扫描预览和外部元数据规划保存；尚不调用模型或生成知识。见[生成指南](docs/user/generation.zh-CN.md)与 [M3 进度](docs/development/m3-acceptance.md)。
 
-M3 开发版已接入校验后的新卡片审阅/发布，以及明确确认后执行的 Generate Knowledge Candidate 命令。Windows 与 Remote SSH 自编演示已真实生成待审阅候选，正式知识不变。已实现元数据任务记录及 Recover or Retry Generation Job；实际恢复/取消与新批次发布验收仍待完成。手动导入未启用。详见[生成指南](docs/user/generation.zh-CN.md)、[ADR 0007](docs/architecture/adr/0007-reviewed-creation.md) 与 [ADR 0008](docs/architecture/adr/0008-explicit-codex-generation.md)。
+M3 开发版已接入校验后的新卡片审阅/发布，以及明确确认后执行的 Generate Knowledge Candidate 命令。Windows 与 Remote SSH 自编演示已真实生成待审阅候选，正式知识不变。已实现元数据任务记录及 Recover or Retry Generation Job；两端结果找回及新批次发布/移除界面已验收；无结果重试与进度取消仍待验收。手动导入未启用。详见[生成指南](docs/user/generation.zh-CN.md)、[ADR 0007](docs/architecture/adr/0007-reviewed-creation.md) 与 [ADR 0008](docs/architecture/adr/0008-explicit-codex-generation.md)。
 
 ## 本地开发
 
