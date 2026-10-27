@@ -42,7 +42,7 @@ export class BackendWorkbench implements vscode.Disposable {
       },
     );
   }
-  private async executable(
+  async executable(
     configured: string,
   ): Promise<{ command: string; source: 'setting' | 'installed-extension' }> {
     let command = configured,

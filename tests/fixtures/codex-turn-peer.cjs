@@ -60,6 +60,15 @@ createInterface({ input: process.stdin }).on('line', (line) => {
       },
     });
   const complete = () => {
+    if (mode === 'upstream-error') {
+      event('error', {
+        error: {
+          message: 'Unsupported schema SECRET-private',
+          codexErrorInfo: { httpConnectionFailed: { httpStatusCode: 400 } },
+        },
+      });
+      return;
+    }
     if (mode === 'server-request') {
       send({
         id: 'approval',

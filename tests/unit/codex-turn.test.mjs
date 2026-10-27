@@ -178,3 +178,14 @@ test('forced cancellation cleans up a task-owned wrapper descendant on Windows/L
       if (pid && (await running())) process.kill(pid, 'SIGKILL');
     }
   }));
+
+test('upstream failure retains only a coarse reason and numeric HTTP status', () =>
+  setup('upstream-error', async ({ run }) => {
+    await assert.rejects(run(), (error) => {
+      assert.equal(error.code, 'TURN_FAILED');
+      assert.equal(error.reason, 'unsupported');
+      assert.equal(error.httpStatusCode, 400);
+      assert.ok(!JSON.stringify(error).includes('SECRET'));
+      return true;
+    });
+  }));

@@ -96,6 +96,12 @@ exports.run = async function run() {
   assert.equal(diagnostics.tools.length, 4);
   const workbench = extension.exports.workbench;
   const roots = await workbench.cards.getChildren();
+  const noPlan = await vscode.commands.executeCommand(
+    'repoKnowledge.generateKnowledge',
+    roots[0],
+  );
+  assert.equal(noPlan?.error, true);
+  assert.match(noPlan.message, /Preview a plan/u);
   const cards = await workbench.cards.getChildren(roots[0]);
   assert.equal(cards.length, 3);
   const readNode = cards.find((card) => card.cardId === 'read-fallback');
@@ -470,6 +476,7 @@ exports.run = async function run() {
           'read-only knowledge document and validated source navigation',
           'durable draft, dirty-editor rejection and saved candidate diff without publication',
           'bounded user-invoked scan plan preview without model calls',
+          'explicit generation command refuses a missing reviewed plan before confirmation/backend access',
           'new-card candidate tree and read-only batch diff; first publish invocation requires review',
           'snapshot editor access',
           'Codex TOML preview',

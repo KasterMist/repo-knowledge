@@ -21,6 +21,42 @@ export type TextTurnBudget = z.input<typeof textTurnBudgetSchema>;
 const bytes = (value: string) => Buffer.byteLength(value, 'utf8');
 const failure = (code: string) =>
   new CodexBackendError(code, 'generation-turn');
+function turnFailure(value: unknown): CodexBackendError {
+  const parsed = z.record(z.string(), z.unknown()).safeParse(value);
+  const message =
+    typeof parsed.data?.message === 'string' ? parsed.data.message : '';
+  const info = parsed.data?.codexErrorInfo;
+  const details =
+    typeof info === 'object' && info !== null
+      ? Object.values(info).find(
+          (entry) => typeof entry === 'object' && entry !== null,
+        )
+      : undefined;
+  const status = z
+    .object({ httpStatusCode: z.int().min(100).max(599).nullish() })
+    .safeParse(details);
+  const reason =
+    /schema|unsupported|not.supported|unrecognized|invalid.parameter/iu.test(
+      message,
+    )
+      ? 'unsupported'
+      : /unauthorized|authentication|log.in|credential|invalid.api.key/iu.test(
+            message,
+          )
+        ? 'authentication'
+        : /rate.limit|overload|quota/iu.test(message)
+          ? 'overloaded'
+          : /network|connect|dns|timeout|timed.out|tls/iu.test(message)
+            ? 'network'
+            : 'unknown';
+  return new CodexBackendError(
+    'TURN_FAILED',
+    'generation-turn',
+    null,
+    reason,
+    status.success ? (status.data.httpStatusCode ?? null) : null,
+  );
+}
 
 /**
  * Collect exactly one explicitly requested turn on an already configured thread.
@@ -168,18 +204,18 @@ export async function collectCodexTextTurn(
               throw failure('CONFLICTING_TURN_OUTPUT');
           }
           if (turn.status !== 'completed')
-            throw failure(
-              turn.status === 'interrupted'
-                ? 'TURN_INTERRUPTED'
-                : 'TURN_FAILED',
-            );
+            throw turn.status === 'interrupted'
+              ? failure('TURN_INTERRUPTED')
+              : turnFailure(
+                  z.record(z.string(), z.unknown()).parse(params.turn).error,
+                );
           if (!final) throw failure('MISSING_TURN_OUTPUT');
           settled = true;
           resolveDone();
           return;
         }
         bind(params.turnId);
-        if (method === 'error') throw failure('TURN_FAILED');
+        if (method === 'error') throw turnFailure(params.error);
         if (method.startsWith('item/reasoning/')) return;
         if (method === 'item/started' || method === 'item/completed') {
           inspectItem(params.item, method === 'item/completed');

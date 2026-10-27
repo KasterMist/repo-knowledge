@@ -115,6 +115,10 @@
       {
         "command": "repoKnowledge.publishCreation",
         "title": "Repo Knowledge: Publish Reviewed Creation"
+      },
+      {
+        "command": "repoKnowledge.generateKnowledge",
+        "title": "Repo Knowledge: Generate Knowledge Candidate"
       }
     ],
     "configuration": {
@@ -136,7 +140,7 @@
           "type": "string",
           "default": "",
           "scope": "machine",
-          "description": "Absolute host-side Codex executable for explicit generation-backend diagnostics. Empty tries the installed official Codex extension on this host. No login/provider settings or tokens are copied; diagnostics do not start model threads."
+          "description": "Absolute host-side Codex executable for metadata diagnostics and explicitly confirmed generation. Empty tries the installed official extension on this host. Login/provider settings and tokens are not copied; only Generate Knowledge Candidate can submit a model turn after confirmation."
         }
       }
     },
@@ -235,6 +239,11 @@
           "command": "repoKnowledge.publishCreation",
           "when": "viewItem == knowledge-creations",
           "group": "knowledge"
+        },
+        {
+          "command": "repoKnowledge.generateKnowledge",
+          "when": "viewItem == knowledge-repository",
+          "group": "planning"
         }
       ]
     }
