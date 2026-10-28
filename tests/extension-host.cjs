@@ -237,6 +237,9 @@ exports.run = async function run() {
       (entry) => entry.itemId === process.env.REPO_KNOWLEDGE_CREATION_ID,
     );
     assert.ok(node);
+    assert.equal(nodes.length, 1);
+    assert.match(node.description, /批次 · 2 张卡片 \/ Batch · 2 cards/u);
+    assert.match(node.tooltip, /Candidate batch\n2 张卡片 \/ 2 cards/u);
     const firstPublish = await vscode.commands.executeCommand(
       'repoKnowledge.publishCreation',
       node,
@@ -257,6 +260,7 @@ exports.run = async function run() {
       (await vscode.workspace.openTextDocument(diff.after)).getText(),
     );
     assert.equal(newCards[0].id, 'host-new-card');
+    assert.equal(newCards.length, 2);
     assert.equal(newCards[0].revision, 1);
     assert.equal(diff.before.scheme, 'repo-knowledge');
     assert.equal(diff.after.scheme, 'repo-knowledge');

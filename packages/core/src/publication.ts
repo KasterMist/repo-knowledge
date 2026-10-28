@@ -299,6 +299,7 @@ export class KnowledgePublication {
         entries.push({
           id,
           title: candidate.cards.map((card) => card.title).join(' · '),
+          cardCount: candidate.cards.length,
           state: 'pending-review',
           error: '',
         });

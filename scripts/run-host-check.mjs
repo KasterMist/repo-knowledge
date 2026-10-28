@@ -66,6 +66,15 @@ const creationCandidate = await new KnowledgePublication(
       scope: ['src'],
       evidence: [{ path: 'src/读取.ts', startLine: 1, endLine: 5 }],
     },
+    {
+      id: 'host-new-cache-card',
+      title: '新增缓存说明',
+      kind: 'fact',
+      body: '缓存未命中以 undefined 表示。',
+      tags: ['缓存'],
+      scope: ['src'],
+      evidence: [{ path: 'src/读取.ts', startLine: 1, endLine: 5 }],
+    },
   ],
 });
 await mkdir(join(demo, '.vscode'), { recursive: true });
