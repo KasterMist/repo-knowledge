@@ -58,6 +58,7 @@ test('new-card batch is saved without source text, reviewed, atomically publishe
     assert.ok(!text.includes(f.repository));
     assert.ok(!text.includes(f.packet.sources[0].content));
     assert.equal((await f.publication.listCreations()).length, 1);
+    assert.equal((await f.publication.listCreations())[0].cardCount, 2);
     const review = await f.publication.previewCreation(saved.candidateId);
     assert.deepEqual(review.before, []);
     assert.equal(review.after.length, 2);

@@ -102,8 +102,16 @@ class PublicationTree
           entry.id,
           entry.title,
         );
-        item.description = entry.state;
-        item.tooltip = entry.error || entry.id;
+        const cardCount = 'cardCount' in entry ? entry.cardCount : undefined;
+        item.description =
+          typeof cardCount === 'number'
+            ? `批次 · ${cardCount} 张卡片 / Batch · ${cardCount} cards · ${entry.state}`
+            : entry.state;
+        item.tooltip =
+          entry.error ||
+          (typeof cardCount === 'number'
+            ? `候选批次 / Candidate batch\n${cardCount} 张卡片 / ${cardCount} cards\n${entry.title}\n${entry.id}`
+            : entry.id);
         return item;
       });
     } catch (error) {

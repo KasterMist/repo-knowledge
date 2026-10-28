@@ -1,6 +1,6 @@
 # ADR 0009: Explicit generation job recovery and stable candidate identity
 
-Status: accepted for M3 development; Windows/Remote SSH result-recovery UI accepted; missing-result retry/progress cancellation pending. Date: 2026-10-27.
+Status: accepted for M3 development; scoped Windows/Remote SSH result recovery, explicit retry and cancellation accepted. Date: 2026-10-27.
 
 ## Decision
 
