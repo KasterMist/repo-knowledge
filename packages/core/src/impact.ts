@@ -16,7 +16,9 @@ const baselineContent = z.strictObject({
   snapshotRevision: z.string().regex(/^[a-f0-9]{64}$/u),
   cards: z.array(dependency).max(200),
 });
-const baselineSchema = baselineContent.extend({ revision: z.string() });
+export const dependencyBaselineSchema = baselineContent.extend({
+  revision: z.string().max(64),
+});
 const complete = (plan: ScanPlan) =>
   !plan.summary.limited &&
   Object.entries(plan.summary.skipped).every(
@@ -57,7 +59,7 @@ export async function reviewDependencyImpact(
   input: unknown,
   signal?: AbortSignal,
 ) {
-  const baseline = baselineSchema.parse(input);
+  const baseline = dependencyBaselineSchema.parse(input);
   const content = baselineContent.parse({
     schemaVersion: baseline.schemaVersion,
     plan: baseline.plan,
@@ -144,6 +146,17 @@ export async function reviewDependencyImpact(
     coverageComplete,
     changes,
     cards,
+    files: changes.map((change) => ({
+      ...change,
+      evidenceCardIds: baseline.cards
+        .filter((card) => card.evidence.some((e) => e.path === change.path))
+        .map((card) => card.id),
+      scopeCardIds: baseline.cards
+        .filter((card) =>
+          card.scope.some((scope) => inScope(change.path, scope)),
+        )
+        .map((card) => card.id),
+    })),
     modelRequests: 0,
     published: false,
   };

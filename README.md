@@ -21,7 +21,7 @@ M3/T14 development now provides explicitly invoked include/exclude/language/byte
 
 M3 development includes new-card candidate review/publication and an explicitly confirmed Generate Knowledge Candidate command with restricted Codex preflight. Self-authored Windows and Remote SSH editor generation succeeded and saved reviewable candidates with canonical knowledge unchanged. Metadata-only job receipts, explicit retry and recovery, source-confirmation/progress cancellation, and new-batch publication/removal are accepted for the self-authored Windows/Remote SSH scope. M3 scoped acceptance is complete; it remains unreleased. Wiki navigation still uses source scopes; this is not whole-repository multi-pass generation or a separate article hierarchy. No manual import is enabled. See [the generation guide](docs/user/generation.zh-CN.md), [ADR 0007](docs/architecture/adr/0007-reviewed-creation.md) and [ADR 0008](docs/architecture/adr/0008-explicit-codex-generation.md).
 
-T17 development now includes an in-memory static dependency-impact core; persisted baselines and editor commands are not yet implemented. See [the increment boundary](docs/development/t17-impact-core.md).
+T17 development includes immutable external dependency baselines and explicit Capture Dependency Baseline / Review Knowledge Changes commands. Reports include reverse file-to-card dependencies; actual Windows/Remote SSH UI acceptance remains pending. See [the increment boundary](docs/development/t17-impact-core.md).
 
 ## Development
 
