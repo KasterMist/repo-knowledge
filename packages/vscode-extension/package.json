@@ -123,6 +123,14 @@
       {
         "command": "repoKnowledge.recoverGeneration",
         "title": "Repo Knowledge: Recover or Retry Generation Job"
+      },
+      {
+        "command": "repoKnowledge.captureDependencyBaseline",
+        "title": "Repo Knowledge: Capture Dependency Baseline"
+      },
+      {
+        "command": "repoKnowledge.reviewKnowledgeChanges",
+        "title": "Repo Knowledge: Review Knowledge Changes"
       }
     ],
     "configuration": {

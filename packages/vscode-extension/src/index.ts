@@ -4,7 +4,7 @@ import { createHash } from 'node:crypto';
 import { mkdir, open, cp, realpath, writeFile, access } from 'node:fs/promises';
 import { join } from 'node:path';
 import { resolveHost, codexConfiguration, nodeCommand } from './host.js';
-import { KnowledgeStore } from '@repo-knowledge/core';
+import { KnowledgeStore, ImpactBaselines } from '@repo-knowledge/core';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
 import { KnowledgeWorkbench } from './workbench.js';
@@ -89,6 +89,90 @@ export function activate(context: vscode.ExtensionContext) {
     context.globalStorageUri,
   );
   context.subscriptions.push(generation);
+  for (const mode of [
+    'captureDependencyBaseline',
+    'reviewKnowledgeChanges',
+  ] as const) {
+    register(mode, async () => {
+      const target = await selected();
+      if (!target) return;
+      if (vscode.workspace.textDocuments.some((document) => document.isDirty))
+        throw new Error(
+          '请先保存或自行取消未保存的编辑 / Save or discard dirty editors before impact review.',
+        );
+      const baselines = new ImpactBaselines(target.knowledge);
+      const plan =
+        mode === 'captureDependencyBaseline'
+          ? workbench.scanning.generationPlan(target)
+          : undefined;
+      if (mode === 'captureDependencyBaseline' && !plan)
+        throw new Error(
+          '请先运行 Plan Knowledge Generation 检查范围 / Preview a plan first.',
+        );
+      const choices =
+        mode === 'reviewKnowledgeChanges' ? await baselines.list() : [];
+      if (mode === 'reviewKnowledgeChanges' && !choices.length)
+        throw new Error(
+          '没有依赖基线 / No dependency baselines; capture one first.',
+        );
+      const picked =
+        mode === 'reviewKnowledgeChanges'
+          ? await vscode.window.showQuickPick(
+              choices.map((value) => ({
+                label: value.plan.createdAt,
+                description: value.plan.id,
+                id: value.plan.id,
+              })),
+              { title: '选择依赖基线 / Select dependency baseline' },
+            )
+          : undefined;
+      if (mode === 'reviewKnowledgeChanges' && !picked) return;
+      return vscode.window.withProgress(
+        {
+          location: vscode.ProgressLocation.Notification,
+          title: 'Repo Knowledge: 静态依赖分析 / Static impact',
+          cancellable: true,
+        },
+        async (_progress, token) => {
+          const controller = new AbortController();
+          const listeners = [
+            token.onCancellationRequested(() => controller.abort()),
+            vscode.workspace.onDidChangeConfiguration((e) => {
+              if (e.affectsConfiguration('repoKnowledge')) controller.abort();
+            }),
+            vscode.workspace.onDidChangeWorkspaceFolders(() =>
+              controller.abort(),
+            ),
+          ];
+          if (token.isCancellationRequested) controller.abort();
+          try {
+            if (plan) {
+              const result = await baselines.save(plan, controller.signal);
+              void vscode.window.showInformationMessage(
+                '已保存依赖基线；未调用模型或发布 / Dependency baseline saved.',
+              );
+              return result;
+            }
+            const report = await baselines.review(
+              picked!.id,
+              controller.signal,
+            );
+            const uri = workbench.documents.create(
+              'knowledge-impact.json',
+              JSON.stringify(report, null, 2),
+            );
+            await vscode.window.showTextDocument(
+              await vscode.workspace.openTextDocument(uri),
+              { preview: false },
+            );
+            return report;
+          } finally {
+            listeners.forEach((listener) => listener.dispose());
+          }
+        },
+      );
+    });
+  }
   register('initialize', async () => {
     const target = await selected();
     if (!target) return;
