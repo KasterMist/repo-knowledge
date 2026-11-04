@@ -21,6 +21,8 @@ M3/T14 开发代码已提供用户主动发起的范围、排除、语言与限�
 
 M3 开发版已接入校验后的新卡片审阅/发布，以及明确确认后执行的 Generate Knowledge Candidate 命令。Windows 与 Remote SSH 自编演示已真实生成待审阅候选，正式知识不变。已实现元数据任务记录及 Recover or Retry Generation Job；两端的明确重试、结果找回、发送确认/进度取消及新批次发布/移除均通过本次自编演示范围验收。M3 本次范围验收完成，尚未发布；Wiki 仍按源码 scope 导航，不等同于全库多轮生成或独立文章层级。手动导入未启用。详见[生成指南](docs/user/generation.zh-CN.md)、[ADR 0007](docs/architecture/adr/0007-reviewed-creation.md) 与 [ADR 0008](docs/architecture/adr/0008-explicit-codex-generation.md)。
 
+T17 开发代码已加入内存中的静态依赖影响分析内核；持久基线和编辑器命令尚未实现。见[本次增量边界](docs/development/t17-impact-core.md)。
+
 ## 本地开发
 
 Windows 与 Linux 统一使用 Node.js **24.19.0**、npm **12.2.1**：
