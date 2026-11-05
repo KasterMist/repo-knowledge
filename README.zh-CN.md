@@ -21,7 +21,7 @@ M3/T14 开发代码已提供用户主动发起的范围、排除、语言与限�
 
 M3 开发版已接入校验后的新卡片审阅/发布，以及明确确认后执行的 Generate Knowledge Candidate 命令。Windows 与 Remote SSH 自编演示已真实生成待审阅候选，正式知识不变。已实现元数据任务记录及 Recover or Retry Generation Job；两端的明确重试、结果找回、发送确认/进度取消及新批次发布/移除均通过本次自编演示范围验收。M3 本次范围验收完成，尚未发布；Wiki 仍按源码 scope 导航，不等同于全库多轮生成或独立文章层级。手动导入未启用。详见[生成指南](docs/user/generation.zh-CN.md)、[ADR 0007](docs/architecture/adr/0007-reviewed-creation.md) 与 [ADR 0008](docs/architecture/adr/0008-explicit-codex-generation.md)。
 
-T17 开发代码已加入外部不可变依赖基线及 Capture Dependency Baseline / Review Knowledge Changes 显式命令，报告含文件到卡片的反向依赖；两端实际界面验收仍待完成。见[本次增量边界](docs/development/t17-impact-core.md)。
+T17 开发代码已加入外部不可变依赖基线及 Capture Dependency Baseline / Review Knowledge Changes 显式命令，报告含文件到卡片的反向依赖；两端无变化报告界面已验收；已实现保守的可能改名提示，变化报告界面与导航仍待完成。见[本次增量边界](docs/development/t17-impact-core.md)。
 
 ## 本地开发
 

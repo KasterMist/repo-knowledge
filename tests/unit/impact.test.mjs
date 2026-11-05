@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFile, writeFile, unlink } from 'node:fs/promises';
+import { readFile, writeFile, unlink, rename } from 'node:fs/promises';
 import { join } from 'node:path';
 import { fixture } from '../helpers.mjs';
 import {
@@ -68,9 +68,55 @@ test('scope additions signal potential impact without falsifying evidence', () =
     const r = await reviewDependencyImpact(k, baseline);
     assert.ok(r.changes.some((c) => c.kind === 'added'));
     assert.ok(r.cards.some((c) => c.state === 'potential-impact'));
+    assert.equal(r.cards.find((c) => c.id === 'cache-miss').state, 'current');
     assert.ok(
       r.cards.every((c) => c.evidence.every((e) => e.state === 'current')),
     );
+  }));
+
+test('unique content suggests a rename while retaining deletion, addition and missing evidence', () =>
+  setup(async ({ f, k, baseline }) => {
+    await rename(
+      join(f.repository, 'src/读取.ts'),
+      join(f.repository, 'src/renamed.ts'),
+    );
+    const r = await reviewDependencyImpact(k, baseline);
+    assert.deepEqual(r.possibleRenames, [
+      {
+        from: 'src/读取.ts',
+        to: 'src/renamed.ts',
+        reason: 'unique-content-match',
+      },
+    ]);
+    assert.ok(r.changes.some((c) => c.kind === 'deleted'));
+    assert.ok(r.changes.some((c) => c.kind === 'added'));
+    assert.equal(
+      r.cards.find((c) => c.id === 'read-fallback').state,
+      'invalid-evidence',
+    );
+  }));
+test('copies and incomplete coverage do not imply a rename', () =>
+  setup(async ({ f, k }) => {
+    const text = await readFile(join(f.repository, 'src/读取.ts'));
+    await writeFile(join(f.repository, 'src/copy.ts'), text);
+    const plan = await scanRepository(f.repository, f.store, {
+      ...defaultScanOptions,
+      include: ['src/**/*.ts'],
+      exclude: [],
+    });
+    const baseline = await captureDependencyBaseline(k, plan);
+    await rename(
+      join(f.repository, 'src/读取.ts'),
+      join(f.repository, 'src/renamed.ts'),
+    );
+    assert.deepEqual(
+      (await reviewDependencyImpact(k, baseline)).possibleRenames,
+      [],
+    );
+    await writeFile(join(f.repository, 'src/large.ts'), 'x'.repeat(70000));
+    const r = await reviewDependencyImpact(k, baseline);
+    assert.equal(r.coverageComplete, false);
+    assert.deepEqual(r.possibleRenames, []);
   }));
 test('tampered baselines and incomplete coverage cannot report all current', () =>
   setup(async ({ f, k, baseline }) => {
