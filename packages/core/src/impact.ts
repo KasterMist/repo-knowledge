@@ -135,6 +135,33 @@ export async function reviewDependencyImpact(
           : 'current';
     return { id: card.id, state, evidence, scopeChanges };
   });
+  // Content identity is only a possible rename; preserve add/delete and old evidence.
+  const possibleRenames = coverageComplete
+    ? changes
+        .filter((change) => change.kind === 'deleted')
+        .flatMap((change) => {
+          const hash = before.get(change.path);
+          if (
+            [...before.values()].filter((value) => value === hash).length !==
+              1 ||
+            [...after.values()].filter((value) => value === hash).length !== 1
+          )
+            return [];
+          const added = changes.find(
+            (candidate) =>
+              candidate.kind === 'added' && after.get(candidate.path) === hash,
+          );
+          return added
+            ? [
+                {
+                  from: change.path,
+                  to: added.path,
+                  reason: 'unique-content-match' as const,
+                },
+              ]
+            : [];
+        })
+    : [];
   if (
     (await knowledge.snapshot()).snapshotRevision !== baseline.snapshotRevision
   )
@@ -144,6 +171,7 @@ export async function reviewDependencyImpact(
     );
   return {
     coverageComplete,
+    possibleRenames,
     changes,
     cards,
     files: changes.map((change) => ({

@@ -11,3 +11,9 @@ This is a bounded static observation, not an atomic repository snapshot, semanti
 Self-authored tests cover unchanged metadata, direct changes/deletion, directory-scope additions, checksum tampering and incomplete coverage. Full-suite results and GitHub delivery are tracked in Issue #35. T17 remains open; M3 acceptance is retained without repeating its UI tests.
 
 Storage increment validation: pinned Node 24.19.0 full check passed 73 unit and 4 integration tests. Actual isolated Windows VS Code 1.117.0 installed the package and registered commands with existing recovery checks passing. Positive capture/select/report GUI interactions are not covered by that runner and remain pending.
+
+## Accepted baseline UI and conservative rename increment (2026-11-05)
+
+The maintainer supplied actual Windows and Remote SSH reports: complete coverage, no changes, three current cards/current evidence, zero model requests, no publication. Independent local core and remote SFTP inspection found one valid saved baseline per host with current source/canonical hashes. This accepts capture/select/read-only no-change reporting; no repeat is required.
+
+Reports now add possibleRenames only for complete coverage and a content hash unique in both entire inventories. Changes still retain added/deleted entries, and old-path evidence remains missing/invalid. Copies or incomplete coverage never create a rename suggestion. This is not Git history inference or automatic reference repair. Existing baseline format 1 is unchanged; older baselines remain readable. Pinned full check passed 75 unit and 4 integration tests. Changed-file report GUI acceptance and navigation shortcuts remain open in Issue #35.
