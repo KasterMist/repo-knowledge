@@ -131,6 +131,10 @@
       {
         "command": "repoKnowledge.reviewKnowledgeChanges",
         "title": "Repo Knowledge: Review Knowledge Changes"
+      },
+      {
+        "command": "repoKnowledge.openImpactTarget",
+        "title": "Repo Knowledge: Open Impact Report Target"
       }
     ],
     "configuration": {

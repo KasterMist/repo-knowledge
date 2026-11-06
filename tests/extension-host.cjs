@@ -130,6 +130,46 @@ exports.run = async function run() {
   assert.equal(sourceUri.scheme, 'file');
   assert.equal(path.basename(sourceUri.fsPath), '读取.ts');
   assert.equal(vscode.window.activeTextEditor.selection.start.line, 0);
+  const impactUri = workbench.documents.create('host-impact.json', '{}');
+  extension.exports.impactNavigation.remember(impactUri, {
+    target: readNode.target,
+    revision: (await readNode.target.knowledge.snapshot()).snapshotRevision,
+    files: ['src/读取.ts', 'src/deleted.ts'],
+    cards: ['read-fallback'],
+  });
+  const activateReport = async () =>
+    vscode.window.showTextDocument(
+      await vscode.workspace.openTextDocument(impactUri),
+      { preview: false },
+    );
+  await activateReport();
+  const jump = await vscode.commands.executeCommand(
+    'repoKnowledge.openImpactTarget',
+    { kind: 'file', value: 'src/读取.ts' },
+  );
+  assert.equal(jump.scheme, 'file', JSON.stringify(jump));
+  assert.equal(path.basename(jump.fsPath), '读取.ts');
+  await activateReport();
+  const missing = await vscode.commands.executeCommand(
+    'repoKnowledge.openImpactTarget',
+    { kind: 'file', value: 'src/deleted.ts' },
+  );
+  assert.equal(missing.error, true);
+  assert.match(missing.message, /Source path is missing/u);
+  const rejected = await vscode.commands.executeCommand(
+    'repoKnowledge.openImpactTarget',
+    { kind: 'file', value: '../secret' },
+  );
+  assert.equal(rejected.error, true);
+  const impactCard = await vscode.commands.executeCommand(
+    'repoKnowledge.openImpactTarget',
+    { kind: 'card', value: 'read-fallback' },
+  );
+  assert.equal(impactCard.scheme, 'repo-knowledge');
+  assert.equal(
+    JSON.parse(vscode.window.activeTextEditor.document.getText()).card.id,
+    'read-fallback',
+  );
   const wikiRoots = await workbench.wiki.getChildren();
   const scope = await workbench.wiki.getChildren(wikiRoots[0]);
   assert.equal(scope[0].label, 'src');
