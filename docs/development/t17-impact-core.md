@@ -17,3 +17,13 @@ Storage increment validation: pinned Node 24.19.0 full check passed 73 unit and 
 The maintainer supplied actual Windows and Remote SSH reports: complete coverage, no changes, three current cards/current evidence, zero model requests, no publication. Independent local core and remote SFTP inspection found one valid saved baseline per host with current source/canonical hashes. This accepts capture/select/read-only no-change reporting; no repeat is required.
 
 Reports now add possibleRenames only for complete coverage and a content hash unique in both entire inventories. Changes still retain added/deleted entries, and old-path evidence remains missing/invalid. Copies or incomplete coverage never create a rename suggestion. This is not Git history inference or automatic reference repair. Existing baseline format 1 is unchanged; older baselines remain readable. Pinned full check passed 75 unit and 4 integration tests. Changed-file report GUI acceptance and navigation shortcuts remain open in Issue #35.
+
+## Changed-report UI and navigation increment (2026-11-06)
+
+The maintainer confirms Windows/SSH composite changed-report results match the requested modified/deleted/added/possible-rename and direct-invalid versus scope-potential states, with no model or publication. This is maintainer-reported UI evidence on the previously statically verified independent fixtures; do not repeat it.
+
+Open Impact Report Target navigates only from an active registered report to its allowlisted current file or card. Memory contexts are capped at 20 and cleared on report close/workspace/config changes. Snapshot mismatch rejects stale navigation. Relative-path validation, every-component symlink checks and root containment protect source opening; a deleted source reports missing without redirecting to a suggested rename. Cards show current structured knowledge and evidence freshness. No persisted formats or model/publication behavior change. Positive navigation UI acceptance remains pending, T17 stays open.
+
+Navigation validation: pinned full check passed 76 unit/4 integration tests. Actual isolated Windows VS Code 1.117.0 passed source/card jumps, missing-file messaging and refusal of a target outside the registered report. Tests bind a real canonical revision, as production reports do. Two-platform interactive target selection remains pending; previous changed/no-change report acceptance is retained.
+
+The initial Windows CI unit assertion compared a canonical path against an 8.3 temporary-directory alias. It now compares real paths; source containment/refusal behavior is unchanged. Exact-head replacement CI must pass before merge.

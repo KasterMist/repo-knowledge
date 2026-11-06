@@ -10,6 +10,7 @@ import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js'
 import { KnowledgeWorkbench } from './workbench.js';
 import { BackendWorkbench } from './backend-workbench.js';
 import { GenerationWorkbench } from './generation-workbench.js';
+import { ImpactNavigation } from './impact-navigation.js';
 
 export function activate(context: vscode.ExtensionContext) {
   const output = vscode.window.createOutputChannel('Repo Knowledge');
@@ -76,6 +77,8 @@ export function activate(context: vscode.ExtensionContext) {
   };
   const workbench = new KnowledgeWorkbench(selected);
   context.subscriptions.push(workbench);
+  const impactNavigation = new ImpactNavigation(workbench.documents);
+  context.subscriptions.push(impactNavigation);
   const backend = new BackendWorkbench(
     selected,
     workbench.documents,
@@ -161,6 +164,18 @@ export function activate(context: vscode.ExtensionContext) {
               'knowledge-impact.json',
               JSON.stringify(report, null, 2),
             );
+            const baseline = await baselines.read(picked!.id);
+            impactNavigation.remember(uri, {
+              target,
+              revision: baseline.snapshotRevision,
+              files: [
+                ...new Set([
+                  ...report.changes.map((c) => c.path),
+                  ...report.cards.flatMap((c) => c.evidence.map((e) => e.path)),
+                ]),
+              ],
+              cards: report.cards.map((c) => c.id),
+            });
             await vscode.window.showTextDocument(
               await vscode.workspace.openTextDocument(uri),
               { preview: false },
@@ -396,5 +411,5 @@ export function activate(context: vscode.ExtensionContext) {
       true,
     );
   });
-  return { workbench, backend, generation };
+  return { workbench, backend, generation, impactNavigation };
 }
