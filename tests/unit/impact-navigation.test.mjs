@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdir, symlink } from 'node:fs/promises';
+import { mkdir, symlink, realpath } from 'node:fs/promises';
 import { join } from 'node:path';
 import { fixture } from '../helpers.mjs';
 import { resolveImpactSource } from '../../packages/core/dist/index.js';
@@ -9,7 +9,7 @@ test('impact navigation resolves Unicode source but refuses missing, traversal a
   try {
     assert.equal(
       await resolveImpactSource(f.repository, 'src/读取.ts'),
-      join(f.repository, 'src/读取.ts'),
+      await realpath(join(f.repository, 'src/读取.ts')),
     );
     await assert.rejects(
       resolveImpactSource(f.repository, 'src/deleted.ts'),
