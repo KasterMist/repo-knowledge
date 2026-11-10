@@ -23,7 +23,7 @@ M3 development includes new-card candidate review/publication and an explicitly 
 
 T17 development includes immutable external dependency baselines and explicit Capture Dependency Baseline / Review Knowledge Changes commands. Reports include reverse file-to-card dependencies; Windows/Remote SSH no-change report UI is accepted. Conservative possible-rename hints are implemented; changed-file GUI acceptance is complete on Windows/SSH; report-target navigation is accepted on both hosts. See [the increment boundary](docs/development/t17-impact-core.md).
 
-T18 development adds explicit Git worktree/branch store binding and HEAD/index-bound reviewed operations. Existing Git stores require a fresh binding workflow; legacy pending metadata is not automatically adopted. Implementation and scoped acceptance are tracked in [Issue #41](https://github.com/KasterMist/repo-knowledge/issues/41); interactive acceptance is pending. See [the migration contract](docs/architecture/adr/0011-repository-context.md). No new release.
+T18 development adds explicit Git worktree/branch store binding and HEAD/index-bound reviewed operations. Existing Git stores require a fresh binding workflow; legacy pending metadata is not automatically adopted. Implementation and scoped acceptance are tracked in [Issue #41](https://github.com/KasterMist/repo-knowledge/issues/41); Windows-native and Remote SSH binding cancellation, confirmed binding, feature-branch refusal and return-to-main recovery are accepted. See [the migration contract](docs/architecture/adr/0011-repository-context.md). No new release.
 
 ## Development
 
