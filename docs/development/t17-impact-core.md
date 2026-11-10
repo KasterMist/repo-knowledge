@@ -27,3 +27,7 @@ Open Impact Report Target navigates only from an active registered report to its
 Navigation validation: pinned full check passed 76 unit/4 integration tests. Actual isolated Windows VS Code 1.117.0 passed source/card jumps, missing-file messaging and refusal of a target outside the registered report. Tests bind a real canonical revision, as production reports do. Two-platform interactive target selection remains pending; previous changed/no-change report acceptance is retained.
 
 The initial Windows CI unit assertion compared a canonical path against an 8.3 temporary-directory alias. It now compares real paths; source containment/refusal behavior is unchanged. Exact-head replacement CI must pass before merge.
+
+## 最终导航验收归档（2026-11-10）
+
+维护者确认 Windows 原生与 Remote SSH 的源码打开、read-fallback 只读卡片 stale=true、旧路径缺失提示均正常。结合此前无变化/变化报告、PR #40 精确 head 五项 CI 和独立自编夹具核对，T17 本次范围退出条件已满足，Issue #35 已关闭。不重测已通过场景；下一项 T18，不代表 M4 或新版本已发布。

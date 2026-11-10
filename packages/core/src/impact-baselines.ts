@@ -9,6 +9,7 @@ import {
 import { join } from 'node:path';
 import { z } from 'zod';
 import { KnowledgeStore } from './store.js';
+import { checkRepositoryBinding } from './repository-context.js';
 import { boundedRead, within, KnowledgeError, fingerprint } from './files.js';
 import {
   captureDependencyBaseline,
@@ -19,6 +20,10 @@ import {
 export class ImpactBaselines {
   constructor(readonly knowledge: KnowledgeStore) {}
   private async directory(create = false) {
+    await checkRepositoryBinding(
+      this.knowledge.repositoryRoot,
+      this.knowledge.storeRoot,
+    );
     const root = await realpath(this.knowledge.repositoryRoot);
     const store = await realpath(this.knowledge.storeRoot);
     if (within(root, store))

@@ -9,6 +9,7 @@ import {
   writeFile,
 } from 'node:fs/promises';
 import { resolve, join } from 'node:path';
+import { tmpdir } from 'node:os';
 import { artifactName } from './release-config.mjs';
 import {
   KnowledgeStore,
@@ -24,7 +25,8 @@ if (!codeExecutable || !cliScript)
     'Usage: node scripts/run-host-check.mjs <Code executable> <VS Code cli.js>',
   );
 await mkdir('.tmp', { recursive: true });
-const directory = await mkdtemp(resolve('.tmp/host-check-'));
+// Fixtures must not inherit the development repository's Git context.
+const directory = await mkdtemp(join(tmpdir(), 'repo-knowledge-host-check-'));
 const profile = join(directory, 'profile');
 const extensions = join(directory, 'extensions');
 const demo = join(directory, 'demo');

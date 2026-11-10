@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { relative, isAbsolute } from 'node:path';
+import { realpath } from 'node:fs/promises';
 import {
   KnowledgePublication,
   type PublicationReview,
@@ -219,22 +220,28 @@ export class PublicationWorkbench implements vscode.Disposable {
     ])
       tree.refresh();
   }
-  private clean(target: KnowledgeTarget): void {
-    const dirty = vscode.workspace.textDocuments.find((document) => {
-      if (!document.isDirty) return false;
-      const path = relative(target.store, document.uri.fsPath);
-      return (
+  private async clean(target: KnowledgeTarget): Promise<void> {
+    const store = await realpath(target.store);
+    for (const document of vscode.workspace.textDocuments) {
+      if (
+        !document.isDirty ||
+        !['file', 'vscode-remote'].includes(document.uri.scheme)
+      )
+        continue;
+      // Canonicalize both sides: Windows may open the same file through RUNNER~1.
+      const source = await realpath(document.uri.fsPath);
+      const path = relative(store, source);
+      if (
         path === '' ||
         (!isAbsolute(path) &&
           path !== '..' &&
           !path.startsWith('../') &&
           !path.startsWith('..\\'))
-      );
-    });
-    if (dirty)
-      throw new Error(
-        '知识目录有未保存的编辑。请先保存或自行取消修改，再审阅 / Save or discard dirty knowledge editors before review.',
-      );
+      )
+        throw new Error(
+          '知识目录有未保存的编辑。请先保存或自行取消修改，再审阅 / Save or discard dirty knowledge editors before review.',
+        );
+    }
   }
   private async choose(mode: Mode, node?: PublicationNode) {
     const target = node?.target ?? (await this.resolve(node?.folder));
@@ -290,7 +297,7 @@ export class PublicationWorkbench implements vscode.Disposable {
   async reviewCreation(node?: PublicationNode) {
     const chosen = await this.choose('creations', node);
     if (!chosen) return;
-    this.clean(chosen.target);
+    await this.clean(chosen.target);
     return this.diff(
       chosen.target,
       await chosen.publication.previewCreation(chosen.id),
@@ -299,7 +306,7 @@ export class PublicationWorkbench implements vscode.Disposable {
   async publishCreation(node?: PublicationNode) {
     const chosen = await this.choose('creations', node);
     if (!chosen) return;
-    this.clean(chosen.target);
+    await this.clean(chosen.target);
     let review = this.reviews.get(this.key(chosen.target, chosen.id));
     if (!review || review.operation !== 'create') {
       review = await chosen.publication.previewCreation(chosen.id);
@@ -317,7 +324,7 @@ export class PublicationWorkbench implements vscode.Disposable {
       )) !== '发布 / Publish'
     )
       return { cancelled: true };
-    this.clean(chosen.target);
+    await this.clean(chosen.target);
     const result = await chosen.publication.publishCreation(
       chosen.id,
       review.token,
@@ -355,7 +362,7 @@ export class PublicationWorkbench implements vscode.Disposable {
   async submitDraft(node?: PublicationNode) {
     const chosen = await this.choose('drafts', node);
     if (!chosen) return;
-    this.clean(chosen.target);
+    await this.clean(chosen.target);
     const result = await chosen.publication.submitDraft(chosen.id);
     this.refreshAll();
     void vscode.window.showInformationMessage(
@@ -366,7 +373,7 @@ export class PublicationWorkbench implements vscode.Disposable {
   async reviewProposal(node?: PublicationNode) {
     const chosen = await this.choose('proposals', node);
     if (!chosen) return;
-    this.clean(chosen.target);
+    await this.clean(chosen.target);
     return this.diff(
       chosen.target,
       await chosen.publication.previewProposal(chosen.id),
@@ -375,7 +382,7 @@ export class PublicationWorkbench implements vscode.Disposable {
   async publishProposal(node?: PublicationNode) {
     const chosen = await this.choose('proposals', node);
     if (!chosen) return;
-    this.clean(chosen.target);
+    await this.clean(chosen.target);
     let review = this.reviews.get(this.key(chosen.target, chosen.id));
     if (!review || review.operation !== 'publish') {
       review = await chosen.publication.previewProposal(chosen.id);
@@ -391,7 +398,7 @@ export class PublicationWorkbench implements vscode.Disposable {
       '发布 / Publish',
     );
     if (choice !== '发布 / Publish') return { cancelled: true };
-    this.clean(chosen.target);
+    await this.clean(chosen.target);
     const result = await chosen.publication.publish(chosen.id, review.token);
     this.reviews.delete(this.key(chosen.target, chosen.id));
     this.refreshAll();
@@ -417,7 +424,7 @@ export class PublicationWorkbench implements vscode.Disposable {
   async rollback(node?: PublicationNode) {
     const chosen = await this.choose('history', node);
     if (!chosen) return;
-    this.clean(chosen.target);
+    await this.clean(chosen.target);
     let review = this.reviews.get(this.key(chosen.target, chosen.id));
     if (!review || !['rollback', 'remove-created'].includes(review.operation)) {
       review = await chosen.publication.previewRollback(chosen.id);
@@ -437,7 +444,7 @@ export class PublicationWorkbench implements vscode.Disposable {
       )) !== '回退 / Roll back'
     )
       return { cancelled: true };
-    this.clean(chosen.target);
+    await this.clean(chosen.target);
     const result = await chosen.publication.rollback(chosen.id, review.token);
     this.reviews.delete(this.key(chosen.target, chosen.id));
     this.refreshAll();
@@ -446,7 +453,7 @@ export class PublicationWorkbench implements vscode.Disposable {
   async recover(node?: PublicationNode) {
     const chosen = await this.choose('history', node);
     if (!chosen) return;
-    this.clean(chosen.target);
+    await this.clean(chosen.target);
     const snapshot = await chosen.target.knowledge.snapshot();
     await this.openHistory(
       new PublicationNode(
@@ -464,7 +471,7 @@ export class PublicationWorkbench implements vscode.Disposable {
       )) !== '恢复标记 / Recover'
     )
       return { cancelled: true };
-    this.clean(chosen.target);
+    await this.clean(chosen.target);
     const result = await chosen.publication.recover(
       chosen.id,
       snapshot.snapshotRevision,

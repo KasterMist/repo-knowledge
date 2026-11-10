@@ -12,3 +12,4 @@ export * from './generation-jobs.js';
 export * from './impact.js';
 export * from './impact-baselines.js';
 export * from './impact-navigation.js';
+export * from './repository-context.js';
