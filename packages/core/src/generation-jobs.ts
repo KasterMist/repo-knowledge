@@ -14,6 +14,7 @@ import { buildGenerationPacket } from './generation.js';
 import { scanPlanSchema, type ScanPlan } from './scan.js';
 import { KnowledgeStore } from './store.js';
 import { KnowledgePublication } from './publication.js';
+import { checkRepositoryBinding } from './repository-context.js';
 import { generateKnowledgeCandidate } from './codex-generation.js';
 
 const uuid = z.uuid();
@@ -50,6 +51,10 @@ async function writeExclusive(path: string, value: unknown) {
 export class GenerationJobs {
   constructor(readonly knowledge: KnowledgeStore) {}
   private async directory() {
+    await checkRepositoryBinding(
+      this.knowledge.repositoryRoot,
+      this.knowledge.storeRoot,
+    );
     const root = await realpath(this.knowledge.storeRoot);
     const directory = join(root, 'generation-jobs');
     await mkdir(directory, { recursive: true });

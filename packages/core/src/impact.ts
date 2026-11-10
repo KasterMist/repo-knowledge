@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { KnowledgeStore } from './store.js';
 import { cardSchema } from './schema.js';
 import { fingerprint, KnowledgeError } from './files.js';
+import { assertContext } from './repository-context.js';
 import {
   scanPlanSchema,
   scanRepository,
@@ -86,6 +87,7 @@ export async function reviewDependencyImpact(
       'IMPACT_ROOT_CHANGED',
       'Baseline belongs to another repository',
     );
+  assertContext(baseline.plan.context, current.context, true);
   const before = new Map(
     baseline.plan.files.map((file) => [file.path, file.sha256]),
   );

@@ -13,6 +13,11 @@ import { setTimeout as pause } from 'node:timers/promises';
 import { z } from 'zod';
 import { KnowledgeStore } from './store.js';
 import {
+  repositoryContext,
+  assertContext,
+  checkRepositoryBinding,
+} from './repository-context.js';
+import {
   buildGenerationPacket,
   validateCurrentGeneration,
   type GenerationPacket,
@@ -110,7 +115,15 @@ const absent = (error: unknown) =>
 
 export class KnowledgePublication {
   constructor(readonly knowledge: KnowledgeStore) {}
+  private async reviewToken(content: string) {
+    const context = await repositoryContext(this.knowledge.repositoryRoot);
+    return fingerprint(content + (context ? '\n' + context.revision : ''));
+  }
   private async directory(name: string, create = false) {
+    await checkRepositoryBinding(
+      this.knowledge.repositoryRoot,
+      this.knowledge.storeRoot,
+    );
     const root = await realpath(this.knowledge.storeRoot);
     const path = join(root, name);
     if (create) await mkdir(path, { recursive: true });
@@ -379,7 +392,7 @@ export class KnowledgePublication {
       review: {
         itemId: id,
         operation: 'create' as const,
-        token: fingerprint(text + '\n' + current.snapshotRevision),
+        token: await this.reviewToken(text + '\n' + current.snapshotRevision),
         baseSnapshot: current.snapshotRevision,
         before: [],
         after: cards,
@@ -599,7 +612,9 @@ export class KnowledgePublication {
       review: {
         itemId: id,
         operation: 'publish' as const,
-        token: fingerprint(candidate.text + '\n' + validated.snapshotRevision),
+        token: await this.reviewToken(
+          candidate.text + '\n' + validated.snapshotRevision,
+        ),
         baseSnapshot: validated.snapshotRevision,
         before,
         after: candidate.input.proposedCard,
@@ -645,7 +660,7 @@ export class KnowledgePublication {
       review: {
         itemId: id,
         operation: 'rollback' as const,
-        token: fingerprint(
+        token: await this.reviewToken(
           json(entry.record) +
             entry.before +
             entry.after +
@@ -692,7 +707,7 @@ export class KnowledgePublication {
       review: {
         itemId: id,
         operation: 'remove-created' as const,
-        token: fingerprint(
+        token: await this.reviewToken(
           json(entry.record) +
             entry.before +
             entry.after +
@@ -775,6 +790,7 @@ export class KnowledgePublication {
       | { schemaVersion: 2; cardIds: string[] },
     revision: number,
   ) {
+    const context = await repositoryContext(this.knowledge.repositoryRoot);
     if ((await this.history()).some((h) => h.state === 'prepared'))
       throw new KnowledgeError(
         'RECOVERY_REQUIRED',
@@ -844,6 +860,10 @@ export class KnowledgePublication {
             'Snapshot changed before atomic replacement',
           );
         try {
+          assertContext(
+            context,
+            await repositoryContext(this.knowledge.repositoryRoot),
+          );
           await rename(temporary, canonical);
           break;
         } catch (error) {

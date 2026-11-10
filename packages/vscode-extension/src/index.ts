@@ -4,7 +4,11 @@ import { createHash } from 'node:crypto';
 import { mkdir, open, cp, realpath, writeFile, access } from 'node:fs/promises';
 import { join } from 'node:path';
 import { resolveHost, codexConfiguration, nodeCommand } from './host.js';
-import { KnowledgeStore, ImpactBaselines } from '@repo-knowledge/core';
+import {
+  KnowledgeStore,
+  ImpactBaselines,
+  bindRepositoryContext,
+} from '@repo-knowledge/core';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
 import { KnowledgeWorkbench } from './workbench.js';
@@ -188,6 +192,23 @@ export function activate(context: vscode.ExtensionContext) {
       );
     });
   }
+  register('bindRepositoryContext', async () => {
+    const target = await selected();
+    if (!target) return;
+    if (vscode.workspace.textDocuments.some((document) => document.isDirty))
+      throw new Error('Save dirty editors before binding repository context.');
+    const answer = await vscode.window.showWarningMessage(
+      '将外部知识存储绑定到当前 Git 工作树和分支。旧规划、候选和历史不可采用；请使用新存储。 / Bind this external store to the current Git worktree and branch?',
+      { modal: true },
+      '绑定 / Bind',
+    );
+    if (answer !== '绑定 / Bind') return;
+    const result = await bindRepositoryContext(target.root, target.store);
+    void vscode.window.showInformationMessage(
+      'Repo Knowledge: Repository context bound; no model started.',
+    );
+    return result;
+  });
   register('initialize', async () => {
     const target = await selected();
     if (!target) return;

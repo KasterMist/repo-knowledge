@@ -25,6 +25,10 @@
   "contributes": {
     "commands": [
       {
+        "command": "repoKnowledge.bindRepositoryContext",
+        "title": "Repo Knowledge: Bind Repository Context"
+      },
+      {
         "command": "repoKnowledge.initialize",
         "title": "Repo Knowledge: Initialize External Store"
       },

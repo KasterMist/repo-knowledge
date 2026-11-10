@@ -17,6 +17,11 @@ import {
   resolveStoragePath,
 } from './files.js';
 import { relativePath } from './schema.js';
+import {
+  repositoryContextSchema,
+  repositoryContext,
+  assertContext,
+} from './repository-context.js';
 
 // Deliberately small POSIX glob grammar, independent of shell/OS glob expansion.
 const pattern = z
@@ -109,6 +114,7 @@ export const scanPlanSchema = z.strictObject({
     skipped: counters,
   }),
   manifestRevision: z.string().regex(/^[a-f0-9]{64}$/u),
+  context: repositoryContextSchema.optional(),
 });
 export type ScanPlan = z.infer<typeof scanPlanSchema>;
 const blockedDirectories = new Set([
@@ -168,7 +174,10 @@ function cancelled(signal?: AbortSignal): void {
 const repositoryId = (root: string) =>
   createHash('sha256').update(root).digest('hex');
 const revision = (
-  plan: Pick<ScanPlan, 'repositoryId' | 'options' | 'files' | 'summary'>,
+  plan: Pick<
+    ScanPlan,
+    'repositoryId' | 'options' | 'files' | 'summary' | 'context'
+  >,
 ) => fingerprint(JSON.stringify(plan));
 
 export async function scanRepository(
@@ -184,6 +193,7 @@ export async function scanRepository(
       'Repository and store must be absolute',
     );
   const root = await realpath(repository);
+  const context = await repositoryContext(root);
   const excludedStore = await resolveStoragePath(store);
   const includes = options.include.map(matcher),
     excludes = options.exclude.map(matcher);
@@ -331,11 +341,13 @@ export async function scanRepository(
   await walk(root, '', 0);
   cancelled(signal);
   files.sort((a, b) => (a.path < b.path ? -1 : a.path > b.path ? 1 : 0));
+  assertContext(context, await repositoryContext(root));
   const manifest = {
     repositoryId: repositoryId(root),
     options,
     files,
     summary: { visitedEntries, selectedBytes, limited, skipped },
+    ...(context ? { context } : {}),
   };
   return scanPlanSchema.parse({
     schemaVersion: 1,
@@ -343,6 +355,7 @@ export async function scanRepository(
     createdAt: new Date().toISOString(),
     ...manifest,
     manifestRevision: revision(manifest),
+    ...(context ? { context } : {}),
   });
 }
 
@@ -354,11 +367,13 @@ export async function verifyScanPlan(
 ): Promise<ScanPlan> {
   const plan = scanPlanSchema.parse(input);
   const fresh = await scanRepository(repository, store, plan.options, signal);
+  assertContext(plan.context, fresh.context);
   const manifest = {
     repositoryId: plan.repositoryId,
     options: plan.options,
     files: plan.files,
     summary: plan.summary,
+    ...(plan.context ? { context: plan.context } : {}),
   };
   if (
     revision(manifest) !== plan.manifestRevision ||

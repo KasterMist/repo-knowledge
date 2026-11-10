@@ -5,6 +5,7 @@ import { randomUUID } from 'node:crypto';
 import { open, realpath, mkdir, lstat } from 'node:fs/promises';
 import { resolve, isAbsolute, join } from 'node:path';
 import { snapshotSchema, proposalInputSchema, type Card } from './schema.js';
+import { checkRepositoryBinding } from './repository-context.js';
 
 export class KnowledgeStore {
   constructor(
@@ -18,6 +19,7 @@ export class KnowledgeStore {
       );
   }
   async snapshot() {
+    await checkRepositoryBinding(this.repositoryRoot, this.storeRoot);
     let text: string;
     try {
       const store = await realpath(this.storeRoot);
