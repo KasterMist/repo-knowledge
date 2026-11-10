@@ -19,7 +19,19 @@ VS Code 新增 Bind Repository Context，先确认再写，不自动采用旧任
 
 同一开发包已在 Windows 隔离配置与 Linux SSH 安装并核对 bundle。首轮 CI 四项
 通过，Windows 宿主发现已有草稿 dirty 检查受短文件名别名影响；改为异步比较
-真实路径，保留未保存必须拒绝的断言，需核对修正后精确 head 的五项 CI。
+真实路径，保留未保存必须拒绝的断言。修正后精确 head
+`2a95400ab6442d59658fd539ac7dd0d2ba65b1b9` 的
+[run 42795048416](https://github.com/KasterMist/repo-knowledge/actions/runs/42795048416)
+五项均通过；[PR #42](https://github.com/KasterMist/repo-knowledge/pull/42)
+合并为 `db601061902d8b27b031e39050b7355cd3cd34c2`。
 
-尚待：最终合并提交的五项 CI、两端显式绑定确认/错误上下文拒绝界面反馈。
-这些门禁通过前 T18 保持开放；不声称 M4 完成或新版本已发布。
+## 两端界面验收完成
+
+维护者明确反馈 Windows 和 Remote SSH 全部正常：取消绑定后仍提示未绑定；
+确认绑定后读取三卡片；feature 分支拒绝原存储；切回 main 恢复读取。
+点击和提示由维护者反馈，不冒充独立捕获的原始界面轨迹。真实 linked worktree、
+暂存区和 dirty 源码边界由另行记录的自编 Git 集成测试覆盖，不要求重复手测。
+
+T18 本次范围退出条件已满足，进入归档关闭；下一项 T19 三方合并与人工内容保护。
+本次仅文档归档，不调用模型、不操作演示源码或知识，不扩大 Linux 桌面 Codex
+支持声明。M4 尚未完成，开发功能尚未发布。

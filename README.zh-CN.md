@@ -53,4 +53,4 @@ npm run package:vsix
 
 采用 [Apache-2.0](LICENSE)。Copyright 2026 KasterMist and contributors。独立社区项目，与 OpenAI、Qoder 无官方隶属关系。
 
-T18 开发版增加 Git 工作树/分支的显式存储绑定，以及 HEAD/暂存区上下文校验；旧 Git 存储不能自动采用旧候选。实现与验收见 [Issue #41](https://github.com/KasterMist/repo-knowledge/issues/41)，界面验收待补齐，尚未发布。操作与迁移见[上下文隔离手册](docs/user/repository-context.zh-CN.md)。
+T18 开发版增加 Git 工作树/分支的显式存储绑定，以及 HEAD/暂存区上下文校验；旧 Git 存储不能自动采用旧候选。实现与验收见 [Issue #41](https://github.com/KasterMist/repo-knowledge/issues/41)，Windows 原生与 Remote SSH 的取消绑定、确认绑定、feature 分支拒绝和切回 main 恢复读取均已通过本次范围验收，尚未发布。操作与迁移见[上下文隔离手册](docs/user/repository-context.zh-CN.md)。
