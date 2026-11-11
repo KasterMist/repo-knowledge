@@ -25,6 +25,14 @@
   "contributes": {
     "commands": [
       {
+        "command": "repoKnowledge.generateKnowledgeUpdate",
+        "title": "Repo Knowledge: Generate Card Update"
+      },
+      {
+        "command": "repoKnowledge.recoverIncrementalUpdate",
+        "title": "Repo Knowledge: Recover Incremental Result"
+      },
+      {
         "command": "repoKnowledge.mergeProposal",
         "title": "Repo Knowledge: Merge Proposal into Draft"
       },

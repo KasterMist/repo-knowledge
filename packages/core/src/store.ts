@@ -2,7 +2,8 @@ import { boundedRead, within, fingerprint, KnowledgeError } from './files.js';
 export { fingerprint, KnowledgeError } from './files.js';
 import { rankCards } from './search.js';
 import { randomUUID } from 'node:crypto';
-import { open, realpath, mkdir, lstat } from 'node:fs/promises';
+import { open, realpath, mkdir, lstat, unlink } from 'node:fs/promises';
+import { z } from 'zod';
 import { resolve, isAbsolute, join } from 'node:path';
 import { snapshotSchema, proposalInputSchema, type Card } from './schema.js';
 import { checkRepositoryBinding } from './repository-context.js';
@@ -202,7 +203,19 @@ export class KnowledgeStore {
       );
     return { proposal, snapshot, snapshotRevision };
   }
-  async propose(input: unknown) {
+  async propose(
+    input: unknown,
+    options: { proposalId?: string; signal?: AbortSignal } = {},
+  ) {
+    if (options.proposalId !== undefined) z.uuid().parse(options.proposalId);
+    const check = () => {
+      if (options.signal?.aborted)
+        throw new KnowledgeError(
+          'GENERATION_CANCELLED',
+          'Update cancelled; no candidate retained',
+        );
+    };
+    check();
     const { proposal, snapshotRevision, snapshot } =
       await this.validateProposal(input);
     const store = await realpath(this.storeRoot);
@@ -222,12 +235,11 @@ export class KnowledgeStore {
         'REVISION_CONFLICT',
         'Snapshot changed during proposal validation',
       );
-    const proposalId = randomUUID();
-    const handle = await open(
-      join(directory, `${proposalId}.json`),
-      'wx',
-      0o600,
-    );
+    const proposalId = options.proposalId ?? randomUUID();
+    const path = join(directory, `${proposalId}.json`);
+    check();
+    const handle = await open(path, 'wx', 0o600);
+    let completed = false;
     try {
       await handle.writeFile(
         JSON.stringify(
@@ -243,8 +255,11 @@ export class KnowledgeStore {
         ) + '\n',
       );
       await handle.sync();
+      check();
+      completed = true;
     } finally {
       await handle.close();
+      if (!completed) await unlink(path);
     }
     return {
       proposalId,

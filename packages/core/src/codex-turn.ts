@@ -70,6 +70,7 @@ export async function collectCodexTextTurn(
   outputSchema: Record<string, unknown>,
   options: TextTurnBudget = {},
   signal?: AbortSignal,
+  onTurnRequest?: () => void,
 ): Promise<{
   text: string;
   output: unknown;
@@ -250,6 +251,7 @@ export async function collectCodexTextTurn(
     abort = () => reject(failure('CANCELLED'));
     signal?.addEventListener('abort', abort, { once: true });
     if (signal?.aborted) abort();
+    onTurnRequest?.();
     const start = client.request('turn/start', params);
     // Race both phases: cancellation must not wait for a slow start response.
     const response = await Promise.race([start, fatal]);

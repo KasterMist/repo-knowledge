@@ -207,6 +207,7 @@ export async function bindRepositoryContext(repository: string, store: string) {
     'plans',
     'dependency-baselines',
     'merge-reviews',
+    'incremental-attempts',
   ]) {
     try {
       if ((await readdir(join(root, name))).length)

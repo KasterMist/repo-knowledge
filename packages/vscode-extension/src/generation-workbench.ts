@@ -6,6 +6,7 @@ import {
   runCodexGenerationJob,
   resolveStoragePath,
   CodexBackendError,
+  IncrementalUpdates,
   type GenerationJob,
 } from '@repo-knowledge/core';
 import type { BackendWorkbench } from './backend-workbench.js';
@@ -67,6 +68,30 @@ export class GenerationWorkbench implements vscode.Disposable {
         },
       ),
     );
+    for (const recover of [false, true])
+      this.commands.push(
+        vscode.commands.registerCommand(
+          recover
+            ? 'repoKnowledge.recoverIncrementalUpdate'
+            : 'repoKnowledge.generateKnowledgeUpdate',
+          async (node?: { folder?: vscode.WorkspaceFolder }) => {
+            try {
+              return await this.update(node?.folder, recover);
+            } catch (error) {
+              const message =
+                error instanceof CodexBackendError
+                  ? `${error.code} (${error.phase}; ${error.reason}; HTTP ${error.httpStatusCode ?? 'unavailable'})`
+                  : error instanceof Error
+                    ? error.message
+                    : 'Incremental update failed';
+              void vscode.window.showErrorMessage(
+                `Repo Knowledge: ${message}。未自动发布或重试。可运行 Recover Incremental Result 查看已保留的尝试；找回不会启动模型。`,
+              );
+              return { error: true, message };
+            }
+          },
+        ),
+      );
     const changed = () => {
       this.revision++;
       this.active?.abort();
@@ -90,6 +115,151 @@ export class GenerationWorkbench implements vscode.Disposable {
     try {
       return await this.run(folder, recover);
     } finally {
+      this.busy = false;
+    }
+  }
+  async update(folder?: vscode.WorkspaceFolder, recover = false) {
+    if (!vscode.workspace.isTrusted)
+      throw new Error('Incremental updates require a trusted workspace.');
+    if (this.busy) throw new Error('A generation task is already active.');
+    this.busy = true;
+    const active = new AbortController(),
+      revision = this.revision;
+    this.active = active;
+    try {
+      const target = await this.resolve(folder);
+      if (!target) return;
+      const updates = new IncrementalUpdates(target.knowledge);
+      const show = async (result: unknown) => {
+        const uri = this.workbench.documents.create(
+          'incremental-result.json',
+          JSON.stringify(result, null, 2),
+        );
+        await vscode.window.showTextDocument(uri, { preview: false });
+      };
+      if (recover) {
+        const attempts = await updates.list();
+        if (!attempts.length)
+          throw new Error('No incremental update attempts in this store.');
+        const selected = await vscode.window.showQuickPick(
+          attempts.map((attempt) => ({
+            label: attempt.cardId,
+            description: attempt.createdAt + ' · ' + attempt.attemptId,
+            attempt,
+          })),
+          { title: '找回增量结果；不重试 / Recover incremental result' },
+        );
+        if (!selected) return { cancelled: true };
+        const result = await updates.recover(selected.attempt.attemptId);
+        this.workbench.refresh();
+        await show(result);
+        void vscode.window.showInformationMessage(
+          '增量结果已检查；未启动模型、未自动重试或发布。',
+        );
+        return result;
+      }
+      const plan = this.workbench.scanning.generationPlan(target);
+      if (!plan)
+        throw new Error(
+          '请先运行 Plan Knowledge Generation，检查本次增量更新的源码范围。',
+        );
+      if (plan.summary.limited || !plan.files.length)
+        throw new Error(
+          'Incremental update requires a nonempty complete plan.',
+        );
+      const guard = () => {
+        if (
+          !vscode.workspace.isTrusted ||
+          revision !== this.revision ||
+          active.signal.aborted
+        )
+          throw new Error(
+            'Workspace/configuration changed; review a fresh incremental plan.',
+          );
+        if (vscode.workspace.textDocuments.some((document) => document.isDirty))
+          throw new Error(
+            '请先保存或自行取消所有未保存编辑 / Save or discard dirty editors before incremental update.',
+          );
+      };
+      guard();
+      const status = await target.knowledge.status(),
+        snapshot = await target.knowledge.snapshot();
+      const chosen = await vscode.window.showQuickPick(
+        snapshot.snapshot.cards.map((card) => ({
+          label: card.title,
+          description:
+            card.id +
+            ' · ' +
+            (status.cards.find((entry) => entry.id === card.id)?.stale
+              ? 'stale'
+              : 'current'),
+          card,
+        })),
+        { title: '选择一张已有卡片 / Select one existing card' },
+      );
+      if (!chosen) return { cancelled: true };
+      if (
+        (await vscode.window.showWarningMessage(
+          `将以下已保存源码及卡片 ${chosen.card.id} 的当前全文发送给本宿主配置的 Codex 模型/提供方：\n${plan.files.map((file) => file.path).join('\n')}\n语言 ${plan.options.language}；仅更新这张卡片；一次模型 turn；总时限 60 秒；输出上限 64 KiB。记录尝试次数和耗时，不保证精确费用上限。只保存更新候选，必须另行审阅确认发布；不执行源码。是否开始？`,
+          { modal: true },
+          '生成更新 / Generate update',
+        )) !== '生成更新 / Generate update'
+      )
+        return { cancelled: true };
+      guard();
+      const executable = await this.backend.executable(
+        target.configuration.get<string>('codexExecutable', ''),
+      );
+      const storage = await resolveStoragePath(this.storage.fsPath);
+      if (contains(target.root, storage) || contains(target.store, storage))
+        throw new Error(
+          'Incremental scratch storage must be outside repository and store.',
+        );
+      await mkdir(storage, { recursive: true });
+      const scratch = await mkdtemp(join(storage, 'incremental-'));
+      try {
+        const result = await vscode.window.withProgress(
+          {
+            location: vscode.ProgressLocation.Notification,
+            title: 'Repo Knowledge: 生成单卡更新候选 / Generate card update',
+            cancellable: true,
+          },
+          async (_progress, token) => {
+            const controller = new AbortController(),
+              listener = token.onCancellationRequested(() =>
+                controller.abort(),
+              );
+            if (token.isCancellationRequested) controller.abort();
+            try {
+              return await updates.run({
+                plan,
+                cardId: chosen.card.id,
+                command: executable.command,
+                cwd: scratch,
+                signal: AbortSignal.any([
+                  controller.signal,
+                  active.signal,
+                  this.lifetime.signal,
+                ]),
+                assertReady: guard,
+              });
+            } finally {
+              listener.dispose();
+            }
+          },
+        );
+        this.workbench.scanning.consumeGenerationPlan(target);
+        this.workbench.refresh();
+        await show(result);
+        void vscode.window.showInformationMessage(
+          `已保存 ${result.cardId} 更新候选；尚未发布。请在 Proposals 审阅差异并单独确认发布。耗时 ${result.metrics.elapsedMs} ms；turn/start 请求尝试 ${result.metrics.submittedTurnRequests} 次。`,
+        );
+        return result;
+      } finally {
+        await rmdir(scratch).catch(() => {});
+      }
+    } finally {
+      this.active = undefined;
       this.busy = false;
     }
   }

@@ -14,3 +14,4 @@ export * from './impact-baselines.js';
 export * from './impact-navigation.js';
 export * from './repository-context.js';
 export * from './merge.js';
+export * from './incremental.js';

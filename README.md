@@ -27,6 +27,8 @@ T18 development adds explicit Git worktree/branch store binding and HEAD/index-b
 
 T19 development adds captured proposal bases, conservative field-level three-way reports and explicitly acknowledged merge drafts. Conflicting fields keep current human content until reviewed; no model or publication is started by merging. Legacy records without a base cannot be merged. Windows-native and Remote SSH report, cancellation, unresolved-conflict refusal, saved resolution and confirmed human-content-preserving publication are accepted; see [the contract](docs/architecture/adr/0012-three-way-merge.md) and [Issue #44](https://github.com/KasterMist/repo-knowledge/issues/44). Unreleased.
 
+T20 development adds an explicitly confirmed Generate Card Update for one existing card and Recover Incremental Result without model work. Selected current-source evidence, captured bases, timing/attempted-turn receipts and existing confirmed publication/rollback are retained. Real Windows/SSH beta acceptance remains pending; this is not whole-repository regeneration or a new release. See [ADR 0013](docs/architecture/adr/0013-incremental-attempts.md) and [Issue #47](https://github.com/KasterMist/repo-knowledge/issues/47).
+
 ## Development
 
 Use Node.js **24.19.0** and npm **12.2.1** on Windows or Linux:
