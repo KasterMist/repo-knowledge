@@ -203,7 +203,8 @@ export class KnowledgeStore {
     return { proposal, snapshot, snapshotRevision };
   }
   async propose(input: unknown) {
-    const { proposal, snapshotRevision } = await this.validateProposal(input);
+    const { proposal, snapshotRevision, snapshot } =
+      await this.validateProposal(input);
     const store = await realpath(this.storeRoot);
     const directory = join(store, 'proposals');
     await mkdir(directory, { recursive: true });
@@ -231,7 +232,8 @@ export class KnowledgeStore {
       await handle.writeFile(
         JSON.stringify(
           {
-            schemaVersion: 1,
+            schemaVersion: 2,
+            baseCard: snapshot.cards.find((card) => card.id === proposal.id),
             proposalId,
             createdAt: new Date().toISOString(),
             ...proposal,
@@ -240,6 +242,7 @@ export class KnowledgeStore {
           2,
         ) + '\n',
       );
+      await handle.sync();
     } finally {
       await handle.close();
     }

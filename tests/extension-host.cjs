@@ -504,6 +504,33 @@ exports.run = async function run() {
       originalSnapshot,
     );
   }
+  // Self-authored fixture only: simulate a later human revision, inspect three-way
+  // UI without confirming a draft/publication, then restore exact original bytes.
+  const mergeBefore = await fs.readFile(snapshotPath);
+  try {
+    const snapshot = JSON.parse(mergeBefore);
+    const card = snapshot.cards.find((card) => card.id === 'read-fallback');
+    card.revision += 1;
+    card.body = '人工设计理由 / Human rationale preserved';
+    await fs.writeFile(snapshotPath, JSON.stringify(snapshot));
+    const currentBytes = await fs.readFile(snapshotPath);
+    const merge = await vscode.commands.executeCommand(
+      'repoKnowledge.mergeProposal',
+      proposalNode,
+    );
+    assert.equal(merge?.reviewRequired, true, merge?.message);
+    assert.equal(merge.uri.scheme, 'repo-knowledge');
+    const report = JSON.parse(
+      (await vscode.workspace.openTextDocument(merge.uri)).getText(),
+    );
+    assert.deepEqual(report.conflicts, ['body']);
+    assert.equal(report.current.body, card.body);
+    assert.equal(report.merged.body, card.body);
+    assert.equal(report.proposed.body, editedDraft.proposedCard.body);
+    assert.deepEqual(await fs.readFile(snapshotPath), currentBytes);
+  } finally {
+    await fs.writeFile(snapshotPath, mergeBefore);
+  }
   await fs.writeFile(
     process.env.REPO_KNOWLEDGE_HOST_RESULT ||
       path.join(
@@ -522,6 +549,7 @@ exports.run = async function run() {
         snapshotUriScheme: document.uri.scheme,
         evidence: [
           'packaged extension activation',
+          'three-way merge report retains human body and reports competing suggestion without publication',
           'command registrations and two knowledge trees',
           'read-only knowledge document and validated source navigation',
           'durable draft, dirty-editor rejection and saved candidate diff without publication',

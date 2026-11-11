@@ -12,6 +12,7 @@ import { join } from 'node:path';
 import { setTimeout as pause } from 'node:timers/promises';
 import { z } from 'zod';
 import { KnowledgeStore } from './store.js';
+import { mergeCards, mergeFieldSchema, proposalRecordSchema } from './merge.js';
 import {
   repositoryContext,
   assertContext,
@@ -31,7 +32,6 @@ import {
   KnowledgeError,
 } from './files.js';
 import {
-  proposalInputSchema,
   cardSchema,
   snapshotSchema,
   type Card,
@@ -41,10 +41,19 @@ import {
 
 const uuid = z.uuid();
 const digest = z.string().regex(/^[a-f0-9]{64}$/u);
-const savedProposal = proposalInputSchema.extend({
+const savedProposal = proposalRecordSchema;
+const mergeReviewSchema = z.strictObject({
   schemaVersion: z.literal(1),
-  proposalId: uuid,
-  createdAt: z.iso.datetime(),
+  reviewId: uuid,
+  sourceProposalId: uuid,
+  sourceFingerprint: digest,
+  baseSnapshot: digest,
+  context: digest,
+  base: cardSchema,
+  current: cardSchema,
+  proposed: cardSchema,
+  merged: cardSchema,
+  conflicts: z.array(mergeFieldSchema).max(6),
 });
 const updateJournal = z.strictObject({
   schemaVersion: z.literal(1),
@@ -170,7 +179,8 @@ export class KnowledgePublication {
     const result = await this.knowledge.read(id);
     const proposalId = randomUUID();
     const draft = {
-      schemaVersion: 1,
+      schemaVersion: 2,
+      baseCard: result.card,
       proposalId,
       createdAt: new Date().toISOString(),
       id,
@@ -412,7 +422,7 @@ export class KnowledgePublication {
     if (!parsed.success || parsed.data.proposalId !== id)
       throw new KnowledgeError(
         'INVALID_PROPOSAL',
-        'Candidate file does not match schemaVersion 1 or its filename',
+        'Candidate file does not match proposal format 1/2 or its filename',
       );
     const {
       id: cardId,
@@ -428,15 +438,157 @@ export class KnowledgePublication {
       reason,
       proposedCard,
     };
-    return { input, path, text, createdAt: parsed.data.createdAt };
+    return {
+      input,
+      path,
+      text,
+      record: parsed.data,
+      createdAt: parsed.data.createdAt,
+    };
   }
   async submitDraft(id: string) {
-    return this.knowledge.propose(
-      (await this.readCandidate(id, 'drafts')).input,
+    const saved = await this.readCandidate(id, 'drafts');
+    let receipt;
+    try {
+      receipt = mergeReviewSchema.parse(
+        JSON.parse(
+          await this.readFile(
+            join(await this.directory('merge-reviews'), id + '.json'),
+          ),
+        ),
+      );
+    } catch (error) {
+      if (!absent(error)) throw error;
+    }
+    if (receipt && (saved.record.schemaVersion !== 2 || !saved.record.merge))
+      throw new KnowledgeError(
+        'MERGE_CONFLICTS_UNRESOLVED',
+        'Do not remove merge acknowledgement metadata',
+      );
+    if (saved.record.schemaVersion === 2 && saved.record.merge) {
+      const { reviewId, resolvedFields } = saved.record.merge;
+      if (!receipt)
+        throw new KnowledgeError(
+          'MERGE_REVIEW_CHANGED',
+          'Merge receipt is missing; create a fresh merge',
+        );
+      const review = receipt;
+      const candidate = await this.readCandidate(review.sourceProposalId);
+      if (
+        review.reviewId !== id ||
+        reviewId !== id ||
+        fingerprint(candidate.text) !== review.sourceFingerprint ||
+        saved.input.baseSnapshot !== review.baseSnapshot ||
+        saved.input.baseRevision !== review.current.revision ||
+        saved.input.id !== review.current.id ||
+        JSON.stringify(saved.record.baseCard) !==
+          JSON.stringify(review.current) ||
+        (await this.reviewToken(review.baseSnapshot)) !== review.context
+      )
+        throw new KnowledgeError(
+          'MERGE_REVIEW_CHANGED',
+          'Merge context/candidate changed; prepare and review a new merge',
+        );
+      if (
+        new Set(resolvedFields).size !== resolvedFields.length ||
+        resolvedFields.length !== review.conflicts.length ||
+        review.conflicts.some((field) => !resolvedFields.includes(field))
+      )
+        throw new KnowledgeError(
+          'MERGE_CONFLICTS_UNRESOLVED',
+          'Review each conflicting field, then list it in merge.resolvedFields',
+        );
+    }
+    return this.knowledge.propose(saved.input);
+  }
+  async previewMerge(id: string) {
+    const candidate = await this.readCandidate(id);
+    if (candidate.record.schemaVersion !== 2 || candidate.record.merge)
+      throw new KnowledgeError(
+        'MERGE_BASE_UNAVAILABLE',
+        'Legacy candidate has no captured base; do not invent one',
+      );
+    const base = candidate.record.baseCard;
+    if (
+      base.id !== candidate.input.id ||
+      base.revision !== candidate.input.baseRevision
+    )
+      throw new KnowledgeError(
+        'INVALID_MERGE_BASE',
+        'Captured base does not match proposal',
+      );
+    const history = await this.history();
+    if (history.some((entry) => entry.state === 'prepared'))
+      throw new KnowledgeError(
+        'RECOVERY_REQUIRED',
+        'Recover publication history before merging',
+      );
+    if (
+      history.some(
+        (entry) =>
+          entry.state === 'committed' &&
+          entry.record.operation === 'publish' &&
+          entry.record.itemId === id,
+      )
+    )
+      throw new KnowledgeError(
+        'ALREADY_PUBLISHED',
+        'Do not merge an already published proposal',
+      );
+    const current = await this.knowledge.read(candidate.input.id);
+    const merged = mergeCards(base, current.card, candidate.input.proposedCard);
+    return {
+      ...merged,
+      sourceProposalId: id,
+      sourceFingerprint: fingerprint(candidate.text),
+      baseSnapshot: current.snapshotRevision,
+      context: await this.reviewToken(current.snapshotRevision),
+    };
+  }
+  async createMergeDraft(id: string, token: string) {
+    const review = await this.previewMerge(id);
+    if (fingerprint(JSON.stringify(review)) !== token)
+      throw new KnowledgeError(
+        'MERGE_REVIEW_CHANGED',
+        'Merge changed after review; inspect again',
+      );
+    if (
+      (await this.names('drafts')).length >= 200 ||
+      (await this.names('merge-reviews')).length >= 200
+    )
+      throw new KnowledgeError(
+        'LIMIT',
+        'Too many drafts or merge reviews; back up complete store',
+      );
+    const reviewId = randomUUID();
+    const receipt = mergeReviewSchema.parse({
+      schemaVersion: 1,
+      reviewId,
+      ...review,
+    });
+    const path = join(await this.directory('drafts', true), reviewId + '.json');
+    await writeExclusive(
+      join(await this.directory('merge-reviews', true), reviewId + '.json'),
+      json(receipt),
     );
+    const draft = savedProposal.parse({
+      schemaVersion: 2,
+      proposalId: reviewId,
+      createdAt: new Date().toISOString(),
+      id: review.current.id,
+      baseRevision: review.current.revision,
+      baseSnapshot: review.baseSnapshot,
+      baseCard: review.current,
+      reason: '三方合并 / Three-way merge ' + id,
+      proposedCard: review.merged,
+      merge: { reviewId, resolvedFields: [] },
+    });
+    await writeExclusive(path, json(draft));
+    return { draftId: reviewId, path, conflicts: review.conflicts };
   }
   async listCandidates(kind: 'proposals' | 'drafts' = 'proposals') {
     const entries = [];
+    const current = await this.knowledge.snapshot();
     const applied =
       kind === 'proposals'
         ? new Set(
@@ -462,7 +614,16 @@ export class KnowledgePublication {
           id,
           cardId: candidate.input.id,
           title: candidate.input.proposedCard.title,
-          state: kind === 'drafts' ? 'draft' : 'pending-review',
+          state:
+            candidate.input.baseSnapshot !== current.snapshotRevision
+              ? kind === 'drafts'
+                ? 'needs-refresh'
+                : candidate.record.schemaVersion === 2
+                  ? 'needs-merge'
+                  : 'needs-recreate'
+              : kind === 'drafts'
+                ? 'draft'
+                : 'pending-review',
           error: '',
         });
       } catch (error) {

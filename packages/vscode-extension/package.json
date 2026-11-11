@@ -25,6 +25,10 @@
   "contributes": {
     "commands": [
       {
+        "command": "repoKnowledge.mergeProposal",
+        "title": "Repo Knowledge: Merge Proposal into Draft"
+      },
+      {
         "command": "repoKnowledge.bindRepositoryContext",
         "title": "Repo Knowledge: Bind Repository Context"
       },
