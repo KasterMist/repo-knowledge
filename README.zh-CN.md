@@ -55,4 +55,4 @@ npm run package:vsix
 
 T18 开发版增加 Git 工作树/分支的显式存储绑定，以及 HEAD/暂存区上下文校验；旧 Git 存储不能自动采用旧候选。实现与验收见 [Issue #41](https://github.com/KasterMist/repo-knowledge/issues/41)，Windows 原生与 Remote SSH 的取消绑定、确认绑定、feature 分支拒绝和切回 main 恢复读取均已通过本次范围验收，尚未发布。操作与迁移见[上下文隔离手册](docs/user/repository-context.zh-CN.md)。
 
-T19 开发版增加原始卡片基线、保守字段级三方报告和逐冲突确认的合并草稿。冲突默认保留当前人工内容；合并不调用模型、不直接发布。旧记录无基线时拒绝合并；界面验收尚待补齐，尚未发布。见[操作手册](docs/user/three-way-merge.zh-CN.md)、[ADR 0012](docs/architecture/adr/0012-three-way-merge.md) 和 [Issue #44](https://github.com/KasterMist/repo-knowledge/issues/44)。
+T19 开发版增加原始卡片基线、保守字段级三方报告和逐冲突确认的合并草稿。冲突默认保留当前人工内容；合并不调用模型、不直接发布。旧记录无基线时拒绝合并；Windows 原生与 Remote SSH 的报告、取消、未处理冲突拒绝、保存解决结果及确认发布保留人工正文均已通过本次范围验收，尚未发布。见[操作手册](docs/user/three-way-merge.zh-CN.md)、[ADR 0012](docs/architecture/adr/0012-three-way-merge.md) 和 [Issue #44](https://github.com/KasterMist/repo-knowledge/issues/44)。
