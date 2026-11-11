@@ -25,7 +25,7 @@ T17 development includes immutable external dependency baselines and explicit Ca
 
 T18 development adds explicit Git worktree/branch store binding and HEAD/index-bound reviewed operations. Existing Git stores require a fresh binding workflow; legacy pending metadata is not automatically adopted. Implementation and scoped acceptance are tracked in [Issue #41](https://github.com/KasterMist/repo-knowledge/issues/41); Windows-native and Remote SSH binding cancellation, confirmed binding, feature-branch refusal and return-to-main recovery are accepted. See [the migration contract](docs/architecture/adr/0011-repository-context.md). No new release.
 
-T19 development adds captured proposal bases, conservative field-level three-way reports and explicitly acknowledged merge drafts. Conflicting fields keep current human content until reviewed; no model or publication is started by merging. Legacy records without a base cannot be merged. UI acceptance remains pending; see [the contract](docs/architecture/adr/0012-three-way-merge.md) and [Issue #44](https://github.com/KasterMist/repo-knowledge/issues/44). Unreleased.
+T19 development adds captured proposal bases, conservative field-level three-way reports and explicitly acknowledged merge drafts. Conflicting fields keep current human content until reviewed; no model or publication is started by merging. Legacy records without a base cannot be merged. Windows-native and Remote SSH report, cancellation, unresolved-conflict refusal, saved resolution and confirmed human-content-preserving publication are accepted; see [the contract](docs/architecture/adr/0012-three-way-merge.md) and [Issue #44](https://github.com/KasterMist/repo-knowledge/issues/44). Unreleased.
 
 ## Development
 
