@@ -19,7 +19,7 @@ async function setup(mode, action) {
   });
   try {
     await client.initialize();
-    const run = (budget = {}, signal) =>
+    const run = (budget = {}, signal, onTurnRequest) =>
       collectCodexTextTurn(
         client,
         'thread-fixture',
@@ -27,6 +27,7 @@ async function setup(mode, action) {
         { type: 'object', additionalProperties: false },
         budget,
         signal,
+        onTurnRequest,
       );
     await action({ run, trace, client });
   } finally {
@@ -39,6 +40,33 @@ const code = (expected) => (error) => {
   assert.ok(!String(error).includes('SECRET'));
   return true;
 };
+test('attempted turn-request metric counts protocol submission and stays zero for local budget rejection', async () => {
+  await setup('ok', async ({ run, trace }) => {
+    let count = 0;
+    await run({}, undefined, () => count++);
+    assert.equal(count, 1);
+    assert.equal(
+      JSON.parse(await readFile(trace, 'utf8')).filter(
+        (method) => method === 'turn/start',
+      ).length,
+      1,
+    );
+  });
+  await setup('ok', async ({ run, trace }) => {
+    let count = 0;
+    await assert.rejects(
+      run({ inputBytes: 1 }, undefined, () => count++),
+      code('INPUT_LIMIT'),
+    );
+    assert.equal(count, 0);
+    assert.equal(
+      JSON.parse(await readFile(trace, 'utf8')).filter(
+        (method) => method === 'turn/start',
+      ).length,
+      0,
+    );
+  });
+});
 test('one bounded turn handles early events and keeps only authoritative JSON output', async () => {
   for (const mode of ['ok', 'early-events'])
     await setup(mode, async ({ run, trace }) => {

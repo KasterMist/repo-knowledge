@@ -59,6 +59,15 @@ export const generatedKnowledgeSchema = z
 export function generationOutputJsonSchema() {
   return z.toJSONSchema(generatedKnowledgeSchema, { unrepresentable: 'any' });
 }
+export function incrementalOutputJsonSchema() {
+  return z.toJSONSchema(
+    z.strictObject({
+      packetRevision: digest,
+      pages: z.array(pageSchema).length(1),
+    }),
+    { unrepresentable: 'any' },
+  );
+}
 const content = (packet: GenerationPacket) =>
   packetContentSchema.parse({
     schemaVersion: packet.schemaVersion,
@@ -175,9 +184,10 @@ export async function buildGenerationPacket(
   return packet;
 }
 
-export function validateGeneratedPages(
+function validatePages(
   input: unknown,
   output: unknown,
+  updating?: Card,
 ): Card[] {
   const packet = generationPacketSchema.parse(input);
   if (
@@ -206,7 +216,17 @@ export function validateGeneratedPages(
       'WRONG_GENERATION_RESULT',
       'Result belongs to a different source packet',
     );
-  if (packet.existingIds.length + result.pages.length > 200)
+  if (
+    updating &&
+    (result.pages.length !== 1 ||
+      result.pages[0]?.id !== updating.id ||
+      !packet.existingIds.includes(updating.id))
+  )
+    throw new KnowledgeError(
+      'WRONG_UPDATE_TARGET',
+      'Return exactly the selected existing card ID',
+    );
+  if (packet.existingIds.length + (updating ? 0 : result.pages.length) > 200)
     throw new KnowledgeError(
       'LIMIT',
       'Generated pages exceed canonical card limit',
@@ -215,7 +235,7 @@ export function validateGeneratedPages(
     packet.sources.map((source) => [source.path, source]),
   );
   return result.pages.map((page) => {
-    if (packet.existingIds.includes(page.id))
+    if (!updating && packet.existingIds.includes(page.id))
       throw new KnowledgeError(
         'EXISTING_CARD',
         'First generation must not overwrite existing knowledge IDs',
@@ -242,8 +262,26 @@ export function validateGeneratedPages(
         );
       return { ...reference, sha256: source.sha256 };
     });
-    return cardSchema.parse({ ...page, revision: 1, evidence });
+    return cardSchema.parse({
+      ...page,
+      revision: updating ? updating.revision + 1 : 1,
+      evidence,
+    });
   });
+}
+
+export function validateGeneratedPages(
+  input: unknown,
+  output: unknown,
+): Card[] {
+  return validatePages(input, output);
+}
+export function validateGeneratedUpdate(
+  input: unknown,
+  output: unknown,
+  base: unknown,
+): Card {
+  return validatePages(input, output, cardSchema.parse(base))[0]!;
 }
 
 export async function validateCurrentGeneration(

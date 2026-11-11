@@ -102,6 +102,21 @@ exports.run = async function run() {
   );
   assert.equal(noPlan?.error, true);
   assert.match(noPlan.message, /Preview a plan/u);
+  const noUpdatePlan = await vscode.commands.executeCommand(
+    'repoKnowledge.generateKnowledgeUpdate',
+    roots[0],
+  );
+  assert.equal(noUpdatePlan?.error, true);
+  assert.match(noUpdatePlan.message, /Plan Knowledge Generation/u);
+  const noUpdateAttempt = await vscode.commands.executeCommand(
+    'repoKnowledge.recoverIncrementalUpdate',
+    roots[0],
+  );
+  assert.equal(noUpdateAttempt?.error, true);
+  assert.match(
+    noUpdateAttempt.message,
+    /Incremental records require an external store/u,
+  );
   const noJob = await vscode.commands.executeCommand(
     'repoKnowledge.recoverGeneration',
     roots[0],
@@ -385,6 +400,12 @@ exports.run = async function run() {
         'scan-plan-external',
       );
       await selectStore(planStore);
+      await fs.mkdir(planStore, { recursive: true });
+      const emptyUpdates = await vscode.commands.executeCommand(
+        'repoKnowledge.recoverIncrementalUpdate',
+      );
+      assert.equal(emptyUpdates?.error, true);
+      assert.match(emptyUpdates.message, /No incremental update attempts/u);
       const externalPlan = await vscode.commands.executeCommand(
         'repoKnowledge.planGeneration',
         roots[0],
