@@ -1,6 +1,6 @@
 # Repo Knowledge：任务、进度与续接入口
 
-更新日期：2026-11-10。所有者：KasterMist。仓库：[KasterMist/repo-knowledge](https://github.com/KasterMist/repo-knowledge)。许可证：Apache-2.0。
+更新日期：2026-11-11。所有者：KasterMist。仓库：[KasterMist/repo-knowledge](https://github.com/KasterMist/repo-knowledge)。许可证：Apache-2.0。
 
 本表依据对话中确认的需求、仓库实现与验收记录，以及当日核对的 GitHub Issue #1/#3/#5 整理。核对起点为已合并的 90b2dcb（PR #8）。实现完成、自动化测试通过、人工验收通过和正式发布是不同状态，不相互替代。本表不按聊天轮数或代码量估算完成百分比。
 
@@ -46,7 +46,7 @@
 | T16 / M3   | 预算、引用校验、取消与恢复                   | 已完成本次范围验收 | 67 单测/4 集成；两端确认框/进度取消、明确重试与重复找回通过；0 遗留 lease，正式快照不变；异常锁保守人工处理                                |
 | T17 / M4   | 指纹与依赖失效追踪                           | 已完成本次范围验收 | [Issue #35](https://github.com/KasterMist/repo-knowledge/issues/35)：先做显式只读变更/影响报告，区分直接证据失效与范围潜在影响；不启动模型 |
 | T18 / M4   | 分支、dirty、工作树隔离                      | 已完成本次范围验收 | Issue #41：显式工作树/分支绑定、HEAD/index 规划校验、发布前重检；迁移与双端门禁见 ADR 0011                                                 |
-| T19 / M4   | 三方合并与人工知识保护                       | 未开始             | 可审阅冲突，不静默丢失人工修改                                                                                                             |
+| T19 / M4   | 三方合并与人工知识保护                       | 实现完成、待验收   | Issue #44：基线捕获、三方报告与显式冲突草稿；真实两端交互和精确 head CI 待补齐                                                             |
 | T20 / M4   | 用户发起增量维护 beta 验收                   | 未开始             | 用户触发、完整案例、迁移/回退、耗时与调用记录                                                                                              |
 | T21 / M5   | 自然任务与知识沉淀效果评估                   | 未开始             | 显式调用/自然调用分开；有无知识对照                                                                                                        |
 | T22 / M5   | 平台、安装、升级、卸载                       | 未开始             | 稳定支持矩阵、迁移和干净环境验收                                                                                                           |
@@ -77,7 +77,7 @@
 1. **M0/M1 已完成。** 治理、Windows 原生/Remote SSH 官方 Codex、宿主恢复与 T10 发布均已有证据。发布运行 [39916665531](https://github.com/KasterMist/repo-knowledge/actions/runs/39916665531) 六项成功，源提交 `872c4a49fd5084dcd3bae5a711a421fe19e5319b`，公开 VSIX SHA-256 为 `b2c10ce88485abdaf43d5a7d323b59e712ef59df5c55bd3aa233a6960cb92745`。本机另外匿名下载、核对来源及校验和，并在隔离 VS Code 中安装公开包通过。前两轮发布失败已修复并保留历史记录，不重测已通过的手动场景。
 2. **M2 实现与本次范围验收完成，跟踪 [Issue #17](https://github.com/KasterMist/repo-knowledge/issues/17)。** PR #18/#19/#20 已合并并通过精确 head 五项 CI；最后双目录宿主验证为 run 39928932686。Windows 与 Remote SSH 均完成新界面发布和回退，cache-storage r1→r2→r3；独立只读核对两次 committed 历史、原正文恢复、其余卡片仍 r1，维护者 MCP 诊断均为 r3/stale=false。取消/确认点击由维护者反馈，历史与正文另行核对；不冒充新一轮官方 Codex 对话。M2 尚未单独发布，旧 M1 资产不变。后续从 T14 开始 M3 范围与生成入口；任何新版本发布需单独升版并完成发布检查。完整证据见 [M2 验收记录](m2-acceptance.md)。
 3. **M3 本次范围验收完成，尚未发布，跟踪 [Issue #22](https://github.com/KasterMist/repo-knowledge/issues/22)。** 已实现用户选择范围/语言/限额、确认发送源码、受限 Codex 生成、带当前源码证据的新卡片候选、元数据任务记录、稳定候选 ID、明确重试与无模型结果找回，以及审阅后确认发布/创建头移除。Windows 原生与 Remote SSH 均已真实生成；维护者确认两端发送确认框取消、进度取消和随后明确重试成功。独立核对每端原任务 UUID 下只有 1 批/2 张有效候选，正式三卡片快照不变、0 发布历史、0 lease；重复找回没有产生第二个候选文件。另有两端自编完成态夹具通过重复找回、取消/确认发布、移除和移除后找回，历史和原卡片内容已核对。Windows 代理差异、早期失败、67 单测/4 集成与各 PR/CI 证据见 [M3 验收记录](m3-acceptance.md)，不重复已通过场景。剩余能力边界：单次有界任务，不是全库多轮/任意模型；Wiki 仍按源码 scope 导航；异常执行锁不自动接管，按 [ADR 0009](../architecture/adr/0009-generation-job-recovery.md) 核实后人工处理。下一项为 T17 的指纹/依赖失效追踪；后续发布必须另行升版与验证，旧 M1 Release 不变。
-4. **M4 用户发起增量维护。** 从 [T17 / Issue #35](https://github.com/KasterMist/repo-knowledge/issues/35) 开始：先确定元数据依赖基线 ADR，再实现显式只读的变更/影响报告；区分改动/缺失的直接证据、范围新增文件的潜在影响、不相关变更和不完整覆盖。之后 T18/T19 → T20；代码改变可识别，但模型更新必须由用户发起。已加入内存中的依赖基线捕获/影响分析内核，详见 [T17 内核说明](t17-impact-core.md)。已实现不可变外部基线、文件反向依赖与两个显式命令；已加入唯一内容的可能改名提示；两端保存/选择基线与无变化报告已验收，两端变化报告已由维护者确认通过；源码/卡片导航两端均由维护者确认通过，T17 本次范围验收完成；Issue #35 已关闭。T18 跟踪 [Issue #41](https://github.com/KasterMist/repo-knowledge/issues/41)：显式 Git 工作树/分支绑定、规划 HEAD/index 校验和发布前上下文重检已实现，PR #42 精确 head 五项 CI 通过，维护者确认两端取消保护、绑定成功、feature 拒绝及 main 恢复均正常，T18 本次范围验收完成；详见 [T18 记录](t18-context.md)。下一项 T19 三方合并与人工内容保护，M4 尚未完成。
+4. **M4 用户发起增量维护。** 从 [T17 / Issue #35](https://github.com/KasterMist/repo-knowledge/issues/35) 开始：先确定元数据依赖基线 ADR，再实现显式只读的变更/影响报告；区分改动/缺失的直接证据、范围新增文件的潜在影响、不相关变更和不完整覆盖。之后 T18/T19 → T20；代码改变可识别，但模型更新必须由用户发起。已加入内存中的依赖基线捕获/影响分析内核，详见 [T17 内核说明](t17-impact-core.md)。已实现不可变外部基线、文件反向依赖与两个显式命令；已加入唯一内容的可能改名提示；两端保存/选择基线与无变化报告已验收，两端变化报告已由维护者确认通过；源码/卡片导航两端均由维护者确认通过，T17 本次范围验收完成；Issue #35 已关闭。T18 跟踪 [Issue #41](https://github.com/KasterMist/repo-knowledge/issues/41)：显式 Git 工作树/分支绑定、规划 HEAD/index 校验和发布前上下文重检已实现，PR #42 精确 head 五项 CI 通过，维护者确认两端取消保护、绑定成功、feature 拒绝及 main 恢复均正常，T18 本次范围验收完成；详见 [T18 记录](t18-context.md)。当前 T19 跟踪 [Issue #44](https://github.com/KasterMist/repo-knowledge/issues/44)，基线捕获、三方报告与合并草稿已实现；详见 [T19 记录](t19-merge.md)。精确 head CI 与两端实际交互验收待补齐；之后 T20，M4 尚未完成。
 5. **M5 稳定候选。** T21–T23；之后另行决定可选 T24 商店发布。Linux 桌面 Codex 仍未验证，不因 alpha 发布而扩大声明。
 
 ## 6. 每次开发与 GitHub 交付流程

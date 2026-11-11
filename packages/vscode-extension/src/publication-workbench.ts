@@ -3,6 +3,7 @@ import { relative, isAbsolute } from 'node:path';
 import { realpath } from 'node:fs/promises';
 import {
   KnowledgePublication,
+  fingerprint,
   type PublicationReview,
   type CreationReview,
 } from '@repo-knowledge/core';
@@ -140,6 +141,7 @@ export class PublicationWorkbench implements vscode.Disposable {
   readonly creations: PublicationTree;
   private readonly disposables: vscode.Disposable[] = [];
   private readonly reviews = new Map<string, PublicationReview>();
+  private readonly mergeReviews = new Map<string, string>();
   constructor(
     private readonly resolve: ResolveTarget,
     private readonly documents: KnowledgeDocuments,
@@ -172,6 +174,9 @@ export class PublicationWorkbench implements vscode.Disposable {
     );
     this.command('reviewProposal', (node) =>
       this.reviewProposal(node as PublicationNode | undefined),
+    );
+    this.command('mergeProposal', (node) =>
+      this.mergeProposal(node as PublicationNode | undefined),
     );
     this.command('reviewCreation', (node) =>
       this.reviewCreation(node as PublicationNode | undefined),
@@ -265,7 +270,7 @@ export class PublicationWorkbench implements vscode.Disposable {
               : publication.listCandidates(mode))
           ).map((c) => ({
             label: c.title,
-            description: c.state,
+            description: `${c.state} · ${c.id}`,
             id: c.id,
           }));
     const chosen = await vscode.window.showQuickPick(entries, {
@@ -275,6 +280,41 @@ export class PublicationWorkbench implements vscode.Disposable {
   }
   private key(target: KnowledgeTarget, id: string): string {
     return JSON.stringify([target.root, target.store, id]);
+  }
+  async mergeProposal(node?: PublicationNode) {
+    const chosen = await this.choose('proposals', node);
+    if (!chosen) return;
+    await this.clean(chosen.target);
+    const review = await chosen.publication.previewMerge(chosen.id);
+    const key = this.key(chosen.target, chosen.id),
+      token = fingerprint(JSON.stringify(review));
+    if (this.mergeReviews.get(key) !== token) {
+      if (this.mergeReviews.size >= 100) this.mergeReviews.clear();
+      this.mergeReviews.set(key, token);
+      const uri = this.documents.create(
+        'three-way-merge.json',
+        JSON.stringify(review, null, 2),
+      );
+      await vscode.window.showTextDocument(uri, { preview: false });
+      void vscode.window.showInformationMessage(
+        '请查看 base/current/proposed、merged 和 conflicts；再运行 Merge Proposal into Draft 创建草稿。冲突默认保留当前内容，不会发布。',
+      );
+      return { reviewRequired: true, uri, conflicts: review.conflicts };
+    }
+    if (
+      (await vscode.window.showWarningMessage(
+        '创建三方合并草稿？冲突默认保留当前人工内容；处理后填写 merge.resolvedFields，再提交候选并单独审阅发布。',
+        { modal: true },
+        '创建草稿 / Create draft',
+      )) !== '创建草稿 / Create draft'
+    )
+      return { cancelled: true };
+    await this.clean(chosen.target);
+    const draft = await chosen.publication.createMergeDraft(chosen.id, token);
+    this.mergeReviews.delete(key);
+    this.refreshAll();
+    await vscode.window.showTextDocument(chosen.target.uriForFile(draft.path));
+    return draft;
   }
   private async diff(target: KnowledgeTarget, review: PublicationReview) {
     const before = this.documents.create(
@@ -482,5 +522,6 @@ export class PublicationWorkbench implements vscode.Disposable {
   dispose(): void {
     this.disposables.forEach((d) => d.dispose());
     this.reviews.clear();
+    this.mergeReviews.clear();
   }
 }
