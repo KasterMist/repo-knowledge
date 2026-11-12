@@ -175,13 +175,23 @@ export function summarize(record) {
       ),
     );
     if (entry.environment !== null) {
-      keys(entry.environment, [
+      const required = [
         'model',
         'codexVersion',
         'editorVersion',
         'extensionVersion',
-      ]);
-      assert.ok(Object.values(entry.environment).every(short));
+      ];
+      const hasReasoning = Object.hasOwn(entry.environment, 'reasoningEffort');
+      keys(
+        entry.environment,
+        hasReasoning ? [...required, 'reasoningEffort'] : required,
+      );
+      assert.ok(required.every((key) => short(entry.environment[key])));
+      if (hasReasoning)
+        assert.ok(
+          entry.environment.reasoningEffort === null ||
+            short(entry.environment.reasoningEffort),
+        );
     }
     if (entry.sessionLabel !== null) {
       assert.ok(
@@ -265,6 +275,8 @@ export function summarize(record) {
             (entry) =>
               entry.environment !== null &&
               entries[0].environment !== null &&
+              typeof entry.environment.reasoningEffort === 'string' &&
+              typeof entries[0].environment.reasoningEffort === 'string' &&
               Object.keys(entry.environment).every(
                 (key) => entry.environment[key] === entries[0].environment[key],
               ),

@@ -31,7 +31,7 @@ T20 development adds an explicitly confirmed Generate Card Update for one existi
 
 ## Development
 
-T21 preparation adds an [offline, traceable evaluation protocol](docs/development/t21-evaluation.zh-CN.md) for baseline/natural/explicit knowledge use and independent-conversation reuse. Static fixture preparation and record validation make no model calls. Real official Codex comparisons remain pending; no effectiveness claim or new release is made.
+T21 preparation adds an [offline, traceable evaluation protocol](docs/development/t21-evaluation.zh-CN.md) for baseline/natural/explicit knowledge use and independent-conversation reuse. Static fixture preparation and record validation make no model calls. Windows/Remote SSH baseline answers have been received; environment/tool metadata and paired knowledge comparisons remain pending. No effectiveness claim or new release is made.
 
 Use Node.js **24.19.0** and npm **12.2.1** on Windows or Linux:
 
