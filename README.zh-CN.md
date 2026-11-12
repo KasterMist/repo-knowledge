@@ -25,7 +25,7 @@ T17 开发代码已加入外部不可变依赖基线及 Capture Dependency Basel
 
 ## 本地开发
 
-T21 已加入[离线、可追溯的评估协议](docs/development/t21-evaluation.zh-CN.md)，分别记录无知识、自然调用、显式调用及独立对话复用。静态案例准备与记录校验不调用模型；已收到 Windows/Remote SSH 无知识组答复，环境/工具记录与知识组对照仍待补齐；尚不宣称知识效果通过，也不发布新版本。
+T21 已加入[离线、可追溯的评估协议](docs/development/t21-evaluation.zh-CN.md)，分别记录无知识、自然调用、显式调用及独立对话复用。静态案例准备与记录校验不调用模型；已记录两端基线/自然组（含 Windows 命令目录偏差及 MCP 未证实），并由开发代理完成 Windows/Linux 有界程序化显式检索，捕获真实 MCP 事件。后续评估默认自动执行，见[结果与局限](docs/development/t21-programmatic.zh-CN.md)；不宣称普遍知识效果，不发布新版本。
 
 Windows 与 Linux 统一使用 Node.js **24.19.0**、npm **12.2.1**：
 

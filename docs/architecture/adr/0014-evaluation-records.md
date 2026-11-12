@@ -41,6 +41,15 @@ field; preserve such records when rolling back rather than deleting metadata.
 
 ## Limits
 
+Captured programmatic traces are separate evidence, identified by their own
+`kind`, protocol revision and schemaVersion 1. They do not migrate into the manual
+observation format or satisfy its coverage by default. Publish only sanitized
+source packets, MCP events, final answers and metrics; retain original failures
+privately. Raw reasoning, credentials, host paths and account configuration stay
+out of public artifacts. Rollback retains the original protocol revision rather
+than relabeling later results as the first attempt. See the
+[programmatic evidence](../../development/t21-programmatic.zh-CN.md).
+
 Directory separation is procedural, not an OS access-control sandbox. Baseline
 is valid only if the reviewer confirms no knowledge tools/other stores, previous
 conversation or scoring material were used. Tool registration and server

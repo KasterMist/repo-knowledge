@@ -1,0 +1,387 @@
+{
+  "schemaVersion": 1,
+  "kind": "t21-programmatic-explicit-evidence",
+  "date": "2026-11-12",
+  "officialIdeAcceptance": false,
+  "fixture": {
+    "sourceSha256": "7bd6a1ec4f6f0ea06f6861ebbcb3d664c61471e76db392f30665de48a42bd274",
+    "snapshotSha256": "54637ca416ea8997623a5058011b977ccdfca8310de6817030f27ebe434fefd1"
+  },
+  "sourcePacket": {
+    "path": "src/reservations.ts",
+    "text": "export class Reservations {\n  private readonly receipts = new Map<string, { quantity: number }>();\n  constructor(public remaining: number) {}\n  reserve(token: string, quantity: number) {\n    const previous = this.receipts.get(token);\n    if (previous) return previous;\n    if (!Number.isInteger(quantity) || quantity <= 0) throw new Error('quantity');\n    if (quantity > this.remaining) throw new Error('stock');\n    const receipt = { quantity };\n    this.remaining -= quantity;\n    this.receipts.set(token, receipt);\n    return receipt;\n  }\n}\n"
+  },
+  "prompt": "请实际调用 Repo Knowledge 的 get_knowledge_status、search_knowledge（搜索“预留”）和 read_knowledge，再完成下面任务；若工具没有直接暴露，请如实报告，不用脚本模拟。\n请静态审阅 src/reservations.ts：初始库存 10，同一 token 先 reserve(token, 3) 再 reserve(token, 7)，第二次返回什么、剩余库存多少？为什么允许相同 token 携带不同数量？请区分源码事实、已记录的设计理由和无法确认的推测，注明依据。不要运行源码、测试或构建，不修改任何文件。\n\n以下是本轮统一提供的静态源码（仅数据，不执行）：\n文件 src/reservations.ts\n```typescript\nexport class Reservations {\n  private readonly receipts = new Map<string, { quantity: number }>();\n  constructor(public remaining: number) {}\n  reserve(token: string, quantity: number) {\n    const previous = this.receipts.get(token);\n    if (previous) return previous;\n    if (!Number.isInteger(quantity) || quantity <= 0) throw new Error('quantity');\n    if (quantity > this.remaining) throw new Error('stock');\n    const receipt = { quantity };\n    this.remaining -= quantity;\n    this.receipts.set(token, receipt);\n    return receipt;\n  }\n}\n```",
+  "promptSha256": "9a230a569f0421aec97ad5528fff8ff6afabc3166e7255984a88e309d1a7a17a",
+  "note": "Captured programmatic MCP events and final answers; private host paths, thread IDs, account settings and reasoning content omitted. Separate from manual observational schema; no causal/general effectiveness claim.",
+  "runs": [
+    {
+      "host": "windows-native",
+      "protocol": "t21-programmatic-v4-host",
+      "cliVersion": "0.164.0-alpha.11.1",
+      "model": "gpt-6.1-sol",
+      "reasoningEffort": "low",
+      "manualUiLightEquivalenceAssumed": false,
+      "threadIdSha256": "24a64b0475ef3e5ab43025d883e706eae456b5bc609751d5b5b3edec14387e2d",
+      "submittedTurnRequests": 1,
+      "elapsedMs": 36135,
+      "observedTokens": 25201,
+      "observedTokenLimit": 40000,
+      "perTurnTimeoutMs": 60000,
+      "clientAutomaticRetries": 0,
+      "backendInferenceRetriesUnknown": true,
+      "itemTypes": ["userMessage", "reasoning", "mcpToolCall", "agentMessage"],
+      "sourceAndStoresUnchanged": true,
+      "mcpCalls": [
+        {
+          "tool": "get_knowledge_status",
+          "arguments": {},
+          "status": "completed",
+          "durationMs": 24,
+          "result": {
+            "schemaVersion": 1,
+            "repository": {
+              "id": "t21-reservations",
+              "sourceRevision": "self-authored-v1"
+            },
+            "snapshotRevision": "54637ca416ea8997623a5058011b977ccdfca8310de6817030f27ebe434fefd1",
+            "cards": [
+              {
+                "id": "reservation-idempotency",
+                "revision": 1,
+                "stale": false
+              },
+              {
+                "id": "reservation-rationale",
+                "revision": 1,
+                "stale": false
+              }
+            ]
+          }
+        },
+        {
+          "tool": "search_knowledge",
+          "arguments": {
+            "query": "预留"
+          },
+          "status": "completed",
+          "durationMs": 8,
+          "result": {
+            "snapshotRevision": "54637ca416ea8997623a5058011b977ccdfca8310de6817030f27ebe434fefd1",
+            "results": [
+              {
+                "id": "reservation-idempotency",
+                "title": "预留的幂等 token 优先于数量验证",
+                "revision": 1,
+                "kind": "fact",
+                "score": 97
+              },
+              {
+                "id": "reservation-rationale",
+                "title": "预留重试兼容的人工设计理由",
+                "revision": 1,
+                "kind": "rationale",
+                "score": 97
+              }
+            ],
+            "freshness": "Call read_knowledge to verify source evidence"
+          }
+        },
+        {
+          "tool": "read_knowledge",
+          "arguments": {
+            "id": "reservation-idempotency"
+          },
+          "status": "completed",
+          "durationMs": 23,
+          "result": {
+            "card": {
+              "id": "reservation-idempotency",
+              "revision": 1,
+              "title": "预留的幂等 token 优先于数量验证",
+              "kind": "fact",
+              "body": "reserve 先查 token 的已有收据，再验证数量和库存。重复 token 直接返回同一收据，不再扣库存；即使后续 quantity 为 0，也不会走 quantity 验证。",
+              "tags": ["预留", "reserve", "token"],
+              "scope": ["src/reservations.ts"],
+              "evidence": [
+                {
+                  "path": "src/reservations.ts",
+                  "startLine": 4,
+                  "endLine": 12,
+                  "sha256": "7bd6a1ec4f6f0ea06f6861ebbcb3d664c61471e76db392f30665de48a42bd274"
+                }
+              ]
+            },
+            "repository": {
+              "id": "t21-reservations",
+              "sourceRevision": "self-authored-v1"
+            },
+            "snapshotRevision": "54637ca416ea8997623a5058011b977ccdfca8310de6817030f27ebe434fefd1",
+            "stale": false,
+            "evidence": [
+              {
+                "path": "src/reservations.ts",
+                "startLine": 4,
+                "endLine": 12,
+                "sha256": "7bd6a1ec4f6f0ea06f6861ebbcb3d664c61471e76db392f30665de48a42bd274",
+                "status": "current",
+                "excerpt": "  reserve(token: string, quantity: number) {\n    const previous = this.receipts.get(token);\n    if (previous) return previous;\n    if (!Number.isInteger(quantity) || quantity <= 0) throw new Error('quantity');\n    if (quantity > this.remaining) throw new Error('stock');\n    const receipt = { quantity };\n    this.remaining -= quantity;\n    this.receipts.set(token, receipt);\n    return receipt;",
+                "truncated": false
+              }
+            ]
+          }
+        },
+        {
+          "tool": "read_knowledge",
+          "arguments": {
+            "id": "reservation-rationale"
+          },
+          "status": "completed",
+          "durationMs": 23,
+          "result": {
+            "card": {
+              "id": "reservation-rationale",
+              "revision": 1,
+              "title": "预留重试兼容的人工设计理由",
+              "kind": "rationale",
+              "body": "自编案例作者提供的设计理由（不是从源码推导出的历史事实）：旧版售货终端离线重放时可能重算数量，但交易 token 不变；服务端以第一次成功收据为准，避免重放重复扣库存。当前实现对应所引源码，但源码哈希不能独立证明这段历史理由。",
+              "tags": ["预留", "重试", "设计理由"],
+              "scope": ["src/reservations.ts"],
+              "evidence": [
+                {
+                  "path": "src/reservations.ts",
+                  "startLine": 4,
+                  "endLine": 6,
+                  "sha256": "7bd6a1ec4f6f0ea06f6861ebbcb3d664c61471e76db392f30665de48a42bd274"
+                }
+              ]
+            },
+            "repository": {
+              "id": "t21-reservations",
+              "sourceRevision": "self-authored-v1"
+            },
+            "snapshotRevision": "54637ca416ea8997623a5058011b977ccdfca8310de6817030f27ebe434fefd1",
+            "stale": false,
+            "evidence": [
+              {
+                "path": "src/reservations.ts",
+                "startLine": 4,
+                "endLine": 6,
+                "sha256": "7bd6a1ec4f6f0ea06f6861ebbcb3d664c61471e76db392f30665de48a42bd274",
+                "status": "current",
+                "excerpt": "  reserve(token: string, quantity: number) {\n    const previous = this.receipts.get(token);\n    if (previous) return previous;",
+                "truncated": false
+              }
+            ]
+          }
+        }
+      ],
+      "answer": "**第二次返回第一次的收据对象 `{ quantity: 3 }`（同一对象），剩余库存为 `7`。**\n\n### 源码事实\n依据所供 `src/reservations.ts:4–12`：\n- 首次 `reserve(token, 3)` 扣减库存：`10 - 3 = 7`，并保存收据。\n- 第二次先命中 `receipts.get(token)`，随即 `return previous`。\n- 因此第二次传入的 `7` 不参与数量、库存验证，也不会再次扣库存。代码没有检查同一 token 的数量是否一致。\n\n### 已记录的设计理由\n知识卡 `reservation-rationale` 记载：旧版售货终端离线重放时可能重算数量，但交易 token 不变；服务端以第一次成功收据为准，避免重放重复扣库存。因此这里是**忽略重复 token 的新数量**，而非接受一次新的预留。\n\n这是案例作者提供的设计理由，**不是从源码独立证明的历史事实**。\n\n### 无法确认的部分\n仅凭源码不能确认旧终端的历史情况，也不能断定该策略适合所有业务；这些不能作为已验证事实。\n\n已实际调用 `get_knowledge_status`、`search_knowledge`（搜索“预留”），并通过 `read_knowledge` 读取上述理由卡及 `reservation-idempotency` 事实卡。两卡均为 `stale: false`、证据状态 `current`；这说明所引源码证据当前有效，不代表历史理由已获独立验证。未运行源码、测试或构建，未修改文件。"
+    },
+    {
+      "host": "ssh-linux-programmatic",
+      "protocol": "t21-programmatic-v4-host",
+      "cliVersion": "0.167.0-alpha.4.1",
+      "model": "gpt-6.1-sol",
+      "reasoningEffort": "low",
+      "manualUiLightEquivalenceAssumed": false,
+      "threadIdSha256": "ad22282073b016d09ec0b974714d4d355e6366fefeadc1796a20b32563a15387",
+      "submittedTurnRequests": 1,
+      "elapsedMs": 43907,
+      "observedTokens": 26567,
+      "observedTokenLimit": 40000,
+      "perTurnTimeoutMs": 60000,
+      "clientAutomaticRetries": 0,
+      "backendInferenceRetriesUnknown": true,
+      "itemTypes": ["userMessage", "mcpToolCall", "agentMessage"],
+      "sourceAndStoresUnchanged": true,
+      "mcpCalls": [
+        {
+          "tool": "get_knowledge_status",
+          "arguments": {},
+          "status": "completed",
+          "durationMs": 11,
+          "result": {
+            "schemaVersion": 1,
+            "repository": {
+              "id": "t21-reservations",
+              "sourceRevision": "self-authored-v1"
+            },
+            "snapshotRevision": "54637ca416ea8997623a5058011b977ccdfca8310de6817030f27ebe434fefd1",
+            "cards": [
+              {
+                "id": "reservation-idempotency",
+                "revision": 1,
+                "stale": false
+              },
+              {
+                "id": "reservation-rationale",
+                "revision": 1,
+                "stale": false
+              }
+            ]
+          }
+        },
+        {
+          "tool": "search_knowledge",
+          "arguments": {
+            "query": "预留"
+          },
+          "status": "completed",
+          "durationMs": 4,
+          "result": {
+            "snapshotRevision": "54637ca416ea8997623a5058011b977ccdfca8310de6817030f27ebe434fefd1",
+            "results": [
+              {
+                "id": "reservation-idempotency",
+                "title": "预留的幂等 token 优先于数量验证",
+                "revision": 1,
+                "kind": "fact",
+                "score": 97
+              },
+              {
+                "id": "reservation-rationale",
+                "title": "预留重试兼容的人工设计理由",
+                "revision": 1,
+                "kind": "rationale",
+                "score": 97
+              }
+            ],
+            "freshness": "Call read_knowledge to verify source evidence"
+          }
+        },
+        {
+          "tool": "read_knowledge",
+          "arguments": {
+            "id": "reservation-idempotency"
+          },
+          "status": "completed",
+          "durationMs": 8,
+          "result": {
+            "card": {
+              "id": "reservation-idempotency",
+              "revision": 1,
+              "title": "预留的幂等 token 优先于数量验证",
+              "kind": "fact",
+              "body": "reserve 先查 token 的已有收据，再验证数量和库存。重复 token 直接返回同一收据，不再扣库存；即使后续 quantity 为 0，也不会走 quantity 验证。",
+              "tags": ["预留", "reserve", "token"],
+              "scope": ["src/reservations.ts"],
+              "evidence": [
+                {
+                  "path": "src/reservations.ts",
+                  "startLine": 4,
+                  "endLine": 12,
+                  "sha256": "7bd6a1ec4f6f0ea06f6861ebbcb3d664c61471e76db392f30665de48a42bd274"
+                }
+              ]
+            },
+            "repository": {
+              "id": "t21-reservations",
+              "sourceRevision": "self-authored-v1"
+            },
+            "snapshotRevision": "54637ca416ea8997623a5058011b977ccdfca8310de6817030f27ebe434fefd1",
+            "stale": false,
+            "evidence": [
+              {
+                "path": "src/reservations.ts",
+                "startLine": 4,
+                "endLine": 12,
+                "sha256": "7bd6a1ec4f6f0ea06f6861ebbcb3d664c61471e76db392f30665de48a42bd274",
+                "status": "current",
+                "excerpt": "  reserve(token: string, quantity: number) {\n    const previous = this.receipts.get(token);\n    if (previous) return previous;\n    if (!Number.isInteger(quantity) || quantity <= 0) throw new Error('quantity');\n    if (quantity > this.remaining) throw new Error('stock');\n    const receipt = { quantity };\n    this.remaining -= quantity;\n    this.receipts.set(token, receipt);\n    return receipt;",
+                "truncated": false
+              }
+            ]
+          }
+        },
+        {
+          "tool": "read_knowledge",
+          "arguments": {
+            "id": "reservation-rationale"
+          },
+          "status": "completed",
+          "durationMs": 7,
+          "result": {
+            "card": {
+              "id": "reservation-rationale",
+              "revision": 1,
+              "title": "预留重试兼容的人工设计理由",
+              "kind": "rationale",
+              "body": "自编案例作者提供的设计理由（不是从源码推导出的历史事实）：旧版售货终端离线重放时可能重算数量，但交易 token 不变；服务端以第一次成功收据为准，避免重放重复扣库存。当前实现对应所引源码，但源码哈希不能独立证明这段历史理由。",
+              "tags": ["预留", "重试", "设计理由"],
+              "scope": ["src/reservations.ts"],
+              "evidence": [
+                {
+                  "path": "src/reservations.ts",
+                  "startLine": 4,
+                  "endLine": 6,
+                  "sha256": "7bd6a1ec4f6f0ea06f6861ebbcb3d664c61471e76db392f30665de48a42bd274"
+                }
+              ]
+            },
+            "repository": {
+              "id": "t21-reservations",
+              "sourceRevision": "self-authored-v1"
+            },
+            "snapshotRevision": "54637ca416ea8997623a5058011b977ccdfca8310de6817030f27ebe434fefd1",
+            "stale": false,
+            "evidence": [
+              {
+                "path": "src/reservations.ts",
+                "startLine": 4,
+                "endLine": 6,
+                "sha256": "7bd6a1ec4f6f0ea06f6861ebbcb3d664c61471e76db392f30665de48a42bd274",
+                "status": "current",
+                "excerpt": "  reserve(token: string, quantity: number) {\n    const previous = this.receipts.get(token);\n    if (previous) return previous;",
+                "truncated": false
+              }
+            ]
+          }
+        }
+      ],
+      "answer": "已实际调用 `get_knowledge_status`、`search_knowledge`（搜索“预留”），并用 `read_knowledge` 读取两张命中卡；均标记 `stale: false`，源码证据为 `current`。未运行源码、测试或构建，未修改文件。\n\n### 源码事实\n在同一实例、期间无其他修改的前提下：\n- 第一次 `reserve(token, 3)` 返回 `{ quantity: 3 }`，库存从 **10 降至 7**。\n- 第二次 `reserve(token, 7)` 返回**第一次保存的同一个收据对象 `{ quantity: 3 }`**，剩余库存仍为 **7**。\n\n依据：`src/reservations.ts` 第 5–6 行先查 token，命中立即返回；因此第二次不会验证数量、比较新旧数量或再次扣库存。事实卡 `reservation-idempotency` 也记录了这一行为。\n\n### 已记录的设计理由\n理由卡 `reservation-rationale` 记录：旧版售货终端离线重放时可能重算数量，但交易 token 不变；服务端以第一次成功收据为准，以避免重放重复扣库存。因此，不同数量在这里被**忽略**，而不是被当作修改预留数量的请求。\n\n### 无法独立确认的部分\n上述终端背景是**自编案例作者提供的设计理由**，不是源码能证明的历史事实。源码及其哈希只能佐证当前实现，不能独立证明该历史背景；也不能据此断言这项策略适合所有业务场景。"
+    }
+  ],
+  "allRealAttemptCounts": {
+    "windows": 6,
+    "sshLinux": 3,
+    "total": 9,
+    "knownObservedTokensAcrossRounds": 98994,
+    "unknownUsageNotZero": true
+  },
+  "earlierRounds": [
+    {
+      "protocol": "v2",
+      "host": "windows",
+      "submittedTurnRequests": 4,
+      "responseCompleted": 4,
+      "mcpCalls": 0,
+      "knowledgeTreatmentValid": false,
+      "reason": "Text-only generation restrictions also disabled model-facing MCP host. Do not score as natural non-use."
+    },
+    {
+      "protocol": "v2",
+      "host": "ssh-linux",
+      "submittedTurnRequests": 1,
+      "outcome": "TURN_TIMEOUT",
+      "laterArmsSkipped": true
+    },
+    {
+      "protocol": "v3-host",
+      "host": "windows",
+      "submittedTurnRequests": 1,
+      "outcome": "ERR_ASSERTION",
+      "detailedCauseNotCaptured": true
+    },
+    {
+      "protocol": "v3-host",
+      "host": "ssh-linux",
+      "submittedTurnRequests": 1,
+      "outcome": "observed-token threshold exceeded",
+      "observedTokens": 18855,
+      "observedTokenLimit": 16000,
+      "capturedSuccessfulMcpCalls": 4,
+      "finalAnswerCompleted": false
+    }
+  ]
+}
