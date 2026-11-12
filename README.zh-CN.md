@@ -25,6 +25,8 @@ T17 开发代码已加入外部不可变依赖基线及 Capture Dependency Basel
 
 ## 本地开发
 
+T21 已加入[离线、可追溯的评估协议](docs/development/t21-evaluation.zh-CN.md)，分别记录无知识、自然调用、显式调用及独立对话复用。静态案例准备与记录校验不调用模型；真实官方 Codex 对照仍待执行，尚不宣称知识效果通过，也不发布新版本。
+
 Windows 与 Linux 统一使用 Node.js **24.19.0**、npm **12.2.1**：
 
 ```text
