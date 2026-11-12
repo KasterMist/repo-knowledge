@@ -33,6 +33,12 @@ scripts/docs; keep experiment records separately for audit. Temporary directorie
 are not deleted automatically. Never recursively delete a path supplied by a
 record; review the exact owned temporary directory before manual cleanup.
 
+The optional `environment.reasoningEffort` field is an additive version-1
+extension: existing four-field environments remain readable, while omitted/null
+effort cannot establish comparable environments. New observations should record
+the actual effort or null, never guess it. Earlier readers may reject the extra
+field; preserve such records when rolling back rather than deleting metadata.
+
 ## Limits
 
 Directory separation is procedural, not an OS access-control sandbox. Baseline

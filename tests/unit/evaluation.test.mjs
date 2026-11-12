@@ -17,6 +17,39 @@ import {
   verifyArtifacts,
 } from '../../scripts/evaluation.mjs';
 
+test('T21 environment comparison requires known matching reasoning effort', () => {
+  const record = recordTemplate();
+  const entries = record.observations.filter(
+    (entry) => entry.host === 'windows-native',
+  );
+  for (const entry of entries)
+    entry.environment = {
+      model: 'synthetic',
+      codexVersion: 'test',
+      editorVersion: 'test',
+      extensionVersion: 'test',
+    };
+  const same = () =>
+    summarize(record).comparableEnvironments.find(
+      (entry) => entry.host === 'windows-native',
+    ).same;
+  assert.equal(
+    same(),
+    false,
+    'Legacy metadata without effort does not prove comparability',
+  );
+  for (const entry of entries) entry.environment.reasoningEffort = 'high';
+  assert.equal(same(), true);
+  entries[1].environment.reasoningEffort = 'low';
+  assert.equal(
+    same(),
+    false,
+    'Same model with different reasoning effort is not matched',
+  );
+  entries[1].environment.reasoningEffort = null;
+  assert.equal(same(), false, 'Unknown effort stays unknown');
+});
+
 test('T21 prepares isolated identical static source, external current cards, and no answers in workspaces', async () => {
   const result = await prepareEvaluation();
   try {
