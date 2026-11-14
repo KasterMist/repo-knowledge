@@ -1,6 +1,6 @@
 # Repo Knowledge：任务、进度与续接入口
 
-更新日期：2026-11-14。所有者：KasterMist。仓库：[KasterMist/repo-knowledge](https://github.com/KasterMist/repo-knowledge)。许可证：Apache-2.0。
+更新日期：2026-11-15。所有者：KasterMist。仓库：[KasterMist/repo-knowledge](https://github.com/KasterMist/repo-knowledge)。许可证：Apache-2.0。
 
 本表依据对话中确认的需求、仓库实现与验收记录，以及当日核对的 GitHub Issue #1/#3/#5 整理。核对起点为已合并的 90b2dcb（PR #8）。实现完成、自动化测试通过、人工验收通过和正式发布是不同状态，不相互替代。本表不按聊天轮数或代码量估算完成百分比。
 
@@ -117,3 +117,5 @@ T27 当前进度：T27.1 文章/目录数据模型、共享卡片引用、ADR 00
 T27.2 范围和证据见 [T27 记录](t27-wiki.zh-CN.md)：正式存储/MCP 仍 v1，预览不导入/迁移/发布；114 单测/5 集成与实际宿主已有证据，最终 head CI 由 Issue #58 记录。截图工具恢复后仍失败，视觉验收未计通过；不重复要求维护者手测。
 
 T27.3 已加入 Wiki 生成模式和独立候选阅读/找回；暂存格式及兼容/恢复规则见 [ADR 0016](../architecture/adr/0016-wiki-generation-staging.md)。自编夹具自动化与打包宿主记录、精确 head 五项 CI 和合并由 Issue #58 维护。没有新增真实模型调用、视觉或 Remote SSH 人工验收，也没有新 Release。下一项 T27.4，正式文章发布与迁移不能绕过全部兼容门禁。
+
+2026-11-15 续接：T27.4a 核心兼容已实现，正式/历史快照统一校验，卡片写入/回退/恢复保留完整文章和人工说明。显式 core harness 可验证 v2；默认编辑器/随包 MCP 仍拒绝 v2，不改变用户格式。接下来 T27.4b 共同事务/迁移备份/历史回退，再 T27.4c 界面和入口激活；整体 T27.4 尚未完成。七组新增自编核心测试及隔离 MCP factory/默认 CLI 拒绝验证不冒充真实迁移或官方 Codex。路径核对、退出条件和证据见 [T27.4 续接](t274-runtime.zh-CN.md)、ADR 0017 和 Issue #58。不重复旧人工测试、不调用真实模型、不发布版本。
