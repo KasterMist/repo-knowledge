@@ -4,7 +4,7 @@
 
 本表依据对话中确认的需求、仓库实现与验收记录，以及当日核对的 GitHub Issue #1/#3/#5 整理。核对起点为已合并的 90b2dcb（PR #8）。实现完成、自动化测试通过、人工验收通过和正式发布是不同状态，不相互替代。本表不按聊天轮数或代码量估算完成百分比。
 
-当前优先级调整：先完成 [T25–T28 产品前端交付](../product/frontend-delivery.zh-CN.md)，再收口 T21/T22/T23。T25 统一主页首个切片已实现，本机完整检查（98 单测、5 集成）与 VS Code 1.117.0 打包宿主验证通过，精确 head CI 待核对；T26 生成面板、T27 独立 Wiki 文章、T28 图形审阅均未完成。原有 T11/T14 范围验收不代表完整前端已交付；不重做已通过的人工测试。跟踪 [Issue #54](https://github.com/KasterMist/repo-knowledge/issues/54)。
+当前优先级调整：先完成 [T25–T28 产品前端交付](../product/frontend-delivery.zh-CN.md)，再收口 T21/T22/T23。T25 统一主页首个切片已实现，本机完整检查（98 单测、5 集成）与 VS Code 1.117.0 打包宿主验证通过，Windows/Linux 五项 CI 已通过 [run 43542951822](https://github.com/KasterMist/repo-knowledge/actions/runs/43542951822)，最终提交门禁见 [PR #55](https://github.com/KasterMist/repo-knowledge/pull/55)；T26 生成面板、T27 独立 Wiki 文章、T28 图形审阅均未完成。原有 T11/T14 范围验收不代表完整前端已交付；不重做已通过的人工测试。跟踪 [Issue #54](https://github.com/KasterMist/repo-knowledge/issues/54)。
 
 ## 1. 已确认需求，后续不得遗忘
 
