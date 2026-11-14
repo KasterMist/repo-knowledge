@@ -61,6 +61,27 @@ async function runMultiRoot(extension) {
       .update(second.target.root)
       .digest('hex'),
   );
+  const wiki = await extension.exports.wikiReader.open(
+    second.folder,
+    await fs.readFile(
+      path.join(second.target.root, 'wiki-preview.json'),
+      'utf8',
+    ),
+  );
+  assert.equal(wiki.repository, second.target.root);
+  const article = await wiki.handle({ action: 'article', id: 'cache-module' });
+  assert.equal(article.sourceFreshness, 'current');
+  const entry = article.evidence[0];
+  const wikiSource = await wiki.handle({
+    action: 'evidence',
+    cardId: entry.cardId,
+    index: entry.index,
+    revision: article.snapshotRevision,
+  });
+  assert.equal(
+    await fs.realpath(wikiSource.fsPath),
+    await fs.realpath(path.join(second.target.root, entry.path)),
+  );
   await fs.writeFile(
     process.env.REPO_KNOWLEDGE_HOST_RESULT,
     JSON.stringify({
@@ -73,6 +94,7 @@ async function runMultiRoot(extension) {
         'pinned first node remains isolated after second read',
         'second-root evidence opens its own source',
         'generation form preview remains pinned to the selected second root',
+        'Wiki article reader and evidence remain pinned to the selected second root',
       ],
     }),
   );
@@ -175,6 +197,44 @@ exports.run = async function run() {
   assert.equal(sourceUri.scheme, 'file');
   assert.equal(path.basename(sourceUri.fsPath), '读取.ts');
   assert.equal(vscode.window.activeTextEditor.selection.start.line, 0);
+  const wikiBefore = await fs.readFile(
+    path.join(readNode.target.store, 'knowledge.json'),
+  );
+  const wiki = await vscode.commands.executeCommand(
+    'repoKnowledge.openWikiPreview',
+    roots[0],
+    await fs.readFile(
+      path.join(readNode.target.root, 'wiki-preview.json'),
+      'utf8',
+    ),
+  );
+  assert.equal(wiki.reader.catalog().length, 2);
+  const article = await wiki.handle({ action: 'article', id: 'overview' });
+  assert.equal(article.sourceFreshness, 'current');
+  assert.equal(article.preview, true);
+  const wikiEvidence = article.evidence[0];
+  const wikiSource = await wiki.handle({
+    action: 'evidence',
+    cardId: wikiEvidence.cardId,
+    index: wikiEvidence.index,
+    revision: article.snapshotRevision,
+  });
+  assert.equal(
+    await fs.realpath(wikiSource.fsPath),
+    await fs.realpath(path.join(readNode.target.root, 'src/读取.ts')),
+  );
+  assert.equal(
+    (await wiki.handle({ action: 'article', id: 'not-in-catalog' })).error,
+    true,
+  );
+  assert.equal(
+    (await wiki.handle({ action: 'refresh' })).sourceFreshness,
+    'current',
+  );
+  assert.deepEqual(
+    await fs.readFile(path.join(readNode.target.store, 'knowledge.json')),
+    wikiBefore,
+  );
   const impactUri = workbench.documents.create('host-impact.json', '{}');
   extension.exports.impactNavigation.remember(impactUri, {
     target: readNode.target,
@@ -642,6 +702,7 @@ exports.run = async function run() {
           'command registrations and two knowledge trees',
           'graphical home opens against the host repository and reads three published cards without generation',
           'generation form previews two files and refuses changed forms or replaced plans before backend/model access',
+          'read-only Wiki catalog, article, host-routed evidence and invalid article recovery without publication',
           'read-only knowledge document and validated source navigation',
           'durable draft, dirty-editor rejection and saved candidate diff without publication',
           'bounded user-invoked scan plan preview without model calls',

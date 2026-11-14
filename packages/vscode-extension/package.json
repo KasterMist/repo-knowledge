@@ -25,6 +25,11 @@
   "contributes": {
     "commands": [
       {
+        "command": "repoKnowledge.openWikiPreview",
+        "title": "Repo Knowledge: Open Wiki Preview",
+        "icon": "$(book)"
+      },
+      {
         "command": "repoKnowledge.openGenerationPanel",
         "title": "Repo Knowledge: Open Generation Panel",
         "icon": "$(sparkle)"
@@ -304,6 +309,7 @@
   },
   "dependencies": {
     "@repo-knowledge/core": "0.1.0",
-    "@modelcontextprotocol/sdk": "1.32.1"
+    "@modelcontextprotocol/sdk": "1.32.1",
+    "marked": "18.1.1"
   }
 }
