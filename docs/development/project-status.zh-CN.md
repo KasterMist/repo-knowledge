@@ -6,7 +6,7 @@
 
 当前优先级调整：先完成 [T25–T28 产品前端交付](../product/frontend-delivery.zh-CN.md)，再收口 T21/T22/T23。T25 统一主页首个切片已实现，本机完整检查（98 单测、5 集成）与 VS Code 1.117.0 打包宿主验证通过，Windows/Linux 五项 CI 已通过 [run 43542951822](https://github.com/KasterMist/repo-knowledge/actions/runs/43542951822)，最终提交门禁见 [PR #55](https://github.com/KasterMist/repo-knowledge/pull/55)；T26 统一生成面板已实现，自动化及合并门禁见 [Issue #56](https://github.com/KasterMist/repo-knowledge/issues/56)；T27 独立 Wiki 文章、T28 图形审阅仍未完成。原有 T11/T14 范围验收不代表完整前端已交付；不重做已通过的人工测试。跟踪 [Issue #54](https://github.com/KasterMist/repo-knowledge/issues/54)。
 
-T27 当前进度：T27.1 文章/目录数据模型、共享卡片引用、ADR 0015 与无写入的迁移/回退预览已实现；实际 KnowledgeStore/MCP/发布器仍严格 v1。整体 T27 未完成；T27.2 已实现只读预览目录、受限 Markdown、正式卡片/源码核验与导航；下一项 T27.3 有界文章生成。最终检查/合并证据和激活门禁见 [T27 续接](t27-wiki.zh-CN.md)及 [Issue #58](https://github.com/KasterMist/repo-knowledge/issues/58)。
+T27 当前进度：T27.1 文章/目录数据模型、共享卡片引用、ADR 0015 与无写入的迁移/回退预览已实现；实际 KnowledgeStore/MCP/发布器仍严格 v1。整体 T27 未完成；T27.2 已实现只读预览目录、受限 Markdown、正式卡片/源码核验与导航；T27.3 已实现面板内有界文章＋关联卡片独立候选生成/阅读及无模型找回。下一项 T27.4 全部 v2 读写兼容、审阅发布及迁移。最终检查/合并证据和激活门禁见 [T27 续接](t27-wiki.zh-CN.md)及 [Issue #58](https://github.com/KasterMist/repo-knowledge/issues/58)。
 
 ## 1. 已确认需求，后续不得遗忘
 
@@ -78,7 +78,7 @@ T27 当前进度：T27.1 文章/目录数据模型、共享卡片引用、ADR 00
 
 ## 5. 下一轮按此顺序推进
 
-**最新顺序（优先于下方历史续接说明）：** 先推进 T25–T28。T25 首个主页切片已实现并做本机检查；T26 统一生成表单已实现，包含页内预览、源码确认、取消/结果/找回，自动化及合并证据见 [T26 记录](t26-generation-panel.zh-CN.md)和 Issue #56。T27.1 预备模型与 ADR 已实现，T27.2 只读阅读器已实现，接下来有界文章生成与全部 v2 读写兼容/发布门禁；完整步骤见 [T27 续接](t27-wiki.zh-CN.md)，随后 T28 图形审阅维护。T21 的已有证据完整保留，后续默认自动评估；最后收口 T22/T23。未做本次新的真实 Codex 对话，不向维护者重复布置旧手动测试。
+**最新顺序（优先于下方历史续接说明）：** 先推进 T25–T28。T25 首个主页切片已实现并做本机检查；T26 统一生成表单已实现，包含页内预览、源码确认、取消/结果/找回，自动化及合并证据见 [T26 记录](t26-generation-panel.zh-CN.md)和 Issue #56。T27.1 预备模型与 ADR、T27.2 只读阅读器、T27.3 有界文章/卡片独立候选已实现，接下来 T27.4 全部 v2 读写兼容/发布/迁移门禁；完整步骤见 [T27 续接](t27-wiki.zh-CN.md)，随后 T28 图形审阅维护。T21 的已有证据完整保留，后续默认自动评估；最后收口 T22/T23。未做本次新的真实 Codex 对话，不向维护者重复布置旧手动测试。
 
 1. **M0/M1 已完成。** 治理、Windows 原生/Remote SSH 官方 Codex、宿主恢复与 T10 发布均已有证据。发布运行 [39916665531](https://github.com/KasterMist/repo-knowledge/actions/runs/39916665531) 六项成功，源提交 `872c4a49fd5084dcd3bae5a711a421fe19e5319b`，公开 VSIX SHA-256 为 `b2c10ce88485abdaf43d5a7d323b59e712ef59df5c55bd3aa233a6960cb92745`。本机另外匿名下载、核对来源及校验和，并在隔离 VS Code 中安装公开包通过。前两轮发布失败已修复并保留历史记录，不重测已通过的手动场景。
 2. **M2 实现与本次范围验收完成，跟踪 [Issue #17](https://github.com/KasterMist/repo-knowledge/issues/17)。** PR #18/#19/#20 已合并并通过精确 head 五项 CI；最后双目录宿主验证为 run 39928932686。Windows 与 Remote SSH 均完成新界面发布和回退，cache-storage r1→r2→r3；独立只读核对两次 committed 历史、原正文恢复、其余卡片仍 r1，维护者 MCP 诊断均为 r3/stale=false。取消/确认点击由维护者反馈，历史与正文另行核对；不冒充新一轮官方 Codex 对话。M2 尚未单独发布，旧 M1 资产不变。后续从 T14 开始 M3 范围与生成入口；任何新版本发布需单独升版并完成发布检查。完整证据见 [M2 验收记录](m2-acceptance.md)。
@@ -115,3 +115,5 @@ T27 当前进度：T27.1 文章/目录数据模型、共享卡片引用、ADR 00
 远端连接资料和本地交接 helper 保留在公开仓库之外；不能为了“防遗忘”将它们写进本表。未来会话缺少可用环境时，先说明缺口，不猜测凭据、配置或完成状态。
 
 T27.2 范围和证据见 [T27 记录](t27-wiki.zh-CN.md)：正式存储/MCP 仍 v1，预览不导入/迁移/发布；114 单测/5 集成与实际宿主已有证据，最终 head CI 由 Issue #58 记录。截图工具恢复后仍失败，视觉验收未计通过；不重复要求维护者手测。
+
+T27.3 已加入 Wiki 生成模式和独立候选阅读/找回；暂存格式及兼容/恢复规则见 [ADR 0016](../architecture/adr/0016-wiki-generation-staging.md)。自编夹具自动化与打包宿主记录、精确 head 五项 CI 和合并由 Issue #58 维护。没有新增真实模型调用、视觉或 Remote SSH 人工验收，也没有新 Release。下一项 T27.4，正式文章发布与迁移不能绕过全部兼容门禁。

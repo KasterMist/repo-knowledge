@@ -107,6 +107,7 @@ export function activate(context: vscode.ExtensionContext) {
     selected,
     workbench,
     generation,
+    (folder, id) => wikiReader.openCandidate(folder, id),
   );
   context.subscriptions.push(generationPanel);
   for (const mode of [

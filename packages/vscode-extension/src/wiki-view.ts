@@ -48,6 +48,7 @@ export function wikiHtml(
   host: string,
   nonce: string,
   error = '',
+  candidate = false,
 ) {
   if (!/^[a-f0-9]{32}$/u.test(nonce)) throw new Error('Invalid webview nonce');
   const tree = (parent: string | null): string =>
@@ -63,7 +64,9 @@ export function wikiHtml(
   if (view) {
     const state = {
       current: '匹配引用的源码已核验',
-      stale: '源码已变化或不可读取，请复核',
+      stale: candidate
+        ? '源码或知识基线已变化，请复核候选'
+        : '源码已变化或不可读取，请复核',
       unavailable: '卡片引用已变化或缺失，部分源码不可核验',
       unchecked: '尚无可核验的源码引用',
     }[view.sourceFreshness];
@@ -95,7 +98,7 @@ export function wikiHtml(
       if (Buffer.byteLength(content, 'utf8') > 512 * 1024)
         throw new Error('WIKI_RENDER_LIMIT');
     }
-    content += `<h2>源码证据</h2><ul>${view.evidence.map((entry) => `<li><button type="button" data-card="${e(entry.cardId)}" data-index="${entry.index}" data-revision="${e(view.snapshotRevision)}">${e(entry.path)}:${entry.startLine}–${entry.endLine}</button> · ${e(entry.status)}</li>`).join('')}</ul>`;
+    content += `<h2>源码证据${candidate ? '（候选只读；暂不导航）' : ''}</h2><ul>${view.evidence.map((entry) => `<li>${candidate ? `<span>${e(entry.path)}:${entry.startLine}–${entry.endLine}</span>` : `<button type="button" data-card="${e(entry.cardId)}" data-index="${entry.index}" data-revision="${e(view.snapshotRevision)}">${e(entry.path)}:${entry.startLine}–${entry.endLine}</button>`} · ${e(entry.status)}</li>`).join('')}</ul>`;
   }
   return `<!doctype html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'nonce-${nonce}'; script-src 'nonce-${nonce}'; base-uri 'none'; form-action 'none'">
@@ -106,6 +109,6 @@ button { font:inherit; color:var(--vscode-button-foreground); background:var(--v
 .muted { color:var(--vscode-descriptionForeground); } .warning { color:var(--vscode-errorForeground); } .path,article { overflow-wrap:anywhere; } .card,.note { border-left:3px solid var(--vscode-panel-border); padding-left:14px; margin:16px 0; }
 pre { overflow:auto; padding:12px; background:var(--vscode-textCodeBlock-background); } code { font-family:var(--vscode-editor-font-family); } table { border-collapse:collapse; } td,th { border:1px solid var(--vscode-panel-border); padding:6px; } blockquote { border-left:3px solid var(--vscode-panel-border); padding-left:12px; } .disabled-link { text-decoration:underline dotted; }
 @media(max-width:700px) { .layout { grid-template-columns:1fr; } }
-</style></head><body><header><strong>Repo Wiki · 未发布文章预览</strong><p class="path">${e(repository)} · ${e(host)}</p><p class="muted">事实来自当前正式卡片；说明是未发布数据。正文链接/图片禁用。未迁移或发布知识。</p><button id="refresh" type="button">重新核验并刷新</button></header>
+</style></head><body><header><strong>Repo Wiki · 未发布文章预览</strong><p class="path">${e(repository)} · ${e(host)}</p><p class="muted">${candidate ? '生成候选：事实仅来自同批未发布卡片，不是正式知识；正文需要人工核对。源码/基线变化时标为过期。' : '事实来自当前正式卡片；说明是未发布数据。'}正文链接/图片禁用。未迁移或发布知识。</p><button id="refresh" type="button">重新核验并刷新</button></header>
 <div class="layout"><nav aria-label="文章目录">${tree(null)}</nav><article>${error ? `<p role="alert" class="warning">${e(error)}</p>` : content}</article></div><script nonce="${nonce}">${wikiClient}</script></body></html>`;
 }

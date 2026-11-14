@@ -14,6 +14,7 @@ export interface GenerationForm {
   maxFiles: string;
   maxKiB: string;
   maxPages: string;
+  output: string;
 }
 export const generationDefaults: GenerationForm = {
   include: defaultScanOptions.include.join(','),
@@ -22,6 +23,7 @@ export const generationDefaults: GenerationForm = {
   maxFiles: '50',
   maxKiB: '128',
   maxPages: '2',
+  output: 'cards',
 };
 function exact(
   value: unknown,
@@ -49,7 +51,8 @@ export function parseGenerationForm(value: unknown) {
   if (
     !/^\d{1,3}$/u.test(form.maxFiles) ||
     !/^\d{1,4}$/u.test(form.maxKiB) ||
-    !['2', '4', '8'].includes(form.maxPages)
+    !['2', '4', '8'].includes(form.maxPages) ||
+    !['cards', 'wiki'].includes(form.output)
   )
     throw new Error(
       'INVALID_FORM: 文件数 1–200；大小 1–2048 KiB；卡片数 2/4/8。',
@@ -67,18 +70,37 @@ export function parseGenerationForm(value: unknown) {
     maxFiles: Number(form.maxFiles),
     maxTotalBytes: Number(form.maxKiB) * 1024,
   });
-  return { options, maxPages: Number(form.maxPages) };
+  return {
+    options,
+    maxPages: Number(form.maxPages),
+    output: form.output as 'cards' | 'wiki',
+  };
 }
 type Message =
   | { action: 'preview'; form: unknown }
   | { action: 'generate'; form: unknown; planId: string }
-  | { action: 'cancel' | 'invalidate' | 'recover' | 'review' };
+  | {
+      action:
+        | 'cancel'
+        | 'invalidate'
+        | 'recover'
+        | 'review'
+        | 'recoverWiki'
+        | 'reviewWiki';
+    };
 export function generationMessage(value: unknown): Message | undefined {
   if (!value || typeof value !== 'object') return;
   const action = (value as Record<string, unknown>).action;
   if (typeof action !== 'string') return;
   if (
-    ['cancel', 'invalidate', 'recover', 'review'].includes(action) &&
+    [
+      'cancel',
+      'invalidate',
+      'recover',
+      'review',
+      'recoverWiki',
+      'reviewWiki',
+    ].includes(action) &&
     exact(value, ['action'])
   )
     return value as Message;
@@ -97,6 +119,7 @@ export interface GenerationInteraction {
   signal: AbortSignal;
   maxPages?: number;
   expectedPlanId?: string;
+  output?: 'cards' | 'wiki';
   phase?(phase: string): void;
 }
 interface Operations {
@@ -106,6 +129,7 @@ interface Operations {
     recover: boolean,
   ): Promise<unknown>;
   review(): Promise<unknown>;
+  reviewWiki?(): Promise<unknown>;
 }
 export interface GenerationPanelState {
   type: 'generation-state';
@@ -195,6 +219,7 @@ export class GenerationSession {
             signal: controller.signal,
             expectedPlanId: reviewed.plan.id,
             maxPages: parsed.maxPages,
+            output: parsed.output,
             phase,
           },
           false,
@@ -209,14 +234,21 @@ export class GenerationSession {
           busy: false,
           result,
         });
-      } else if (message.action === 'recover') {
+      } else if (
+        message.action === 'recover' ||
+        message.action === 'recoverWiki'
+      ) {
         this.send({
           type: 'generation-state',
           phase: 'recovering',
           busy: true,
         });
         const result = await this.operations.generate(
-          { signal: controller.signal, phase },
+          {
+            signal: controller.signal,
+            phase,
+            output: message.action === 'recoverWiki' ? 'wiki' : 'cards',
+          },
           true,
         );
         this.reviewed = undefined;
@@ -228,6 +260,8 @@ export class GenerationSession {
           busy: false,
           result,
         });
+      } else if (message.action === 'reviewWiki') {
+        await this.operations.reviewWiki?.();
       } else {
         await this.operations.review();
       }

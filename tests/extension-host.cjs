@@ -3,6 +3,105 @@ const fs = require('node:fs/promises');
 const path = require('node:path');
 const vscode = require('vscode');
 
+// Self-authored completed-candidate fixture. This does not stand in for a model turn.
+async function checkWikiCandidate(extension, folder, target, plan) {
+  const crypto = require('node:crypto');
+  const fingerprint = (text) =>
+    crypto
+      .createHash('sha256')
+      .update(text.replaceAll('\r\n', '\n'))
+      .digest('hex');
+  const base = await target.knowledge.snapshot();
+  const original = await fs.readFile(path.join(target.store, 'knowledge.json'));
+  const sources = [];
+  for (const file of plan.files)
+    sources.push({
+      path: file.path,
+      sha256: file.sha256,
+      lines: file.lines,
+      content: (
+        await fs.readFile(path.join(target.root, file.path), 'utf8')
+      ).replaceAll('\r\n', '\n'),
+    });
+  const packetRevision = fingerprint(
+    JSON.stringify({
+      schemaVersion: 1,
+      repositoryId: plan.repositoryId,
+      planId: plan.id,
+      planRevision: plan.manifestRevision,
+      baseSnapshot: base.snapshotRevision,
+      language: plan.options.language,
+      existingIds: base.snapshot.cards.map((card) => card.id).sort(),
+      sources,
+    }),
+  );
+  const candidateId = crypto.randomUUID();
+  const output = {
+    packetRevision,
+    pages: [
+      {
+        id: 'wiki-host-card',
+        title: '候选读取说明',
+        kind: 'fact',
+        body: '自编候选，不是正式知识。',
+        tags: [],
+        scope: ['src'],
+        evidence: [{ path: 'src/读取.ts', startLine: 1, endLine: 5 }],
+      },
+    ],
+    articles: [
+      {
+        id: 'generated-overview',
+        title: '生成候选概述',
+        kind: 'overview',
+        parentId: null,
+        order: 0,
+        sections: [
+          {
+            id: 'read',
+            title: '共享事实',
+            blocks: [{ id: 'card', type: 'card', cardId: 'wiki-host-card' }],
+          },
+        ],
+      },
+    ],
+  };
+  await fs.mkdir(path.join(target.store, 'wiki-candidates'), {
+    recursive: true,
+  });
+  await fs.writeFile(
+    path.join(target.store, 'wiki-candidates', candidateId + '.json'),
+    JSON.stringify({
+      format: 'wiki-generation-candidate',
+      schemaVersion: 1,
+      candidateId,
+      createdAt: new Date().toISOString(),
+      baseSnapshot: base.snapshotRevision,
+      packetRevision,
+      plan,
+      maxPages: 2,
+      repository: base.snapshot.repository,
+      output,
+    }),
+  );
+  const preview = await extension.exports.wikiReader.openCandidate(
+    folder,
+    candidateId,
+  );
+  assert.equal(preview.repository, target.root);
+  const view = await preview.handle({
+    action: 'article',
+    id: 'generated-overview',
+  });
+  assert.equal(view.sourceFreshness, 'current');
+  assert.equal(view.sections[0].blocks[0].card.id, 'wiki-host-card');
+  assert.deepEqual(
+    await fs.readFile(path.join(target.store, 'knowledge.json')),
+    original,
+  );
+  assert.ok(!base.snapshot.cards.some((card) => card.id === 'wiki-host-card'));
+}
+
 async function runMultiRoot(extension) {
   const workbench = extension.exports.workbench;
   const roots = await workbench.cards.getChildren();
@@ -51,9 +150,16 @@ async function runMultiRoot(extension) {
       maxFiles: '10',
       maxKiB: '128',
       maxPages: '2',
+      output: 'wiki',
     },
   });
   assert.equal(panel.session.state.phase, 'previewed');
+  await checkWikiCandidate(
+    extension,
+    second.folder,
+    second.target,
+    panel.session.state.plan,
+  );
   assert.equal(
     panel.session.state.plan.repositoryId,
     require('node:crypto')
@@ -94,6 +200,7 @@ async function runMultiRoot(extension) {
         'pinned first node remains isolated after second read',
         'second-root evidence opens its own source',
         'generation form preview remains pinned to the selected second root',
+        'Wiki generation mode and completed candidate reader stay pinned to the selected second root without publication',
         'Wiki article reader and evidence remain pinned to the selected second root',
       ],
     }),
@@ -366,10 +473,17 @@ exports.run = async function run() {
     maxFiles: '10',
     maxKiB: '128',
     maxPages: '2',
+    output: 'cards',
   };
   await generationPanel.session.handle({ action: 'preview', form });
   assert.equal(generationPanel.session.state.phase, 'previewed');
   assert.equal(generationPanel.session.state.plan.files.length, 2);
+  await checkWikiCandidate(
+    extension,
+    roots[0].folder,
+    readNode.target,
+    generationPanel.session.state.plan,
+  );
   const panelPlanId = generationPanel.session.state.plan.id;
   await workbench.scanning.preview(roots[0], scanOptions, {
     signal: globalThis.AbortSignal.timeout(10000),
@@ -702,6 +816,7 @@ exports.run = async function run() {
           'command registrations and two knowledge trees',
           'graphical home opens against the host repository and reads three published cards without generation',
           'generation form previews two files and refuses changed forms or replaced plans before backend/model access',
+          'completed self-authored Wiki candidate opens its own shared cards without changing canonical knowledge or calling a model',
           'read-only Wiki catalog, article, host-routed evidence and invalid article recovery without publication',
           'read-only knowledge document and validated source navigation',
           'durable draft, dirty-editor rejection and saved candidate diff without publication',

@@ -14,6 +14,10 @@ export class GenerationPanelWorkbench implements vscode.Disposable {
     private readonly resolve: ResolveTarget,
     private readonly workbench: KnowledgeWorkbench,
     private readonly generation: GenerationWorkbench,
+    private readonly openWiki: (
+      folder: vscode.WorkspaceFolder,
+      id: string,
+    ) => Promise<unknown>,
   ) {
     this.disposables = [
       vscode.commands.registerCommand(
@@ -54,6 +58,7 @@ export class GenerationPanelWorkbench implements vscode.Disposable {
           retainContextWhenHidden: true,
         },
       );
+      let wikiCandidateId: string | undefined;
       const session = new GenerationSession(
         {
           preview: async (options, signal) => {
@@ -65,8 +70,21 @@ export class GenerationPanelWorkbench implements vscode.Disposable {
             if (!result) throw new Error('Scan cancelled');
             return result.plan;
           },
-          generate: (interaction, recover) =>
-            this.generation.generate(folder, recover, interaction),
+          generate: async (interaction, recover) => {
+            const result = await this.generation.generate(
+              folder,
+              recover,
+              interaction,
+            );
+            if (result?.state === 'wiki-preview')
+              wikiCandidateId = result.candidateId;
+            return result;
+          },
+          reviewWiki: async () => {
+            if (!wikiCandidateId)
+              throw new Error('请先生成或找回已保存 Wiki 候选。');
+            return this.openWiki(folder, wikiCandidateId);
+          },
           review: async () =>
             await vscode.commands.executeCommand(
               'repoKnowledge.creations.focus',
