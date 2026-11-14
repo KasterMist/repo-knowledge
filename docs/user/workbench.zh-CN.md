@@ -61,6 +61,6 @@
 
 ## 统一主页（开发版）
 
-点击 Repo Knowledge 侧栏标题栏的主页图标，或运行 Open Knowledge Home / Open Knowledge Workbench。多仓库工作区先选仓库。主页显示宿主、已发布卡片数和快照，按钮依次进入范围预览、生成候选和新增待审阅；找回按钮沿用现有明确重试确认。页面打开不请求模型，生成不自动发布。配置或工作区变化后重新打开主页。
+点击 Repo Knowledge 侧栏标题栏的主页图标，或运行 Open Knowledge Home / Open Knowledge Workbench。多仓库工作区先选仓库。主页显示宿主、已发布卡片数和快照；点击“打开生成面板”可在一页填写范围/语言/限额、预览文件、生成、取消和找回；另有“查看新增待审阅”。页面打开不请求模型，生成不自动发布。配置或工作区变化后重新打开主页。
 
-本阶段按钮仍使用原有向导；Repo Wiki 仍为源码范围导航。独立文章和统一生成表单见[产品交付计划](../product/frontend-delivery.zh-CN.md)，不包含在公开 M1 版本。
+统一生成表单已实现，源码发送确认与已有任务选择仍为原生对话框；Repo Wiki 仍为源码范围导航。独立文章见[产品交付计划](../product/frontend-delivery.zh-CN.md)，不包含在公开 M1 版本。

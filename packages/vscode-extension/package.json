@@ -25,6 +25,11 @@
   "contributes": {
     "commands": [
       {
+        "command": "repoKnowledge.openGenerationPanel",
+        "title": "Repo Knowledge: Open Generation Panel",
+        "icon": "$(sparkle)"
+      },
+      {
         "command": "repoKnowledge.openHome",
         "title": "Repo Knowledge: Open Knowledge Home",
         "icon": "$(home)"
@@ -177,7 +182,7 @@
           "type": "string",
           "default": "",
           "scope": "machine",
-          "description": "Absolute host-side Codex executable for metadata diagnostics and explicitly confirmed generation. Empty tries the installed official extension on this host. Login/provider settings and tokens are not copied; only Generate Knowledge Candidate can submit a model turn after confirmation."
+          "description": "Absolute host-side Codex executable for metadata diagnostics and explicitly confirmed generation. Empty tries the installed official extension on this host. Login/provider settings and tokens are not copied; a model turn is submitted only by explicit generation after source confirmation."
         }
       }
     },

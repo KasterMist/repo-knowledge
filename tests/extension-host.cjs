@@ -40,6 +40,27 @@ async function runMultiRoot(extension) {
     await fs.realpath(source.fsPath),
     await fs.realpath(path.join(second.target.root, 'src/读取.ts')),
   );
+  const panel = await extension.exports.generationPanel.open(second.folder);
+  assert.equal(panel.repository, second.target.root);
+  await panel.session.handle({
+    action: 'preview',
+    form: {
+      include: 'src/**/*.ts',
+      exclude: '',
+      language: 'zh-CN',
+      maxFiles: '10',
+      maxKiB: '128',
+      maxPages: '2',
+    },
+  });
+  assert.equal(panel.session.state.phase, 'previewed');
+  assert.equal(
+    panel.session.state.plan.repositoryId,
+    require('node:crypto')
+      .createHash('sha256')
+      .update(second.target.root)
+      .digest('hex'),
+  );
   await fs.writeFile(
     process.env.REPO_KNOWLEDGE_HOST_RESULT,
     JSON.stringify({
@@ -51,6 +72,7 @@ async function runMultiRoot(extension) {
         'same card ID uses distinct configured stores',
         'pinned first node remains isolated after second read',
         'second-root evidence opens its own source',
+        'generation form preview remains pinned to the selected second root',
       ],
     }),
   );
@@ -273,6 +295,44 @@ exports.run = async function run() {
     maxFileBytes: 65536,
     maxTotalBytes: 131072,
   };
+  const generationPanel = await vscode.commands.executeCommand(
+    'repoKnowledge.openGenerationPanel',
+    roots[0],
+  );
+  const form = {
+    include: 'src/**/*.ts',
+    exclude: '',
+    language: 'zh-CN',
+    maxFiles: '10',
+    maxKiB: '128',
+    maxPages: '2',
+  };
+  await generationPanel.session.handle({ action: 'preview', form });
+  assert.equal(generationPanel.session.state.phase, 'previewed');
+  assert.equal(generationPanel.session.state.plan.files.length, 2);
+  const panelPlanId = generationPanel.session.state.plan.id;
+  await workbench.scanning.preview(roots[0], scanOptions, {
+    signal: globalThis.AbortSignal.timeout(10000),
+    reveal: false,
+  });
+  await generationPanel.session.handle({
+    action: 'generate',
+    form,
+    planId: panelPlanId,
+  });
+  assert.equal(generationPanel.session.state.phase, 'failed');
+  assert.match(
+    generationPanel.session.state.error,
+    /Another preview replaced/u,
+  );
+  await generationPanel.session.handle({ action: 'preview', form });
+  await generationPanel.session.handle({
+    action: 'generate',
+    form: { ...form, maxPages: '4' },
+    planId: generationPanel.session.state.plan.id,
+  });
+  assert.match(generationPanel.session.state.error, /PREVIEW_REQUIRED/u);
+  assert.deepEqual(await fs.readFile(snapshotPath), beforeDraft);
   const scan = await vscode.commands.executeCommand(
     'repoKnowledge.planGeneration',
     roots[0],
@@ -581,6 +641,7 @@ exports.run = async function run() {
           'three-way merge report retains human body and reports competing suggestion without publication',
           'command registrations and two knowledge trees',
           'graphical home opens against the host repository and reads three published cards without generation',
+          'generation form previews two files and refuses changed forms or replaced plans before backend/model access',
           'read-only knowledge document and validated source navigation',
           'durable draft, dirty-editor rejection and saved candidate diff without publication',
           'bounded user-invoked scan plan preview without model calls',

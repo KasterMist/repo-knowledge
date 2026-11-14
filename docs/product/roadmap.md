@@ -6,7 +6,7 @@
 
 生成边界：由用户决定是否生成 Wiki/卡片，并主动发起扫描、首次生成、重新生成和增量更新。代码变化不得静默触发模型调用或知识重写；生成候选经用户审阅确认后发布。
 
-当前优先级调整：先完成 [T25–T28 产品前端交付](frontend-delivery.zh-CN.md)，再收口 T21/T22/T23。T25 统一主页正在实现；T26 生成面板、T27 独立 Wiki 文章、T28 图形审阅均未完成。原有 T11/T14 范围验收不代表完整前端已交付；不重做已通过的人工测试。跟踪 [Issue #54](https://github.com/KasterMist/repo-knowledge/issues/54)。
+当前优先级调整：先完成 [T25–T28 产品前端交付](frontend-delivery.zh-CN.md)，再收口 T21/T22/T23。T25 主页首个切片已合并 PR #55；T26 统一生成面板已实现，自动化及合并门禁见 [Issue #56](https://github.com/KasterMist/repo-knowledge/issues/56)；下一项 T27 文章模型/目录/阅读器，随后 T28 图形审阅。原有 T11/T14 范围验收不代表完整前端已交付；不重做已通过的人工测试。跟踪 [Issue #54](https://github.com/KasterMist/repo-knowledge/issues/54)。
 
 ## 1. 里程碑与发布含义
 

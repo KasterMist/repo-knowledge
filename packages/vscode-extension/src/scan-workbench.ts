@@ -17,6 +17,7 @@ export class ScanWorkbench implements vscode.Disposable {
   private readonly pending = new Map<string, ScanPlan>();
   private readonly reviewed = new Map<string, ScanPlan>();
   private readonly disposables: vscode.Disposable[] = [];
+  private revision = 0;
   constructor(
     private readonly resolve: ResolveTarget,
     private readonly documents: KnowledgeDocuments,
@@ -48,11 +49,13 @@ export class ScanWorkbench implements vscode.Disposable {
     this.disposables.push(
       vscode.workspace.onDidChangeConfiguration((event) => {
         if (event.affectsConfiguration('repoKnowledge')) {
+          this.revision++;
           this.pending.clear();
           this.reviewed.clear();
         }
       }),
       vscode.workspace.onDidChangeWorkspaceFolders(() => {
+        this.revision++;
         this.pending.clear();
         this.reviewed.clear();
       }),
@@ -119,6 +122,7 @@ export class ScanWorkbench implements vscode.Disposable {
   private async cancellable<T>(
     title: string,
     action: (signal: AbortSignal) => Promise<T>,
+    signal?: AbortSignal,
   ): Promise<T> {
     return vscode.window.withProgress(
       {
@@ -133,14 +137,23 @@ export class ScanWorkbench implements vscode.Disposable {
         );
         if (token.isCancellationRequested) controller.abort();
         try {
-          return await action(controller.signal);
+          return await action(
+            signal
+              ? AbortSignal.any([controller.signal, signal])
+              : controller.signal,
+          );
         } finally {
           listener.dispose();
         }
       },
     );
   }
-  async preview(node?: ScanNode, input?: unknown) {
+  async preview(
+    node?: ScanNode,
+    input?: unknown,
+    interaction?: { signal: AbortSignal; reveal: boolean },
+  ) {
+    const revision = this.revision;
     const target = await this.resolve(node?.folder);
     if (!target) return;
     // Explicit command arguments support other extensions and real editor fixtures.
@@ -155,7 +168,14 @@ export class ScanWorkbench implements vscode.Disposable {
     const plan = await this.cancellable(
       'Repo Knowledge: 静态扫描规划 / Scan plan',
       (signal) => scanRepository(target.root, target.store, options, signal),
+      interaction?.signal,
     );
+    interaction?.signal.throwIfAborted();
+    if (revision !== this.revision)
+      throw new Error('Workspace/configuration changed; preview a fresh plan.');
+    this.pending.set(this.key(target), plan);
+    this.reviewed.set(this.key(target), plan);
+    if (interaction?.reveal === false) return { plan };
     const uri = this.documents.create(
       'generation-plan.json',
       JSON.stringify(plan, null, 2),
@@ -164,8 +184,6 @@ export class ScanWorkbench implements vscode.Disposable {
       await vscode.workspace.openTextDocument(uri),
       { preview: true },
     );
-    this.pending.set(this.key(target), plan);
-    this.reviewed.set(this.key(target), plan);
     void vscode.window.showInformationMessage(
       `扫描规划：${plan.files.length} 文件，${plan.summary.selectedBytes} bytes${plan.summary.limited ? '，达到限额或存在未覆盖内容' : ''}。未调用模型、未生成知识；检查后可运行 Save Generation Plan。`,
     );
