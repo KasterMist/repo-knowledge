@@ -33,6 +33,12 @@ The user decides whether to scan and generate Wiki pages or knowledge cards, whi
 
 Generation and incremental model updates produce reviewable candidates. The user reviews and confirms publication; human edits and rationale must be preserved. Model requests must have an explicit bounded scope and budget, cancellation and recoverable failure handling. M3 is user-initiated first knowledge generation; M4 adds user-initiated incremental maintenance. Neither milestone is an unattended background writer.
 
+## Product interface delivery gate
+
+The original product requires a graphical workflow, not only commands. Before the next release candidate, deliver T25–T28: a unified workbench, a single generation form, a human Wiki article hierarchy/reader sharing canonical facts with agent cards, and graphical editing/review/incremental maintenance. See [the frontend delivery plan](frontend-delivery.zh-CN.md). Existing T11/T14 scoped acceptance does not fulfill this complete product gate.
+
+Opening the workbench must make no model request. Generation begins only after an explicit source/budget confirmation; results remain candidates until separately reviewed and published. The UI must work in the workspace extension host for native Windows and Remote SSH to Linux. UI messages must use allowlisted actions, never arbitrary commands, paths or URLs. Untrusted repository text must not execute as HTML/scripts.
+
 ## Data and evidence
 
 Human-readable Wiki and agent cards must share a canonical knowledge source. Every future conclusion has a source scope/version and evidence or an inference label. Source staleness is explicit. Facts, intended conventions and human design rationale are distinct. Use external storage for read-only target repositories.

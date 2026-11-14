@@ -1,10 +1,12 @@
 # Repo Knowledge：任务路线图与里程碑
 
-更新：2026-11-12。所有者：KasterMist。许可证：Apache-2.0。仓库名 repo-knowledge。Windows 与 Linux 均为必需平台。
+更新：2026-11-14。所有者：KasterMist。许可证：Apache-2.0。仓库名 repo-knowledge。Windows 与 Linux 均为必需平台。
 
 当前状态：M0 工程与治理已完成；main 保护和五项必需 CI 已独立核对，其余管理细节与私密漏洞报告由维护者确认保存。M1 已完成，已公开发布 [v0.1.0-alpha.1](https://github.com/KasterMist/repo-knowledge/releases/tag/v0.1.0-alpha.1)，Windows 原生/Remote SSH 官方 Codex 与 Windows/Linux 公开包安装均有验收记录；M2 知识工作台也已完成实现与本次 Windows/Remote SSH 范围验收，尚未单独发布；证据见 [M2 验收记录](../development/m2-acceptance.md)，M3 用户发起首次生成、明确重试/取消与批次审阅也已完成本次小样例范围验收，尚未发布；T17 指纹/依赖失效追踪及两端导航验收已完成，T18 分支/工作树隔离已完成本次 Windows/Remote SSH 范围验收，T19 三方合并与人工内容保护也已完成本次双端范围验收；T20/M4 有界单卡增量维护 beta 本次范围验收完成，尚未发布；见 [M4 验收](../development/m4-acceptance.md)。T21 自然任务与知识沉淀评估进行中：已有基线/自然组样本和有界程序化显式检索，维护者调整为默认自动评估；见 [结果与局限](../development/t21-programmatic.zh-CN.md)。维护者已明确首个 alpha 聚焦 Windows 原生与 Remote SSH 到 Linux；Linux 真实编辑器宿主由 CI 验证，Linux 桌面 Codex 保留未验证、不纳入本次兼容声明。任务状态与续接步骤统一见[项目任务与进度总表](../development/project-status.zh-CN.md)，详细证据见 [Issue #3](https://github.com/KasterMist/repo-knowledge/issues/3) 和 [验收记录](../development/m1-acceptance.md)。任务 ID 是规划编号，不能当作 GitHub Issue 编号。
 
 生成边界：由用户决定是否生成 Wiki/卡片，并主动发起扫描、首次生成、重新生成和增量更新。代码变化不得静默触发模型调用或知识重写；生成候选经用户审阅确认后发布。
+
+当前优先级调整：先完成 [T25–T28 产品前端交付](frontend-delivery.zh-CN.md)，再收口 T21/T22/T23。T25 统一主页正在实现；T26 生成面板、T27 独立 Wiki 文章、T28 图形审阅均未完成。原有 T11/T14 范围验收不代表完整前端已交付；不重做已通过的人工测试。跟踪 [Issue #54](https://github.com/KasterMist/repo-knowledge/issues/54)。
 
 ## 1. 里程碑与发布含义
 
@@ -118,3 +120,7 @@ Closes #实际编号
 ```
 
 不能将占位 `Closes #实际编号` 原样提交到 GitHub。任务状态由验收证据驱动，不按投入时长或生成代码量判断。
+
+## 6. 产品前端补充工作包
+
+T25 统一主页 → T26 单页生成 → T27 独立文章/目录与共享证据 → T28 图形审阅维护。完整范围、依赖和验收见[前端交付计划](frontend-delivery.zh-CN.md)。T23 依赖这四项产品门禁；旧任务编号保持不变。
