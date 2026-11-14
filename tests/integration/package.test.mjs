@@ -53,6 +53,11 @@ test(
       /@modelcontextprotocol\/sdk/u,
     );
     assert.ok(files.has('extension/demo/src/读取.ts'));
+    assert.ok(files.has('extension/demo/wiki-preview.json'));
+    assert.match(
+      files.get('extension/THIRD_PARTY_NOTICES.md').toString(),
+      /## marked 18\.1\.1/u,
+    );
     assert.ok(files.has('extension/dist/extension.cjs'));
     assert.ok(files.has('extension/media/knowledge.svg'));
     for (const name of files.keys()) {

@@ -16,3 +16,4 @@ export * from './repository-context.js';
 export * from './merge.js';
 export * from './incremental.js';
 export * from './wiki.js';
+export * from './wiki-reader.js';

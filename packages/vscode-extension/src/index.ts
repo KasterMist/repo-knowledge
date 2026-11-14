@@ -17,6 +17,7 @@ import { GenerationWorkbench } from './generation-workbench.js';
 import { ImpactNavigation } from './impact-navigation.js';
 import { HomeWorkbench } from './home-workbench.js';
 import { GenerationPanelWorkbench } from './generation-panel.js';
+import { WikiWorkbench } from './wiki-workbench.js';
 
 export function activate(context: vscode.ExtensionContext) {
   const output = vscode.window.createOutputChannel('Repo Knowledge');
@@ -83,6 +84,8 @@ export function activate(context: vscode.ExtensionContext) {
   };
   const workbench = new KnowledgeWorkbench(selected);
   context.subscriptions.push(workbench);
+  const wikiReader = new WikiWorkbench(selected);
+  context.subscriptions.push(wikiReader);
   const home = new HomeWorkbench(selected);
   context.subscriptions.push(home);
   const impactNavigation = new ImpactNavigation(workbench.documents);
@@ -442,5 +445,12 @@ export function activate(context: vscode.ExtensionContext) {
       true,
     );
   });
-  return { workbench, backend, generation, generationPanel, impactNavigation };
+  return {
+    workbench,
+    backend,
+    generation,
+    generationPanel,
+    impactNavigation,
+    wikiReader,
+  };
 }
