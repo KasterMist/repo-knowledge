@@ -7,6 +7,8 @@ import {
   resolveStoragePath,
   CodexBackendError,
   IncrementalUpdates,
+  WikiCandidates,
+  generateWikiCandidate,
   type GenerationJob,
 } from '@repo-knowledge/core';
 import type { BackendWorkbench } from './backend-workbench.js';
@@ -282,6 +284,8 @@ export class GenerationWorkbench implements vscode.Disposable {
     const revision = this.revision;
     const target = await this.resolve(folder);
     if (!target) return;
+    if (interaction?.output === 'wiki')
+      return this.runWiki(target, recover, revision, interaction);
     const jobs = new GenerationJobs(target.knowledge);
     let savedJob: GenerationJob | undefined;
     if (recover) {
@@ -430,6 +434,141 @@ export class GenerationWorkbench implements vscode.Disposable {
             ? '此任务的候选已进入发布历史，不会再次生成或发布。'
             : `${result.recovered ? '已找回' : '已保存'} ${result.pages} 张待审阅卡片；尚未发布。请打开 New Cards 检查全部差异，再单独确认发布。`,
         );
+        return result;
+      } finally {
+        await rmdir(scratch).catch(() => {});
+      }
+    } finally {
+      this.active = undefined;
+    }
+  }
+  private async runWiki(
+    target: Target,
+    recover: boolean,
+    revision: number,
+    interaction: GenerationInteraction,
+  ) {
+    const candidates = new WikiCandidates(target.knowledge);
+    if (recover) {
+      const saved = await candidates.list();
+      if (!saved.length)
+        throw new Error(
+          '没有已保存 Wiki 候选；找回不启动模型，请重新预览后明确生成。',
+        );
+      const selected = await vscode.window.showQuickPick(
+        saved.map((value) => ({
+          label: value.candidate.createdAt,
+          description: value.candidate.candidateId,
+          value,
+        })),
+        { title: '找回已保存 Wiki；不重试、不发布' },
+      );
+      if (!selected) return { cancelled: true };
+      interaction.signal.throwIfAborted();
+      if (revision !== this.revision)
+        throw new Error('Workspace changed; reopen generation panel.');
+      const value = await candidates.read(selected.value.candidate.candidateId);
+      return {
+        candidateId: value.candidate.candidateId,
+        state: 'wiki-preview',
+        articles: value.preview.articles.length,
+        pages: value.preview.cards.length,
+        sourceState: value.sourceState,
+        recovered: true,
+        modelStarted: false,
+        published: false,
+      };
+    }
+    const plan = this.workbench.scanning.generationPlan(target);
+    if (![2, 4, 8].includes(interaction.maxPages ?? 0))
+      throw new Error('Invalid Wiki card limit; preview the generation form.');
+    if (
+      !plan ||
+      plan.id !== interaction.expectedPlanId ||
+      plan.summary.limited ||
+      !plan.files.length
+    )
+      throw new Error(
+        'PREVIEW_REQUIRED: Review a nonempty complete Wiki plan.',
+      );
+    const active = new AbortController();
+    this.active = active;
+    const guard = () => {
+      interaction.signal.throwIfAborted();
+      if (
+        !vscode.workspace.isTrusted ||
+        revision !== this.revision ||
+        active.signal.aborted
+      )
+        throw new Error(
+          'Workspace/configuration changed; review a fresh Wiki plan.',
+        );
+      if (
+        vscode.workspace.textDocuments.some(
+          (document) =>
+            document.isDirty &&
+            (contains(target.root, document.uri.fsPath) ||
+              contains(target.store, document.uri.fsPath)),
+        )
+      )
+        throw new Error(
+          'Save or discard dirty source/knowledge editors before Wiki generation.',
+        );
+    };
+    try {
+      guard();
+      const choice = await vscode.window.showWarningMessage(
+        `将以下已保存源码发送给本宿主配置的模型/提供方：\n${plan.files.map((file) => file.path).join('\n')}\n生成 ${plan.options.language} Wiki：最多 3 篇概述/架构/模块文章及 ${interaction.maxPages} 张关联卡片；一次模型任务、总时限 60 秒、输出 64 KiB，用量并非精确费用上限。仅保存独立候选，未迁移、未发布，不能单独发布关联卡片。不运行源码；失败不自动重试。是否开始？`,
+        { modal: true },
+        '生成 Wiki 候选 / Generate Wiki',
+      );
+      if (choice !== '生成 Wiki 候选 / Generate Wiki')
+        return { cancelled: true };
+      guard();
+      const executable = await this.backend.executable(
+        target.configuration.get<string>('codexExecutable', ''),
+      );
+      guard();
+      const storage = await resolveStoragePath(this.storage.fsPath);
+      if (contains(target.root, storage) || contains(target.store, storage))
+        throw new Error('Wiki scratch must be outside repository and store.');
+      await mkdir(storage, { recursive: true });
+      const scratch = await mkdtemp(join(storage, 'wiki-generation-'));
+      try {
+        interaction.phase?.('running');
+        const result = await vscode.window.withProgress(
+          {
+            location: vscode.ProgressLocation.Notification,
+            title: 'Repo Knowledge: 生成 Wiki 候选',
+            cancellable: true,
+          },
+          async (_progress, token) => {
+            const cancelled = new AbortController();
+            const listener = token.onCancellationRequested(() =>
+              cancelled.abort(),
+            );
+            if (token.isCancellationRequested) cancelled.abort();
+            try {
+              return await generateWikiCandidate({
+                command: executable.command,
+                cwd: scratch,
+                knowledge: target.knowledge,
+                plan,
+                maxPages: interaction.maxPages!,
+                signal: AbortSignal.any([
+                  cancelled.signal,
+                  active.signal,
+                  this.lifetime.signal,
+                  interaction.signal,
+                ]),
+                assertReady: guard,
+              });
+            } finally {
+              listener.dispose();
+            }
+          },
+        );
+        this.workbench.scanning.consumeGenerationPlan(target);
         return result;
       } finally {
         await rmdir(scratch).catch(() => {});

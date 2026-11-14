@@ -265,6 +265,27 @@ test('shipped browser script sends no startup work, binds form/plan, invalidates
     },
   });
   assert.match(elements.get('status').textContent, /已找回 2 张待审阅卡片/u);
+  elements.get('recoverWiki').handlers.click();
+  assert.equal(sent.at(-1).action, 'recoverWiki');
+  elements.get('reviewWiki').handlers.click();
+  assert.deepEqual(sent.at(-1), { action: 'reviewWiki' });
+  listener({
+    data: {
+      type: 'generation-state',
+      phase: 'finished',
+      busy: false,
+      result: {
+        state: 'wiki-preview',
+        articles: 3,
+        pages: 2,
+        published: false,
+      },
+    },
+  });
+  assert.match(
+    elements.get('status').textContent,
+    /已保存 3 篇 Wiki 文章与 2 张关联卡片候选/u,
+  );
   const html = generationHtml(
     '</p><script>evil()</script>',
     'ssh-remote & linux',

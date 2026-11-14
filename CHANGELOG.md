@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Add bounded Wiki-and-card generation from the unified form, an independently labelled candidate reader and no-model saved-result recovery. Derive revisions/evidence/bindings and model inference labels; reject spoofed human rationale. Keep canonical v1, MCP and existing publication unchanged. This is staging only: article publication/migration, real Wiki model quality and final visual/Remote SSH acceptance remain pending. See ADR 0016.
+
 - Add an explicitly confirmed Generate Knowledge Candidate development command: restricted version/model/config preflight, individually disabled inherited MCP, external ephemeral readonly thread, selected-source transfer and reviewed-candidate save. Preserve model/provider/login and canonical knowledge. Real Windows inference attempts failed upstream; successful generation and T16 checkpoints/retry remain unverified. Cancellation is propagated through candidate saving; no automatic publication or retry.
 
 - Add an explicit single-turn JSON collector with scoped early events, authoritative output checks, byte/event/deadline/observed-usage limits and best-effort interruption. Forced transport cleanup targets owned wrapper descendants on Windows/Linux. The collector does not publish or retry; observed usage is not a hard cost cap. Persistent generation checkpoints remain pending.

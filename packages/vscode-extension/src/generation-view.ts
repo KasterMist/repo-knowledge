@@ -5,7 +5,7 @@ import { generationDefaults } from './generation-session.js';
 export const generationClient = `
 const api = acquireVsCodeApi();
 const form = document.getElementById('generation-form');
-const fields = ['include', 'exclude', 'language', 'maxFiles', 'maxKiB', 'maxPages'];
+const fields = ['include', 'exclude', 'language', 'maxFiles', 'maxKiB', 'maxPages', 'output'];
 const read = () => Object.fromEntries(fields.map(name => [name, document.getElementById(name).value]));
 let plan;
 function invalidate() {
@@ -21,7 +21,7 @@ form.addEventListener('submit', event => { event.preventDefault(); api.postMessa
 document.getElementById('generate').addEventListener('click', () => {
   if (plan) api.postMessage({ action: 'generate', form: read(), planId: plan.id });
 });
-for (const action of ['cancel', 'recover', 'review'])
+for (const action of ['cancel', 'recover', 'review', 'recoverWiki', 'reviewWiki'])
   document.getElementById(action).addEventListener('click', () => api.postMessage({ action }));
 window.addEventListener('message', event => {
   const state = event.data;
@@ -32,8 +32,10 @@ window.addEventListener('message', event => {
     document.getElementById('status').textContent = (state.result.recovered ? '已找回 ' : '已保存 ') + state.result.pages + ' 张待审阅卡片（一个批次）；尚未发布。';
   if (state.phase === 'finished' && state.result?.state === 'previously-published')
     document.getElementById('status').textContent = '该任务已进入发布历史，不会再次生成或发布。';
+  if (state.phase === 'finished' && state.result?.state === 'wiki-preview')
+    document.getElementById('status').textContent = (state.result.recovered ? '已找回 ' : '已保存 ') + state.result.articles + ' 篇 Wiki 文章与 ' + state.result.pages + ' 张关联卡片候选；未发布、未迁移。点击查看 Wiki 候选阅读。';
   fields.forEach(name => document.getElementById(name).disabled = state.busy);
-  ['preview', 'recover', 'review'].forEach(name => document.getElementById(name).disabled = state.busy);
+  ['preview', 'recover', 'review', 'recoverWiki', 'reviewWiki'].forEach(name => document.getElementById(name).disabled = state.busy);
   document.getElementById('cancel').disabled = !state.busy;
   plan = state.phase === 'previewed' ? state.plan : undefined;
   document.getElementById('generate').disabled = state.busy || !plan || plan.summary.limited || !plan.files.length;
@@ -79,8 +81,9 @@ button:hover { background:var(--vscode-button-hoverBackground); } button:disable
 @media (max-width:600px) { form { grid-template-columns:1fr; } }
 </style></head><body><h1>生成知识候选 / Generate knowledge</h1>
 <p class="path">${escapeHtml(repository)}</p><p class="muted">${escapeHtml(host)}</p>
-<p>填写范围，预览并检查源码清单，再确认发送给当前模型。仅生成 Agent 卡片候选；独立 Wiki 文章生成尚在开发。</p>
+<p>填写范围，预览并检查源码清单，再确认发送给当前模型。可选择 Agent 卡片，或 Wiki 文章与关联卡片。Wiki 只保存独立候选预览，尚不能发布；不会迁移正式知识格式。</p>
 <form id="generation-form">
+<label for="output">生成内容</label><select id="output"><option value="cards">Agent 卡片候选</option><option value="wiki">Wiki 文章＋关联卡片（预览）</option></select>
 ${input('include', '包含范围 / Include', 'required maxlength="8192"')}
 ${input('exclude', '排除范围 / Exclude', 'maxlength="8192"')}
 <label for="language">语言 / Language</label><select id="language"><option value="zh-CN">简体中文</option><option value="en">English</option></select>
@@ -92,7 +95,8 @@ ${input('maxKiB', '总读取上限 KiB', 'type="number" min="1" max="2048" requi
 <h2>本次源码清单</h2><p id="summary">尚未扫描；打开页面不会请求模型。</p><ul id="files"></ul>
 <button id="generate" type="button" disabled>确认并生成候选</button><button id="cancel" type="button" disabled>取消当前操作</button>
 <button id="recover" type="button">找回结果 / 明确重试</button><button id="review" type="button">查看新增待审阅</button>
+<button id="recoverWiki" type="button">找回已保存 Wiki（不重试）</button><button id="reviewWiki" type="button">查看 Wiki 候选</button>
 <p id="status" role="status" aria-live="polite">请填写范围并预览。</p><pre id="error" role="alert"></pre><details><summary>任务详情 / Task details</summary><pre id="result"></pre></details>
-<p class="muted">预览只静态读取文件。生成前另有源码发送确认；已有结果的找回不请求模型，无结果时重试需要再次确认。候选必须另行审阅并确认发布。关闭页面会取消该页面的活动任务，已保存结果仍可找回。</p>
+<p class="muted">预览只静态读取文件。生成前另有源码发送确认；已有结果找回不请求模型。卡片无结果时明确重试需要再次确认。Wiki 每次最多 3 篇文章，一次受限模型任务；失败不自动重试，无已保存结果时须重新预览生成。Wiki 文章事实引用同批卡片，推测标为模型；不替代正式卡片，也不能单独发布。关闭页面取消活动任务，已保存结果仍可找回。</p>
 <script nonce="${nonce}">${generationClient}</script></body></html>`;
 }
