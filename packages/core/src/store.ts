@@ -5,19 +5,33 @@ import { randomUUID } from 'node:crypto';
 import { open, realpath, mkdir, lstat, unlink } from 'node:fs/promises';
 import { z } from 'zod';
 import { resolve, isAbsolute, join } from 'node:path';
-import { snapshotSchema, proposalInputSchema, type Card } from './schema.js';
+import { proposalInputSchema, type Card } from './schema.js';
+import {
+  parseRuntimeSnapshot,
+  type SnapshotFormat,
+} from './snapshot-format.js';
 import { checkRepositoryBinding } from './repository-context.js';
 
 export class KnowledgeStore {
   constructor(
     readonly repositoryRoot: string,
     readonly storeRoot: string,
+    private readonly format: SnapshotFormat = 'v1',
   ) {
     if (!isAbsolute(repositoryRoot) || !isAbsolute(storeRoot))
       throw new KnowledgeError(
         'INVALID_PATH',
         'Repository and store paths must be absolute',
       );
+    if (format !== 'v1' && format !== 'wiki-v2')
+      throw new KnowledgeError(
+        'INVALID_SNAPSHOT_FORMAT',
+        'Unknown snapshot compatibility mode',
+      );
+  }
+  /** Shared validation for live snapshots and full before/after history payloads. */
+  parseSnapshot(input: unknown) {
+    return parseRuntimeSnapshot(input, this.format);
   }
   async snapshot() {
     await checkRepositoryBinding(this.repositoryRoot, this.storeRoot);
@@ -37,10 +51,11 @@ export class KnowledgeStore {
     }
     try {
       return {
-        snapshot: snapshotSchema.parse(JSON.parse(text)),
+        snapshot: this.parseSnapshot(JSON.parse(text)),
         snapshotRevision: fingerprint(text),
       };
-    } catch {
+    } catch (error) {
+      if (error instanceof KnowledgeError) throw error;
       throw new KnowledgeError(
         'INVALID_SNAPSHOT',
         'knowledge.json does not match schemaVersion 1',

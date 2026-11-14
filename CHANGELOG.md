@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Prepare explicitly opted-in canonical v2 core compatibility with shared snapshot validation for card writers, history and rollback/recovery. Preserve article values, human note whitespace and pinned references; reject hidden article/format changes in card-only journals. Default editor/CLI stay v1. Reviewed migration, joint Wiki publication and user activation remain pending (ADR 0017).
+
 - Add bounded Wiki-and-card generation from the unified form, an independently labelled candidate reader and no-model saved-result recovery. Derive revisions/evidence/bindings and model inference labels; reject spoofed human rationale. Keep canonical v1, MCP and existing publication unchanged. This is staging only: article publication/migration, real Wiki model quality and final visual/Remote SSH acceptance remain pending. See ADR 0016.
 
 - Add an explicitly confirmed Generate Knowledge Candidate development command: restricted version/model/config preflight, individually disabled inherited MCP, external ephemeral readonly thread, selected-source transfer and reviewed-candidate save. Preserve model/provider/login and canonical knowledge. Real Windows inference attempts failed upstream; successful generation and T16 checkpoints/retry remain unverified. Cancellation is propagated through candidate saving; no automatic publication or retry.

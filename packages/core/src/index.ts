@@ -18,3 +18,4 @@ export * from './incremental.js';
 export * from './wiki.js';
 export * from './wiki-reader.js';
 export * from './wiki-generation.js';
+export * from './snapshot-format.js';

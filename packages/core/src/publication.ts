@@ -31,13 +31,8 @@ import {
   fingerprint,
   KnowledgeError,
 } from './files.js';
-import {
-  cardSchema,
-  snapshotSchema,
-  type Card,
-  type ProposalInput,
-  type Snapshot,
-} from './schema.js';
+import { cardSchema, type Card, type ProposalInput } from './schema.js';
+import type { RuntimeSnapshot } from './snapshot-format.js';
 
 const uuid = z.uuid();
 const digest = z.string().regex(/^[a-f0-9]{64}$/u);
@@ -656,8 +651,8 @@ export class KnowledgePublication {
         'INVALID_HISTORY',
         'History digest or identity mismatch',
       );
-    const previous = snapshotSchema.parse(JSON.parse(before));
-    const next = snapshotSchema.parse(JSON.parse(after));
+    const previous = this.knowledge.parseSnapshot(JSON.parse(before));
+    const next = this.knowledge.parseSnapshot(JSON.parse(after));
     if (record.schemaVersion === 1) {
       const oldCard = previous.cards.find((card) => card.id === record.cardId);
       const newCard = next.cards.find((card) => card.id === record.cardId);
@@ -803,7 +798,7 @@ export class KnowledgePublication {
         'Use creation rollback for a creation transaction',
       );
     const cardId = entry.record.cardId;
-    const previous = snapshotSchema.parse(JSON.parse(entry.before));
+    const previous = this.knowledge.parseSnapshot(JSON.parse(entry.before));
     const old = previous.cards.find((c) => c.id === cardId);
     const before = current.snapshot.cards.find((c) => c.id === cardId);
     if (!old || !before)
@@ -940,7 +935,10 @@ export class KnowledgePublication {
   }
   private async commitSnapshot(
     review: PublicationReview,
-    validate: () => Promise<{ snapshot: Snapshot; snapshotRevision: string }>,
+    validate: () => Promise<{
+      snapshot: RuntimeSnapshot;
+      snapshotRevision: string;
+    }>,
     fields:
       | {
           schemaVersion: 1;
@@ -963,7 +961,7 @@ export class KnowledgePublication {
         'REVISION_CONFLICT',
         'Snapshot changed after review',
       );
-    const after = json(snapshotSchema.parse(validated.snapshot));
+    const after = json(this.knowledge.parseSnapshot(validated.snapshot));
     if (Buffer.byteLength(after) > 1024 * 1024)
       throw new KnowledgeError(
         'LIMIT',

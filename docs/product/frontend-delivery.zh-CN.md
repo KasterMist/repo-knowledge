@@ -1,6 +1,6 @@
 # Repo Wiki 产品前端交付
 
-更新：2026-11-14。跟踪 [Issue #54](https://github.com/KasterMist/repo-knowledge/issues/54)。
+更新：2026-11-15。跟踪 [Issue #54](https://github.com/KasterMist/repo-knowledge/issues/54)。
 
 原需求包含人类 Wiki 和 Agent 卡片的完整前端。T11 的源码范围树、T14 的命令向导是底层阶段成果，不能替代文章目录、阅读器和统一生成界面。以下工作包成为 T23 发布候选之前的明确门禁，不覆盖旧验收结果。
 
@@ -40,3 +40,5 @@ T27.1 的文章模型、共享卡片引用和无写入迁移预览已实现，�
 T27.2 已提供未发布文章预览目录/阅读器和证据跳转，实际正式存储仍为 v1；视觉截图验收未完成。T27.4 全路径兼容/审阅/迁移门禁不变，见 [T27 续接](../development/t27-wiki.zh-CN.md)。
 
 T27.3 已加入统一表单 Wiki 模式、受限一次文章/关联卡片生成、独立候选目录/阅读及无模型找回；正式存储仍 v1，不能单独发布这批卡片。下一项 T27.4 全部 v2 兼容、审阅确认发布与显式迁移/回退；真实 Wiki 模型/视觉/Remote SSH 最终门禁保留 T27.5。见 [生成说明](../user/wiki-generation.zh-CN.md)及 [ADR 0016](../architecture/adr/0016-wiki-generation-staging.md)。
+
+T27.4a 已加入显式核心 v2 兼容和卡片全快照/历史/回退的文章保留；默认入口仍 v1。接下来 4b 共同事务及迁移备份/回退，再 4c 图形审阅/确认和入口同步激活。核心 harness 通过不等于用户已能发布文章；本轮无新界面、模型调用或 Release。见 [T27.4 路径核对](../development/t274-runtime.zh-CN.md)。
