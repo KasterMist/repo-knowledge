@@ -43,6 +43,8 @@ Opening the workbench must make no model request. Generation begins only after a
 
 Human-readable Wiki and agent cards must share a canonical knowledge source. Every future conclusion has a source scope/version and evidence or an inference label. Source staleness is explicit. Facts, intended conventions and human design rationale are distinct. Use external storage for read-only target repositories.
 
+Article fact blocks must reference shared canonical cards with explicit revisions/content bindings rather than duplicate their factual bodies. Commentary must distinguish context, inference and human-recorded rationale; binding agreement does not prove live source freshness or historical intent. Prepared model and rollout boundaries are recorded in [ADR 0015](../architecture/adr/0015-wiki-articles.md); runtime migration remains disabled until all readers/writers are compatible.
+
 ## Integration boundary
 
 Configure MCP for Codex explicitly; registering tools in VS Code alone does not establish Codex consumption. No promise of mandatory per-turn context injection or reading the official extension's private session state. Use documented interfaces and record real acceptance separately from mocks.

@@ -2,7 +2,7 @@
 
 [English](README.md)
 
-开发代码已加入统一主页和生成表单：范围、语言和限额、页内源码清单、明确生成确认、进度/取消、结果和找回。打开页面不启动模型，候选仍需单独审阅发布。独立人类 Wiki 文章属于 T27。见 [T25–T28](docs/product/frontend-delivery.zh-CN.md)及 [T26 实现与证据](docs/development/t26-generation-panel.zh-CN.md)。尚未发布，公开 M1 包不变。
+开发代码已加入统一主页和生成表单：范围、语言和限额、页内源码清单、明确生成确认、进度/取消、结果和找回。打开页面不启动模型，候选仍需单独审阅发布。独立人类 Wiki 文章属于 T27。T27.1 已加入预备文章模型和纯迁移预览，实际存储/MCP 仍为 v1，见 [T27 续接记录](docs/development/t27-wiki.zh-CN.md)。见 [T25–T28](docs/product/frontend-delivery.zh-CN.md)及 [T26 实现与证据](docs/development/t26-generation-panel.zh-CN.md)。尚未发布，公开 M1 包不变。
 
 供开发者与编码 Agent 共同使用的代码库知识系统，面向 **Windows 和 Linux 上的 VS Code**。
 **Windows VS Code 通过 Remote SSH 连接 Linux 是必需场景**，见[远程接入与验收指南](docs/user/remote-ssh.zh-CN.md)。
