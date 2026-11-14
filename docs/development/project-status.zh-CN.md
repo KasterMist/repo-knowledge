@@ -1,8 +1,10 @@
 # Repo Knowledge：任务、进度与续接入口
 
-更新日期：2026-11-12。所有者：KasterMist。仓库：[KasterMist/repo-knowledge](https://github.com/KasterMist/repo-knowledge)。许可证：Apache-2.0。
+更新日期：2026-11-14。所有者：KasterMist。仓库：[KasterMist/repo-knowledge](https://github.com/KasterMist/repo-knowledge)。许可证：Apache-2.0。
 
 本表依据对话中确认的需求、仓库实现与验收记录，以及当日核对的 GitHub Issue #1/#3/#5 整理。核对起点为已合并的 90b2dcb（PR #8）。实现完成、自动化测试通过、人工验收通过和正式发布是不同状态，不相互替代。本表不按聊天轮数或代码量估算完成百分比。
+
+当前优先级调整：先完成 [T25–T28 产品前端交付](../product/frontend-delivery.zh-CN.md)，再收口 T21/T22/T23。T25 统一主页首个切片已实现，本机完整检查（98 单测、5 集成）与 VS Code 1.117.0 打包宿主验证通过，精确 head CI 待核对；T26 生成面板、T27 独立 Wiki 文章、T28 图形审阅均未完成。原有 T11/T14 范围验收不代表完整前端已交付；不重做已通过的人工测试。跟踪 [Issue #54](https://github.com/KasterMist/repo-knowledge/issues/54)。
 
 ## 1. 已确认需求，后续不得遗忘
 
@@ -73,6 +75,8 @@
 已合并实现/证据：[M0 PR #2](https://github.com/KasterMist/repo-knowledge/pull/2)、[M1 PR #4](https://github.com/KasterMist/repo-knowledge/pull/4)、[Remote SSH PR #6](https://github.com/KasterMist/repo-knowledge/pull/6)、[URI 修复 PR #7](https://github.com/KasterMist/repo-knowledge/pull/7)、[验收汇总 PR #8](https://github.com/KasterMist/repo-knowledge/pull/8)。
 
 ## 5. 下一轮按此顺序推进
+
+**最新顺序（优先于下方历史续接说明）：** 先推进 T25–T28。T25 首个主页切片已实现并做本机检查；下一切片 T26 统一生成表单，再 T27 文章模型/目录与生成、T28 图形审阅维护。T21 的已有证据完整保留，后续默认自动评估；最后收口 T22/T23。未做本次新的真实 Codex 对话，不向维护者重复布置旧手动测试。
 
 1. **M0/M1 已完成。** 治理、Windows 原生/Remote SSH 官方 Codex、宿主恢复与 T10 发布均已有证据。发布运行 [39916665531](https://github.com/KasterMist/repo-knowledge/actions/runs/39916665531) 六项成功，源提交 `872c4a49fd5084dcd3bae5a711a421fe19e5319b`，公开 VSIX SHA-256 为 `b2c10ce88485abdaf43d5a7d323b59e712ef59df5c55bd3aa233a6960cb92745`。本机另外匿名下载、核对来源及校验和，并在隔离 VS Code 中安装公开包通过。前两轮发布失败已修复并保留历史记录，不重测已通过的手动场景。
 2. **M2 实现与本次范围验收完成，跟踪 [Issue #17](https://github.com/KasterMist/repo-knowledge/issues/17)。** PR #18/#19/#20 已合并并通过精确 head 五项 CI；最后双目录宿主验证为 run 39928932686。Windows 与 Remote SSH 均完成新界面发布和回退，cache-storage r1→r2→r3；独立只读核对两次 committed 历史、原正文恢复、其余卡片仍 r1，维护者 MCP 诊断均为 r3/stale=false。取消/确认点击由维护者反馈，历史与正文另行核对；不冒充新一轮官方 Codex 对话。M2 尚未单独发布，旧 M1 资产不变。后续从 T14 开始 M3 范围与生成入口；任何新版本发布需单独升版并完成发布检查。完整证据见 [M2 验收记录](m2-acceptance.md)。

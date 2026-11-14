@@ -15,6 +15,7 @@ import { KnowledgeWorkbench } from './workbench.js';
 import { BackendWorkbench } from './backend-workbench.js';
 import { GenerationWorkbench } from './generation-workbench.js';
 import { ImpactNavigation } from './impact-navigation.js';
+import { HomeWorkbench } from './home-workbench.js';
 
 export function activate(context: vscode.ExtensionContext) {
   const output = vscode.window.createOutputChannel('Repo Knowledge');
@@ -81,6 +82,8 @@ export function activate(context: vscode.ExtensionContext) {
   };
   const workbench = new KnowledgeWorkbench(selected);
   context.subscriptions.push(workbench);
+  const home = new HomeWorkbench(selected);
+  context.subscriptions.push(home);
   const impactNavigation = new ImpactNavigation(workbench.documents);
   context.subscriptions.push(impactNavigation);
   const backend = new BackendWorkbench(

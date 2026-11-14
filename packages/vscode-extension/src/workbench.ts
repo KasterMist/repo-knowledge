@@ -201,9 +201,12 @@ export class KnowledgeWorkbench implements vscode.Disposable {
       vscode.workspace.onDidChangeWorkspaceFolders(() => this.refresh()),
     );
     this.command('refreshKnowledge', () => this.refresh());
-    this.command('openWorkbench', () =>
-      vscode.commands.executeCommand('workbench.view.extension.repoKnowledge'),
-    );
+    this.command('openWorkbench', async () => {
+      await vscode.commands.executeCommand(
+        'workbench.view.extension.repoKnowledge',
+      );
+      return vscode.commands.executeCommand('repoKnowledge.openHome');
+    });
     this.command('openCard', (node) => this.openCard(node));
     this.command('openEvidence', (node) => this.openEvidence(node));
   }

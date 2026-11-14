@@ -94,6 +94,14 @@ exports.run = async function run() {
   );
   assert.equal(diagnostics?.protocolConnected, true);
   assert.equal(diagnostics.tools.length, 4);
+  const home = await vscode.commands.executeCommand('repoKnowledge.openHome');
+  assert.equal(home.cardCount, 3);
+  assert.equal(home.problem, '');
+  assert.equal(
+    await fs.realpath(home.repository),
+    await fs.realpath(vscode.workspace.workspaceFolders[0].uri.fsPath),
+  );
+
   const workbench = extension.exports.workbench;
   const roots = await workbench.cards.getChildren();
   const noPlan = await vscode.commands.executeCommand(
@@ -572,6 +580,7 @@ exports.run = async function run() {
           'packaged extension activation',
           'three-way merge report retains human body and reports competing suggestion without publication',
           'command registrations and two knowledge trees',
+          'graphical home opens against the host repository and reads three published cards without generation',
           'read-only knowledge document and validated source navigation',
           'durable draft, dirty-editor rejection and saved candidate diff without publication',
           'bounded user-invoked scan plan preview without model calls',

@@ -25,6 +25,11 @@
   "contributes": {
     "commands": [
       {
+        "command": "repoKnowledge.openHome",
+        "title": "Repo Knowledge: Open Knowledge Home",
+        "icon": "$(home)"
+      },
+      {
         "command": "repoKnowledge.generateKnowledgeUpdate",
         "title": "Repo Knowledge: Generate Card Update"
       },
@@ -215,6 +220,11 @@
     },
     "menus": {
       "view/title": [
+        {
+          "command": "repoKnowledge.openHome",
+          "when": "view =~ /^repoKnowledge\\./",
+          "group": "navigation@0"
+        },
         {
           "command": "repoKnowledge.refreshKnowledge",
           "when": "view =~ /^repoKnowledge\\./",
