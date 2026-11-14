@@ -256,6 +256,15 @@ test('shipped browser script sends no startup work, binds form/plan, invalidates
   assert.equal(elements.get('preview').disabled, true);
   elements.get('cancel').handlers.click();
   assert.equal(sent.at(-1).action, 'cancel');
+  listener({
+    data: {
+      type: 'generation-state',
+      phase: 'finished',
+      busy: false,
+      result: { pages: 2, state: 'pending-review', recovered: true },
+    },
+  });
+  assert.match(elements.get('status').textContent, /已找回 2 张待审阅卡片/u);
   const html = generationHtml(
     '</p><script>evil()</script>',
     'ssh-remote & linux',

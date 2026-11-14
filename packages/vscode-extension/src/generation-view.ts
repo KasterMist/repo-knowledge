@@ -28,6 +28,10 @@ window.addEventListener('message', event => {
   if (state?.type !== 'generation-state') return;
   const labels = { idle: '请填写范围并预览。', scanning: '正在静态扫描，未调用模型…', previewed: '请检查下方文件清单。', confirming: '等待源码发送确认…', running: '正在生成候选，可取消；尚未发布…', recovering: '正在检查已有任务；仅明确重试后才调用模型…', finished: '操作完成；如有候选，请另行审阅发布。', cancelled: '操作已取消。', failed: '操作失败，未自动重试或发布。' };
   document.getElementById('status').textContent = labels[state.phase] || state.phase;
+  if (state.phase === 'finished' && state.result?.state === 'pending-review')
+    document.getElementById('status').textContent = (state.result.recovered ? '已找回 ' : '已保存 ') + state.result.pages + ' 张待审阅卡片（一个批次）；尚未发布。';
+  if (state.phase === 'finished' && state.result?.state === 'previously-published')
+    document.getElementById('status').textContent = '该任务已进入发布历史，不会再次生成或发布。';
   fields.forEach(name => document.getElementById(name).disabled = state.busy);
   ['preview', 'recover', 'review'].forEach(name => document.getElementById(name).disabled = state.busy);
   document.getElementById('cancel').disabled = !state.busy;
@@ -88,7 +92,7 @@ ${input('maxKiB', '总读取上限 KiB', 'type="number" min="1" max="2048" requi
 <h2>本次源码清单</h2><p id="summary">尚未扫描；打开页面不会请求模型。</p><ul id="files"></ul>
 <button id="generate" type="button" disabled>确认并生成候选</button><button id="cancel" type="button" disabled>取消当前操作</button>
 <button id="recover" type="button">找回结果 / 明确重试</button><button id="review" type="button">查看新增待审阅</button>
-<p id="status" role="status" aria-live="polite">请填写范围并预览。</p><pre id="error" role="alert"></pre><pre id="result"></pre>
+<p id="status" role="status" aria-live="polite">请填写范围并预览。</p><pre id="error" role="alert"></pre><details><summary>任务详情 / Task details</summary><pre id="result"></pre></details>
 <p class="muted">预览只静态读取文件。生成前另有源码发送确认；已有结果的找回不请求模型，无结果时重试需要再次确认。候选必须另行审阅并确认发布。关闭页面会取消该页面的活动任务，已保存结果仍可找回。</p>
 <script nonce="${nonce}">${generationClient}</script></body></html>`;
 }
