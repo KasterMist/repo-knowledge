@@ -1,6 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFile, writeFile, mkdir, symlink } from 'node:fs/promises';
+import {
+  readFile,
+  writeFile,
+  mkdir,
+  symlink,
+  realpath,
+} from 'node:fs/promises';
 import { join } from 'node:path';
 import { runInNewContext } from 'node:vm';
 import {
@@ -49,7 +55,10 @@ test('Wiki reader uses canonical facts, live source checks and validated evidenc
       entry.index,
       view.snapshotRevision,
     );
-    assert.equal(location.path, join(f.repository, 'src/读取.ts'));
+    assert.equal(
+      await realpath(location.path),
+      await realpath(join(f.repository, 'src/读取.ts')),
+    );
     await assert.rejects(
       reader.evidence('overview', 'cache-storage', 0, view.snapshotRevision),
       (e) => e.code === 'INVALID_EVIDENCE',
@@ -231,4 +240,61 @@ test('reader message bridge is strict and shipped browser script sends only arti
     },
     { action: 'refresh' },
   ]);
+});
+
+test('article read budget rejects excessive card/evidence fanout before any source reads', async () => {
+  const f = await fixture();
+  try {
+    const { text, knowledge } = await setup(f);
+    const original = (await knowledge.snapshot()).snapshot;
+    let sourceReads = 0;
+    knowledge.read = async () => {
+      sourceReads++;
+      throw new Error('must reject before source I/O');
+    };
+    for (const [count, evidenceCount] of [
+      [33, 1],
+      [27, 3],
+    ]) {
+      const cards = Array.from({ length: count }, (_, index) => ({
+        ...original.cards[0],
+        id: `card-${index}`,
+        evidence: Array.from(
+          { length: evidenceCount },
+          () => original.cards[0].evidence[0],
+        ),
+      }));
+      await writeFile(
+        join(f.store, 'knowledge.json'),
+        JSON.stringify({ ...original, cards }),
+      );
+      const preview = JSON.parse(text);
+      preview.cards = cards;
+      const blocks = cards.map((card, index) => ({
+        id: `block-${index}`,
+        type: 'card',
+        reference: bindWikiCard(card),
+      }));
+      preview.articles = [
+        {
+          ...preview.articles[0],
+          sections: [
+            { id: 'first', title: 'First', blocks: blocks.slice(0, 20) },
+            { id: 'second', title: 'Second', blocks: blocks.slice(20) },
+          ],
+        },
+      ];
+      const reader = await WikiPreviewReader.open(
+        knowledge,
+        JSON.stringify(preview),
+      );
+      await assert.rejects(
+        reader.read('overview'),
+        (error) => error.code === 'WIKI_READ_LIMIT',
+      );
+    }
+    assert.equal(sourceReads, 0);
+  } finally {
+    await f.cleanup();
+  }
 });

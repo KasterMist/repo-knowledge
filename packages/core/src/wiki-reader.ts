@@ -10,6 +10,7 @@ import {
 /** Explicit preview file only; never a canonical store writer or implicit importer. */
 export const loadWikiPreviewText = (path: string): Promise<string> =>
   boundedRead(path);
+export const wikiReaderLimits = { cards: 32, evidence: 80 } as const;
 export class WikiPreviewReader {
   private constructor(
     private readonly knowledge: KnowledgeStore,
@@ -51,6 +52,17 @@ export class WikiPreviewReader {
         ),
       ),
     );
+    const evidenceCount = snapshot.cards
+      .filter((card) => ids.has(card.id))
+      .reduce((count, card) => count + card.evidence.length, 0);
+    if (
+      ids.size > wikiReaderLimits.cards ||
+      evidenceCount > wikiReaderLimits.evidence
+    )
+      throw new KnowledgeError(
+        'WIKI_READ_LIMIT',
+        'Article exceeds 32 referenced cards or 80 source evidence entries; split the article',
+      );
     const evidence: {
       cardId: string;
       index: number;
