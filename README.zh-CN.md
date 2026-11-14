@@ -2,7 +2,7 @@
 
 [English](README.md)
 
-开发代码新增统一图形主页，展示仓库、宿主、快照和卡片计数，提供范围规划、候选生成、找回和审阅导航按钮。现有确认向导仍保留，单页生成表单及独立人类 Wiki 文章目录仍待实现。见 [T25–T28](docs/product/frontend-delivery.zh-CN.md)。尚未发布，不改变公开 M1 包。
+开发代码已加入统一主页和生成表单：范围、语言和限额、页内源码清单、明确生成确认、进度/取消、结果和找回。打开页面不启动模型，候选仍需单独审阅发布。独立人类 Wiki 文章属于 T27。见 [T25–T28](docs/product/frontend-delivery.zh-CN.md)及 [T26 实现与证据](docs/development/t26-generation-panel.zh-CN.md)。尚未发布，公开 M1 包不变。
 
 供开发者与编码 Agent 共同使用的代码库知识系统，面向 **Windows 和 Linux 上的 VS Code**。
 **Windows VS Code 通过 Remote SSH 连接 Linux 是必需场景**，见[远程接入与验收指南](docs/user/remote-ssh.zh-CN.md)。

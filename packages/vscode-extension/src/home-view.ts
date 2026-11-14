@@ -1,8 +1,6 @@
 // Pure rendering/message boundary: repository text never becomes HTML or a command.
 export const homeActions = {
-  plan: 'repoKnowledge.planGeneration',
-  generate: 'repoKnowledge.generateKnowledge',
-  recover: 'repoKnowledge.recoverGeneration',
+  plan: 'repoKnowledge.openGenerationPanel',
   wiki: 'repoKnowledge.wiki.focus',
   cards: 'repoKnowledge.cards.focus',
   proposals: 'repoKnowledge.creations.focus',
@@ -58,9 +56,8 @@ button:hover { background: var(--vscode-button-hoverBackground); } button:focus-
 ${button('wiki', 'Repo Wiki · 源码范围导航')}${button('cards', 'Agent 知识卡片')}
 <p class="muted">目前 Wiki 使用卡片的源码范围导航；独立文章目录与阅读器尚在开发。</p></section>
 <section><h2>生成知识 / Generate knowledge</h2><p>先选择范围并检查源码清单，再明确确认发送给当前模型。生成结果只保存为待审阅候选。</p>
-${button('plan', '1. 选择范围与预览')}${button('generate', '2. 生成卡片候选')}${button('proposals', '3. 查看新增待审阅')}
-<p class="muted">本阶段按钮复用现有向导。打开主页不会启动模型；候选不会自动发布。</p>
-${button('recover', '找回结果 / 明确重试')}</section>
+${button('plan', '打开生成面板')}${button('proposals', '查看新增待审阅')}
+<p class="muted">在同一页面选择范围、预览、生成和找回。打开页面不会启动模型；候选不会自动发布。</p></section>
 <p id="status" role="status" aria-live="polite"></p>
 <script nonce="${nonce}">
 const api = acquireVsCodeApi();

@@ -20,7 +20,7 @@ test('home messages accept only explicit bounded actions, never commands or path
     { command: 'repoKnowledge.generateKnowledge' },
   ])
     assert.equal(homeAction(value), undefined);
-  assert.equal(homeActions.generate, 'repoKnowledge.generateKnowledge');
+  assert.equal(homeActions.plan, 'repoKnowledge.openGenerationPanel');
   assert.equal(
     homeAction(
       Object.assign(Object.create({ action: 'plan' }), { path: 'outside' }),
