@@ -33,7 +33,9 @@ Development adds a unified graphical home and generation form: scope, language a
 
 ## Development
 
-T27.4a prepares explicitly opted-in v2 core compatibility: card writers, rollback and history/recovery preserve full articles and human notes. Default editor/MCP entry points still accept v1 only. Reviewed migration, joint article/card publication and activation remain pending; see the [compatibility checkpoint](docs/development/t274-runtime.zh-CN.md). No user data is upgraded by this change.
+T27.4b adds core-only reviewed migration, raw-byte backup, atomic joint article/card publication and head-only rollback/recovery with retained article history. Default editor/CLI activation is still deferred to T27.4c. See the [transaction checkpoint](docs/development/t274-transactions.zh-CN.md); no end-user migration command or new release is enabled.
+
+T27.4a prepares explicitly opted-in v2 core compatibility: card writers, rollback and history/recovery preserve full articles and human notes. T27.4b provides the core migration/joint transactions; default editor/MCP entry points still accept v1 only and user activation remains pending. See the [compatibility checkpoint](docs/development/t274-runtime.zh-CN.md). No user data is upgraded by this change.
 
 T21 preparation adds an [offline, traceable evaluation protocol](docs/development/t21-evaluation.zh-CN.md) for baseline/natural/explicit knowledge use and independent-conversation reuse. Static fixture preparation and record validation make no model calls. Windows/Remote SSH baseline and natural-task samples are recorded, including a Windows command-scope deviation and unconfirmed MCP use. Bounded programmatic explicit retrieval completed on Windows/Linux with captured MCP events; subsequent evaluation is automated. See [the results and limitations](docs/development/t21-programmatic.zh-CN.md). No general effectiveness claim or new release is made.
 

@@ -19,3 +19,4 @@ export * from './wiki.js';
 export * from './wiki-reader.js';
 export * from './wiki-generation.js';
 export * from './snapshot-format.js';
+export * from './wiki-transactions.js';
