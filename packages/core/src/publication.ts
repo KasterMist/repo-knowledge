@@ -24,15 +24,17 @@ import {
   type GenerationPacket,
 } from './generation.js';
 import { scanPlanSchema, type ScanPlan } from './scan.js';
-import {
-  boundedRead,
-  boundedBytes,
-  within,
-  fingerprint,
-  KnowledgeError,
-} from './files.js';
+import { boundedBytes, within, fingerprint, KnowledgeError } from './files.js';
 import { cardSchema, type Card, type ProposalInput } from './schema.js';
 import type { RuntimeSnapshot } from './snapshot-format.js';
+import { prepareWikiUpgrade } from './wiki.js';
+import { WikiCandidates, validateGeneratedWiki } from './wiki-generation.js';
+import {
+  rawDigest,
+  wikiJournalSchema,
+  validateWikiTransition,
+  type WikiReview,
+} from './wiki-transactions.js';
 
 const uuid = z.uuid();
 const digest = z.string().regex(/^[a-f0-9]{64}$/u);
@@ -72,7 +74,15 @@ const creationJournal = z.strictObject({
   beforeSnapshot: digest,
   afterSnapshot: digest,
 });
-const journal = z.union([updateJournal, creationJournal]);
+const journal = z.union([updateJournal, creationJournal, wikiJournalSchema]);
+interface HistoryEntry {
+  record: z.infer<typeof journal>;
+  before: string;
+  after: string;
+  beforeBytes: Buffer;
+  afterBytes: Buffer;
+  state: 'committed' | 'aborted' | 'prepared';
+}
 const creationCandidate = z.strictObject({
   schemaVersion: z.literal(1),
   candidateId: uuid,
@@ -143,7 +153,7 @@ export class KnowledgePublication {
       );
     return path;
   }
-  private async readFile(path: string) {
+  private async readBytes(path: string) {
     const root = await realpath(this.knowledge.storeRoot);
     if (
       (await lstat(path)).isSymbolicLink() ||
@@ -153,7 +163,12 @@ export class KnowledgePublication {
         'PATH_ESCAPE',
         'Knowledge metadata file escapes store',
       );
-    return boundedRead(path);
+    return boundedBytes(path);
+  }
+  private async readFile(path: string) {
+    return new TextDecoder('utf-8', { fatal: true }).decode(
+      await this.readBytes(path),
+    );
   }
   private async names(name: string) {
     try {
@@ -195,8 +210,10 @@ export class KnowledgePublication {
     return new Set(
       (await this.history()).flatMap((entry) =>
         entry.state === 'committed' &&
-        entry.record.schemaVersion === 2 &&
-        entry.record.operation === 'create'
+        ((entry.record.schemaVersion === 2 &&
+          entry.record.operation === 'create') ||
+          (entry.record.schemaVersion === 3 &&
+            entry.record.operation === 'create-wiki'))
           ? entry.record.cardIds
           : [],
       ),
@@ -217,6 +234,29 @@ export class KnowledgePublication {
         'Recover prepared history before starting another generation',
       );
     return [...(await this.reservedIds())].sort();
+  }
+  async reservedWikiArticleIds(): Promise<string[]> {
+    const current = await this.knowledge.snapshot();
+    const history = await this.history();
+    if (history.some((entry) => entry.state === 'prepared'))
+      throw new KnowledgeError(
+        'RECOVERY_REQUIRED',
+        'Recover history before Wiki generation',
+      );
+    return [
+      ...new Set([
+        ...(current.snapshot.schemaVersion === 2
+          ? current.snapshot.articles.map((article) => article.id)
+          : []),
+        ...history.flatMap((entry) =>
+          entry.state === 'committed' &&
+          entry.record.schemaVersion === 3 &&
+          entry.record.operation === 'create-wiki'
+            ? entry.record.articleIds
+            : [],
+        ),
+      ]),
+    ].sort();
   }
   async saveCreation(
     plan: ScanPlan,
@@ -633,15 +673,28 @@ export class KnowledgePublication {
     }
     return entries;
   }
-  private async historyEntry(id: string) {
+  private async historyEntry(
+    id: string,
+    visited = new Set<string>(),
+  ): Promise<HistoryEntry> {
+    if (visited.has(id) || visited.size >= 8)
+      throw new KnowledgeError(
+        'INVALID_HISTORY',
+        'Cyclic or excessive Wiki history links',
+      );
+    const chain = new Set([...visited, id]);
     if (!uuid.safeParse(id).success)
       throw new KnowledgeError('INVALID_ID', 'Expected a history UUID');
     const directory = await this.directory('history/' + id);
     const record = journal.parse(
       JSON.parse(await this.readFile(join(directory, 'record.json'))),
     );
-    const before = await this.readFile(join(directory, 'before.json'));
-    const after = await this.readFile(join(directory, 'after.json'));
+    const beforeBytes = await this.readBytes(join(directory, 'before.json'));
+    const afterBytes = await this.readBytes(join(directory, 'after.json'));
+    const before = new TextDecoder('utf-8', { fatal: true }).decode(
+      beforeBytes,
+    );
+    const after = new TextDecoder('utf-8', { fatal: true }).decode(afterBytes);
     if (
       record.transactionId !== id ||
       fingerprint(before) !== record.beforeSnapshot ||
@@ -676,7 +729,7 @@ export class KnowledgePublication {
           'INVALID_HISTORY',
           'History changes more than the recorded card',
         );
-    } else {
+    } else if (record.schemaVersion === 2) {
       const ids = new Set(record.cardIds);
       const smaller = record.operation === 'create' ? previous : next;
       const larger = record.operation === 'create' ? next : previous;
@@ -699,6 +752,53 @@ export class KnowledgePublication {
           'INVALID_HISTORY',
           'Creation history must only add/remove the recorded revision-1 batch',
         );
+    } else {
+      if (
+        rawDigest(beforeBytes) !== record.beforeBytesSha256 ||
+        rawDigest(afterBytes) !== record.afterBytesSha256
+      )
+        throw new KnowledgeError(
+          'INVALID_HISTORY',
+          'Wiki raw-byte backup digest mismatch',
+        );
+      validateWikiTransition(record, previous, next, before, after);
+      if (
+        record.operation === 'restore-wiki' ||
+        record.operation === 'remove-wiki'
+      ) {
+        const source = await this.historyEntry(record.itemId, chain);
+        if (
+          source.state !== 'committed' ||
+          source.record.schemaVersion !== 3 ||
+          source.record.operation !==
+            (record.operation === 'restore-wiki'
+              ? 'migrate-wiki'
+              : 'create-wiki') ||
+          source.record.afterSnapshot !== record.beforeSnapshot ||
+          json(this.knowledge.parseSnapshot(JSON.parse(source.before))) !==
+            json(next) ||
+          (record.operation === 'restore-wiki' &&
+            rawDigest(afterBytes) !== source.record.beforeBytesSha256)
+        )
+          throw new KnowledgeError(
+            'INVALID_HISTORY',
+            'Wiki inverse does not match its retained committed source',
+          );
+        if (
+          source.record.schemaVersion === 3 &&
+          json([...record.priorTransactions].sort()) !==
+            json(
+              [
+                ...source.record.priorTransactions,
+                source.record.transactionId,
+              ].sort(),
+            )
+        )
+          throw new KnowledgeError(
+            'INVALID_HISTORY',
+            'Wiki inverse crosses a later committed transaction',
+          );
+      }
     }
     const marker = async (name: string) => {
       try {
@@ -722,6 +822,8 @@ export class KnowledgePublication {
       record,
       before,
       after,
+      beforeBytes,
+      afterBytes,
       state: committed ? 'committed' : aborted ? 'aborted' : 'prepared',
     };
   }
@@ -879,6 +981,11 @@ export class KnowledgePublication {
   }
   async previewRollback(id: string): Promise<PublicationReview> {
     const entry = await this.historyEntry(id);
+    if (entry.record.schemaVersion === 3)
+      throw new KnowledgeError(
+        'INVALID_HISTORY',
+        'Use the explicit Wiki rollback review for this transaction',
+      );
     return entry.record.schemaVersion === 1
       ? (await this.prepareRollback(id)).review
       : (await this.prepareCreationRollback(id)).review;
@@ -934,10 +1041,12 @@ export class KnowledgePublication {
     );
   }
   private async commitSnapshot(
-    review: PublicationReview,
-    validate: () => Promise<{
+    review: PublicationReview | WikiReview,
+    validate: (ownTransaction?: string) => Promise<{
       snapshot: RuntimeSnapshot;
       snapshotRevision: string;
+      bytes?: Uint8Array;
+      baseBytesSha256?: string;
     }>,
     fields:
       | {
@@ -946,11 +1055,13 @@ export class KnowledgePublication {
           beforeRevision: number;
           afterRevision: number;
         }
-      | { schemaVersion: 2; cardIds: string[] },
+      | { schemaVersion: 2; cardIds: string[] }
+      | { schemaVersion: 3; cardIds: string[]; articleIds: string[] },
     revision: number,
   ) {
     const context = await repositoryContext(this.knowledge.repositoryRoot);
-    if ((await this.history()).some((h) => h.state === 'prepared'))
+    const priorHistory = await this.history();
+    if (priorHistory.some((h) => h.state === 'prepared'))
       throw new KnowledgeError(
         'RECOVERY_REQUIRED',
         'Resolve prepared history before another publication',
@@ -961,8 +1072,20 @@ export class KnowledgePublication {
         'REVISION_CONFLICT',
         'Snapshot changed after review',
       );
-    const after = json(this.knowledge.parseSnapshot(validated.snapshot));
-    if (Buffer.byteLength(after) > 1024 * 1024)
+    const target = this.knowledge.parseSnapshot(validated.snapshot);
+    if (validated.bytes && review.operation !== 'restore-wiki')
+      throw new KnowledgeError(
+        'INVALID_HISTORY',
+        'Only a reviewed migration restore accepts exact target bytes',
+      );
+    const afterBytes = validated.bytes ?? Buffer.from(json(target));
+    const after = new TextDecoder('utf-8', { fatal: true }).decode(afterBytes);
+    if (json(this.knowledge.parseSnapshot(JSON.parse(after))) !== json(target))
+      throw new KnowledgeError(
+        'REVIEW_CHANGED',
+        'Target bytes differ from reviewed values',
+      );
+    if (afterBytes.length > 1024 * 1024)
       throw new KnowledgeError(
         'LIMIT',
         'Published snapshot would exceed 1 MiB',
@@ -975,6 +1098,14 @@ export class KnowledgePublication {
         'Publication requires a regular canonical snapshot, not a symlink',
       );
     const beforeBytes = await boundedBytes(canonical);
+    if (
+      validated.baseBytesSha256 &&
+      rawDigest(beforeBytes) !== validated.baseBytesSha256
+    )
+      throw new KnowledgeError(
+        'REVIEW_CHANGED',
+        'Canonical bytes changed after Wiki review',
+      );
     const before = new TextDecoder('utf-8', { fatal: true }).decode(
       beforeBytes,
     );
@@ -991,7 +1122,6 @@ export class KnowledgePublication {
       );
     const transactionId = randomUUID();
     const directory = join(history, transactionId);
-    await mkdir(directory);
     const record = journal.parse({
       ...fields,
       transactionId,
@@ -1000,19 +1130,42 @@ export class KnowledgePublication {
       createdAt: new Date().toISOString(),
       beforeSnapshot: review.baseSnapshot,
       afterSnapshot: fingerprint(after),
+      ...(fields.schemaVersion === 3
+        ? {
+            beforeBytesSha256: rawDigest(beforeBytes),
+            afterBytesSha256: rawDigest(afterBytes),
+            priorTransactions: priorHistory
+              .filter((entry) => entry.state === 'committed')
+              .map((entry) => entry.record.transactionId)
+              .sort(),
+          }
+        : {}),
     });
+    if (record.schemaVersion === 3)
+      validateWikiTransition(
+        record,
+        this.knowledge.parseSnapshot(JSON.parse(before)),
+        target,
+        before,
+        after,
+      );
+    await mkdir(directory);
     await writeExclusive(join(directory, 'before.json'), beforeBytes);
-    await writeExclusive(join(directory, 'after.json'), after);
+    await writeExclusive(join(directory, 'after.json'), afterBytes);
     await writeExclusive(join(directory, 'record.json'), json(record));
     const temporary = join(root, `.publication-${transactionId}.tmp`);
     let replaced = false;
     try {
-      await writeExclusive(temporary, after);
+      await writeExclusive(temporary, afterBytes);
       for (let attempt = 0; ; attempt++) {
-        const last = await validate();
+        const last = await validate(transactionId);
         if (
           last.snapshotRevision !== review.baseSnapshot ||
-          json(last.snapshot) !== after
+          json(last.snapshot) !== json(target) ||
+          (last.baseBytesSha256 !== undefined &&
+            last.baseBytesSha256 !== rawDigest(beforeBytes)) ||
+          (last.bytes !== undefined &&
+            rawDigest(last.bytes) !== rawDigest(afterBytes))
         )
           throw new KnowledgeError(
             'REVISION_CONFLICT',
@@ -1080,7 +1233,13 @@ export class KnowledgePublication {
   }
   async rollback(id: string, token: string) {
     return this.locked(async () => {
-      if ((await this.historyEntry(id)).record.schemaVersion === 2)
+      const entry = await this.historyEntry(id);
+      if (entry.record.schemaVersion === 3)
+        throw new KnowledgeError(
+          'INVALID_HISTORY',
+          'Use the explicit Wiki rollback review for this transaction',
+        );
+      if (entry.record.schemaVersion === 2)
         return this.commitCreation(id, token, true);
       const prepared = await this.prepareRollback(id);
       if (prepared.review.token !== token)
@@ -1126,6 +1285,412 @@ export class KnowledgePublication {
   }
   async publishCreation(id: string, token: string) {
     return this.locked(() => this.commitCreation(id, token));
+  }
+  /** Retain old metadata without adopting it; bind confirmation to exact bounded contents. */
+  private async wikiInventory(ownTransaction?: string) {
+    const entries: { path: string; sha256: string }[] = [];
+    let bytes = 0;
+    for (const name of [
+      'proposals',
+      'drafts',
+      'creations',
+      'generation-jobs',
+      'incremental-attempts',
+      'merge-reviews',
+      'wiki-candidates',
+      'plans',
+      'dependency-baselines',
+    ]) {
+      for (const entry of await this.names(name)) {
+        if (entry.endsWith('.lease') || entry.endsWith('.tmp'))
+          throw new KnowledgeError(
+            'RECOVERY_REQUIRED',
+            'Resolve active/interrupted metadata before Wiki transactions',
+          );
+        if (!entry.endsWith('.json'))
+          throw new KnowledgeError(
+            'INVALID_METADATA',
+            'Unexpected retained metadata file',
+          );
+        if (entries.length >= 128)
+          throw new KnowledgeError(
+            'LIMIT',
+            'Wiki review inventory exceeds 128 files',
+          );
+        const content = await this.readBytes(
+          join(await this.directory(name), entry),
+        );
+        bytes += content.length;
+        if (bytes > 4 * 1024 * 1024)
+          throw new KnowledgeError(
+            'LIMIT',
+            'Wiki review inventory exceeds 4 MiB',
+          );
+        entries.push({ path: name + '/' + entry, sha256: rawDigest(content) });
+      }
+    }
+    const history = await this.history();
+    if (
+      history.some(
+        (entry) =>
+          entry.state === 'prepared' &&
+          entry.record.transactionId !== ownTransaction,
+      )
+    )
+      throw new KnowledgeError(
+        'RECOVERY_REQUIRED',
+        'Recover prepared history before Wiki review',
+      );
+    return {
+      entries: entries.length,
+      revision: fingerprint(
+        json({
+          entries,
+          committed: history
+            .filter((entry) => entry.state === 'committed')
+            .map((entry) => entry.record.transactionId)
+            .sort(),
+        }),
+      ),
+    };
+  }
+  private async wikiReview(
+    input: Omit<WikiReview, 'token'>,
+    proof = '',
+  ): Promise<WikiReview> {
+    return { ...input, token: await this.reviewToken(json(input) + proof) };
+  }
+  private async prepareMigration(id: string, ownTransaction?: string) {
+    uuid.parse(id);
+    const current = await this.knowledge.snapshot();
+    const root = await realpath(this.knowledge.storeRoot);
+    const beforeBytes = await this.readBytes(join(root, 'knowledge.json'));
+    const before = new TextDecoder('utf-8', { fatal: true }).decode(
+      beforeBytes,
+    );
+    const preview = prepareWikiUpgrade(before);
+    const after = this.knowledge.parseSnapshot(JSON.parse(preview.targetText));
+    if (current.snapshotRevision !== preview.baseRevision)
+      throw new KnowledgeError(
+        'REVISION_CONFLICT',
+        'Knowledge changed during migration preview',
+      );
+    return {
+      snapshot: after,
+      snapshotRevision: current.snapshotRevision,
+      baseBytesSha256: rawDigest(beforeBytes),
+      review: await this.wikiReview(
+        {
+          itemId: id,
+          operation: 'migrate-wiki',
+          baseSnapshot: current.snapshotRevision,
+          before: current.snapshot,
+          after,
+          retainedMetadata: await this.wikiInventory(ownTransaction),
+          reason:
+            '显式升级为 v2；保留原字节备份及全部旧记录，旧基础候选不会自动采用。',
+        },
+        rawDigest(beforeBytes),
+      ),
+    };
+  }
+  async previewWikiMigration() {
+    return (await this.prepareMigration(randomUUID())).review;
+  }
+  async migrateWiki(id: string, token: string) {
+    return this.locked(async () => {
+      const prepare = (ownTransaction?: string) =>
+        this.prepareMigration(id, ownTransaction);
+      const current = await prepare();
+      if (current.review.token !== token)
+        throw new KnowledgeError('REVIEW_CHANGED', 'Migration review changed');
+      return this.commitSnapshot(
+        current.review,
+        async (ownTransaction) => {
+          const fresh = await prepare(ownTransaction);
+          if (fresh.review.token !== token)
+            throw new KnowledgeError(
+              'REVIEW_CHANGED',
+              'Migration inventory or base changed',
+            );
+          return fresh;
+        },
+        { schemaVersion: 3, cardIds: [], articleIds: [] },
+        0,
+      );
+    });
+  }
+  private async prepareWikiCreation(id: string, ownTransaction?: string) {
+    const saved = await new WikiCandidates(this.knowledge).read(id);
+    const current = await this.knowledge.snapshot();
+    if (current.snapshot.schemaVersion !== 2)
+      throw new KnowledgeError(
+        'WIKI_MIGRATION_REQUIRED',
+        'Review and confirm Wiki migration first',
+      );
+    const history = await this.history();
+    if (
+      history.some(
+        (entry) =>
+          entry.state === 'committed' &&
+          entry.record.operation === 'create-wiki' &&
+          entry.record.itemId === id,
+      )
+    )
+      throw new KnowledgeError(
+        'ALREADY_PUBLISHED',
+        'Wiki candidate was already published',
+      );
+    const packet = await buildGenerationPacket(
+      this.knowledge,
+      saved.candidate.plan,
+    );
+    let adaptedFromMigration: string | undefined;
+    if (packet.baseSnapshot !== saved.candidate.baseSnapshot) {
+      const migration = history.find(
+        (entry) =>
+          entry.state === 'committed' &&
+          entry.record.operation === 'migrate-wiki' &&
+          entry.record.beforeSnapshot === saved.candidate.baseSnapshot &&
+          entry.record.afterSnapshot === current.snapshotRevision,
+      );
+      if (!migration)
+        throw new KnowledgeError(
+          'REVISION_CONFLICT',
+          'Candidate base changed; generate or review a fresh candidate',
+        );
+      adaptedFromMigration = migration.record.transactionId;
+    }
+    const { packetRevision, ...content } = packet;
+    if (
+      (adaptedFromMigration
+        ? fingerprint(
+            JSON.stringify({
+              ...content,
+              baseSnapshot: saved.candidate.baseSnapshot,
+            }),
+          )
+        : packetRevision) !== saved.candidate.packetRevision
+    )
+      throw new KnowledgeError(
+        'GENERATION_BASE_CHANGED',
+        'Candidate source packet changed',
+      );
+    const generated = validateGeneratedWiki(
+      packet,
+      { ...saved.candidate.output, packetRevision: packet.packetRevision },
+      saved.candidate.maxPages,
+    );
+    await this.checkCreationIds(generated.cards);
+    const reservedArticles = new Set(
+      history.flatMap((entry) =>
+        entry.state === 'committed' &&
+        entry.record.schemaVersion === 3 &&
+        entry.record.operation === 'create-wiki'
+          ? entry.record.articleIds
+          : [],
+      ),
+    );
+    if (
+      generated.articles.some(
+        (article) =>
+          reservedArticles.has(article.id) ||
+          (current.snapshot.schemaVersion === 2 &&
+            current.snapshot.articles.some(
+              (existing) => existing.id === article.id,
+            )),
+      )
+    )
+      throw new KnowledgeError(
+        'RETIRED_ID',
+        'Existing or previously published article IDs cannot be reused',
+      );
+    const offset =
+      Math.max(
+        -1,
+        ...current.snapshot.articles
+          .filter((article) => article.parentId === null)
+          .map((article) => article.order),
+      ) + 1;
+    const roots = generated.articles
+      .filter((article) => article.parentId === null)
+      .sort((a, b) => a.order - b.order);
+    const articles = generated.articles.map((article) =>
+      article.parentId === null
+        ? {
+            ...article,
+            order: offset + roots.findIndex((root) => root.id === article.id),
+          }
+        : article,
+    );
+    const snapshot = this.knowledge.parseSnapshot({
+      ...current.snapshot,
+      cards: [...current.snapshot.cards, ...generated.cards],
+      articles: [...current.snapshot.articles, ...articles],
+    });
+    const candidateBytes = await this.readBytes(
+      join(await this.directory('wiki-candidates'), id + '.json'),
+    );
+    if (
+      fingerprint(
+        new TextDecoder('utf-8', { fatal: true }).decode(candidateBytes),
+      ) !== saved.candidateRevision
+    )
+      throw new KnowledgeError(
+        'REVIEW_CHANGED',
+        'Candidate changed while preparing Wiki review',
+      );
+    const baseBytesSha256 = rawDigest(
+      await this.readBytes(
+        join(await realpath(this.knowledge.storeRoot), 'knowledge.json'),
+      ),
+    );
+    return {
+      snapshot,
+      snapshotRevision: current.snapshotRevision,
+      cardIds: generated.cards.map((card) => card.id),
+      baseBytesSha256,
+      articleIds: articles.map((article) => article.id),
+      review: await this.wikiReview(
+        {
+          itemId: id,
+          operation: 'create-wiki',
+          baseSnapshot: current.snapshotRevision,
+          before: current.snapshot,
+          after: snapshot,
+          retainedMetadata: await this.wikiInventory(ownTransaction),
+          ...(adaptedFromMigration ? { adaptedFromMigration } : {}),
+          reason:
+            '文章和关联卡片一次审阅、一次提交；新增根目录顺序追加到现有文章之后。旧候选仅本次显式核验，不改写其基础记录。',
+        },
+        rawDigest(candidateBytes) + baseBytesSha256,
+      ),
+    };
+  }
+  async previewWikiCreation(id: string) {
+    return (await this.prepareWikiCreation(id)).review;
+  }
+  async publishWikiCreation(id: string, token: string) {
+    return this.locked(async () => {
+      const prepared = await this.prepareWikiCreation(id);
+      if (prepared.review.token !== token)
+        throw new KnowledgeError(
+          'REVIEW_CHANGED',
+          'Wiki candidate review changed',
+        );
+      return this.commitSnapshot(
+        prepared.review,
+        async (ownTransaction) => {
+          const fresh = await this.prepareWikiCreation(id, ownTransaction);
+          if (fresh.review.token !== token)
+            throw new KnowledgeError(
+              'REVIEW_CHANGED',
+              'Wiki candidate/source/inventory changed',
+            );
+          return fresh;
+        },
+        {
+          schemaVersion: 3,
+          cardIds: prepared.cardIds,
+          articleIds: prepared.articleIds,
+        },
+        1,
+      );
+    });
+  }
+  private async prepareWikiRollback(id: string, ownTransaction?: string) {
+    const entry = await this.historyEntry(id),
+      current = await this.knowledge.snapshot(),
+      history = await this.history();
+    if (
+      entry.record.schemaVersion !== 3 ||
+      !['migrate-wiki', 'create-wiki'].includes(entry.record.operation)
+    )
+      throw new KnowledgeError(
+        'INVALID_HISTORY',
+        'Only a Wiki migration or creation can be rolled back',
+      );
+    const priorTransactions = entry.record.priorTransactions;
+    const baseBytesSha256 = rawDigest(
+      await this.readBytes(
+        join(await realpath(this.knowledge.storeRoot), 'knowledge.json'),
+      ),
+    );
+    if (
+      entry.state !== 'committed' ||
+      current.snapshotRevision !== entry.record.afterSnapshot ||
+      baseBytesSha256 !== entry.record.afterBytesSha256 ||
+      history.some(
+        (item) =>
+          item.state === 'committed' &&
+          item.record.transactionId !== id &&
+          !priorTransactions.includes(item.record.transactionId),
+      )
+    )
+      throw new KnowledgeError(
+        'REVISION_CONFLICT',
+        'Wiki rollback requires an unmodified committed head with no later write',
+      );
+    const restore = entry.record.operation === 'migrate-wiki';
+    const snapshot = this.knowledge.parseSnapshot(JSON.parse(entry.before));
+    const bytes = restore ? entry.beforeBytes : undefined;
+    const review = await this.wikiReview(
+      {
+        itemId: id,
+        operation: restore ? 'restore-wiki' : 'remove-wiki',
+        baseSnapshot: current.snapshotRevision,
+        before: current.snapshot,
+        after: snapshot,
+        retainedMetadata: await this.wikiInventory(ownTransaction),
+        ...(restore
+          ? { restoreBytesSha256: rawDigest(entry.beforeBytes) }
+          : {}),
+        reason: restore
+          ? '仅在迁移后无后续发布时恢复迁移前原始字节；历史/旧候选全部保留。'
+          : '整批移除本次文章和关联卡片，完整文章导出保留于不可变历史；所有 ID 永久保留。',
+      },
+      json(entry.record) +
+        rawDigest(entry.beforeBytes) +
+        rawDigest(entry.afterBytes) +
+        baseBytesSha256,
+    );
+    return {
+      snapshot,
+      snapshotRevision: current.snapshotRevision,
+      ...(bytes ? { bytes } : {}),
+      baseBytesSha256,
+      cardIds: entry.record.cardIds,
+      articleIds: entry.record.articleIds,
+      review,
+    };
+  }
+  async previewWikiRollback(id: string) {
+    return (await this.prepareWikiRollback(id)).review;
+  }
+  async rollbackWiki(id: string, token: string) {
+    return this.locked(async () => {
+      const prepared = await this.prepareWikiRollback(id);
+      if (prepared.review.token !== token)
+        throw new KnowledgeError(
+          'REVIEW_CHANGED',
+          'Wiki rollback review changed',
+        );
+      return this.commitSnapshot(
+        prepared.review,
+        async (ownTransaction) => {
+          const fresh = await this.prepareWikiRollback(id, ownTransaction);
+          if (fresh.review.token !== token)
+            throw new KnowledgeError('REVIEW_CHANGED', 'Wiki rollback changed');
+          return fresh;
+        },
+        {
+          schemaVersion: 3,
+          cardIds: prepared.cardIds,
+          articleIds: prepared.articleIds,
+        },
+        0,
+      );
+    });
   }
   async recover(id: string, expectedSnapshot: string) {
     return this.locked(async () => {

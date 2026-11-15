@@ -2,7 +2,9 @@
 
 [English](README.md)
 
-T27.4a 已准备显式 v2 核心兼容：卡片写入、回退及历史/恢复保留完整文章和人工说明；默认编辑器/MCP 入口仍仅接受 v1。审阅后的格式迁移、文章/卡片共同发布和入口激活尚待完成，见[兼容续接](docs/development/t274-runtime.zh-CN.md)。本轮不升级用户数据。
+T27.4b 已加入仅供显式核心模式使用的迁移审阅/原字节备份、文章/卡片原子共同发布、创建头回退及恢复；文章完整历史保留。默认编辑器/CLI 激活仍待 T27.4c。见[事务续接](docs/development/t274-transactions.zh-CN.md)；未新增用户迁移命令或发布版本。
+
+T27.4a 已准备显式 v2 核心兼容：卡片写入、回退及历史/恢复保留完整文章和人工说明；T27.4b 提供对应核心迁移/共同事务，默认编辑器/MCP 入口仍仅接受 v1，正常用户入口激活尚待完成。见[兼容续接](docs/development/t274-runtime.zh-CN.md)。本轮不升级用户数据。
 
 开发代码已加入统一主页和生成表单：范围、语言和限额、页内源码清单、明确生成确认、进度/取消、结果和找回。打开页面不启动模型，候选仍需单独审阅发布。独立人类 Wiki 文章属于 T27。T27.1 已加入预备文章模型，T27.2 新增只读文章预览：分层目录、受限 Markdown、正式卡片/源码核验及同宿主证据跳转。T27.3 新增面板内有界 Wiki 文章＋关联卡片候选生成、独立候选阅读及无模型找回；实际存储/MCP 仍为 v1，文章发布/迁移尚未启用。见[文章生成指南](docs/user/wiki-generation.zh-CN.md)、[阅读器指南](docs/user/wiki-preview.zh-CN.md)和 [T27 续接记录](docs/development/t27-wiki.zh-CN.md)。见 [T25–T28](docs/product/frontend-delivery.zh-CN.md)及 [T26 实现与证据](docs/development/t26-generation-panel.zh-CN.md)。尚未发布，公开 M1 包不变。
 

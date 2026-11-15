@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Add core-only reviewed Wiki migration and joint article/card transactions under the existing writer lock. Retain raw-byte backups, v3 journals and article exports; revalidate old candidates explicitly after migration, reserve retired IDs, block rollback across later commits and recover prepared markers without rewriting knowledge. Editor/CLI activation remains deferred (ADR 0018).
+
 - Prepare explicitly opted-in canonical v2 core compatibility with shared snapshot validation for card writers, history and rollback/recovery. Preserve article values, human note whitespace and pinned references; reject hidden article/format changes in card-only journals. Default editor/CLI stay v1. Reviewed migration, joint Wiki publication and user activation remain pending (ADR 0017).
 
 - Add bounded Wiki-and-card generation from the unified form, an independently labelled candidate reader and no-model saved-result recovery. Derive revisions/evidence/bindings and model inference labels; reject spoofed human rationale. Keep canonical v1, MCP and existing publication unchanged. This is staging only: article publication/migration, real Wiki model quality and final visual/Remote SSH acceptance remain pending. See ADR 0016.

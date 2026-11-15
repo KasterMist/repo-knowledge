@@ -143,14 +143,38 @@ test('linked worktrees and copied stores cannot share bindings; packed refs and 
     );
   }));
 
-test('legacy metadata cannot be silently adopted by binding a store', () =>
+test('legacy metadata cannot be silently adopted by binding a store', async () => {
+  for (const name of ['generation-jobs', 'wiki-candidates'])
+    await gitFixture(async (f) => {
+      await mkdir(join(f.store, name));
+      await writeFile(join(f.store, name, 'legacy.json'), '{}');
+      await assert.rejects(
+        bindRepositoryContext(f.repository, f.store),
+        code('LEGACY_CONTEXT_UNVERIFIED'),
+      );
+    });
+});
+
+test('Wiki migration confirmation cannot cross a Git HEAD/index change or branch binding', () =>
   gitFixture(async (f) => {
-    await mkdir(join(f.store, 'generation-jobs'));
-    await writeFile(join(f.store, 'generation-jobs', 'legacy.json'), '{}');
-    await assert.rejects(
-      bindRepositoryContext(f.repository, f.store),
-      code('LEGACY_CONTEXT_UNVERIFIED'),
+    await bindRepositoryContext(f.repository, f.store);
+    const publication = new KnowledgePublication(
+      new KnowledgeStore(f.repository, f.store, 'wiki-v2'),
     );
+    const before = await readFile(join(f.store, 'knowledge.json'));
+    const review = await publication.previewWikiMigration();
+    await writeFile(join(f.git, 'index'), 'new staged metadata');
+    await assert.rejects(
+      publication.migrateWiki(review.itemId, review.token),
+      code('REVIEW_CHANGED'),
+    );
+    const fresh = await publication.previewWikiMigration();
+    await writeFile(join(f.git, 'HEAD'), 'ref: refs/heads/other\n');
+    await assert.rejects(
+      publication.migrateWiki(fresh.itemId, fresh.token),
+      code('REPOSITORY_CONTEXT_CHANGED'),
+    );
+    assert.deepEqual(await readFile(join(f.store, 'knowledge.json')), before);
   }));
 
 test('publication review becomes invalid after staging even when cited source is unchanged', () =>
