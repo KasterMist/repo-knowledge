@@ -7,8 +7,9 @@ import {
 } from '@repo-knowledge/core';
 import type { ResolveTarget } from './workbench.js';
 import { wikiReviewHtml, wikiReviewMessage } from './wiki-review-view.js';
+import { WikiConfirmation } from './wiki-confirmation.js';
 
-/** Read-only UI staging: no mutation methods are reachable from messages. */
+/** Server-owned review followed by independent native confirmation. */
 export class WikiReviewWorkbench implements vscode.Disposable {
   private readonly panels = new Set<vscode.WebviewPanel>();
   private revision = 0;
@@ -84,11 +85,13 @@ export class WikiReviewWorkbench implements vscode.Disposable {
         },
       );
       this.panels.add(panel);
+      const confirmation = new WikiConfirmation();
       let busy = false;
       const render = (
         review?: Parameters<typeof wikiReviewHtml>[4],
         error = '',
       ) => {
+        confirmation.stage(review);
         if (this.panels.has(panel))
           panel.webview.html = wikiReviewHtml(
             target.root,
@@ -112,7 +115,47 @@ export class WikiReviewWorkbench implements vscode.Disposable {
             return;
           busy = true;
           try {
-            if (message.action === 'migration')
+            if (message.action === 'confirm') {
+              const result = await confirmation.confirm(
+                async (review) =>
+                  (await vscode.window.showWarningMessage(
+                    `${review.operation}\n${review.reason}\n保留元数据 ${review.retainedMetadata.entries} 项。确认写入已审阅目标？`,
+                    { modal: true },
+                    '确认写入 / Confirm',
+                  )) === '确认写入 / Confirm',
+                () => {
+                  if (
+                    !this.panels.has(panel) ||
+                    revision !== this.revision ||
+                    !vscode.workspace.isTrusted
+                  )
+                    throw new Error('Workspace changed.');
+                  if (
+                    vscode.workspace.textDocuments.some(
+                      (document) => document.isDirty,
+                    )
+                  )
+                    throw new Error(
+                      'Save or discard unsaved editors before publication.',
+                    );
+                },
+                (review) =>
+                  review.operation === 'migrate-wiki'
+                    ? publication.migrateWiki(review.itemId, review.token)
+                    : review.operation === 'create-wiki'
+                      ? publication.publishWikiCreation(
+                          review.itemId,
+                          review.token,
+                        )
+                      : publication.rollbackWiki(review.itemId, review.token),
+              );
+              if (!(result as { cancelled?: boolean })?.cancelled) {
+                render(
+                  undefined,
+                  '操作已完成。请重新打开本页刷新候选和历史；正式知识已由事务记录保护。',
+                );
+              }
+            } else if (message.action === 'migration')
               render(await publication.previewWikiMigration());
             else if (
               message.action === 'candidate' &&
@@ -135,6 +178,7 @@ export class WikiReviewWorkbench implements vscode.Disposable {
         },
       );
       panel.onDidDispose(() => {
+        confirmation.dispose();
         listener.dispose();
         this.panels.delete(panel);
       });

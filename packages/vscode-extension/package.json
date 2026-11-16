@@ -26,7 +26,7 @@
     "commands": [
       {
         "command": "repoKnowledge.openWikiReview",
-        "title": "Repo Knowledge: Open Wiki Review (Read Only)",
+        "title": "Repo Knowledge: Open Wiki Review",
         "icon": "$(diff)"
       },
       {

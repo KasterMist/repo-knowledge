@@ -14,7 +14,7 @@ async function main() {
     throw new Error(
       'Usage: node server.cjs --repository <absolute-path> --store <absolute-path>',
     );
-  const store = new KnowledgeStore(args[1], args[3]);
+  const store = new KnowledgeStore(args[1], args[3], 'wiki-v2');
   await store.snapshot();
   const server = createServer(store);
   const close = () => {
@@ -26,7 +26,7 @@ async function main() {
 }
 main().catch(() => {
   process.stderr.write(
-    'Repo Knowledge startup failed. Check Node version, absolute --repository/--store paths and schemaVersion 1 knowledge.json.\n',
+    'Repo Knowledge startup failed. Check Node version, absolute --repository/--store paths and schemaVersion 1/2 knowledge.json.\n',
   );
   process.exitCode = 1;
 });
