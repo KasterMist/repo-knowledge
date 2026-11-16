@@ -222,6 +222,16 @@ exports.run = async function run() {
     wikiReview && !wikiReview.error,
     'Read-only Wiki review opens in actual host',
   );
+  const refreshedReview = await wikiReview.handle({ action: 'refresh' });
+  assert.equal(refreshedReview.candidates, wikiReview.candidates);
+  assert.equal(refreshedReview.history, wikiReview.history);
+  await wikiReview.handle({ action: 'migration' });
+  await wikiReview.handle({ action: 'refresh' });
+  assert.equal(
+    (await wikiReview.handle({ action: 'confirm' })).error,
+    true,
+    'refresh invalidates staged review without opening a confirmation dialog',
+  );
   for (const command of extension.packageJSON.contributes.commands)
     assert.ok(commands.includes(command.command), command.command);
   const opened = await vscode.commands.executeCommand(
@@ -313,6 +323,23 @@ exports.run = async function run() {
   assert.equal(vscode.window.activeTextEditor.selection.start.line, 0);
   const wikiBefore = await fs.readFile(
     path.join(readNode.target.store, 'knowledge.json'),
+  );
+  const brokenListEntry = path.join(
+    readNode.target.store,
+    'wiki-candidates',
+    '00000000-0000-4000-8000-000000000099.json',
+  );
+  await fs.mkdir(path.dirname(brokenListEntry), { recursive: true });
+  try {
+    await fs.writeFile(brokenListEntry, '{}', { flag: 'wx' });
+    assert.equal((await wikiReview.handle({ action: 'refresh' })).error, true);
+    assert.equal((await wikiReview.handle({ action: 'confirm' })).error, true);
+  } finally {
+    await fs.unlink(brokenListEntry);
+  }
+  assert.equal(
+    (await wikiReview.handle({ action: 'refresh' })).error,
+    undefined,
   );
   const wiki = await vscode.commands.executeCommand(
     'repoKnowledge.openWikiPreview',

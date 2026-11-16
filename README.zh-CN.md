@@ -74,3 +74,5 @@ T19 开发版增加原始卡片基线、保守字段级三方报告和逐冲突�
 T20 开发版新增 Generate Card Update（确认后更新一张已有卡片）和无模型的 Recover Incremental Result。保留当前源码证据、人工基线、耗时/请求尝试记录及既有确认发布/回退。两端真实更新、耗时记录、确认发布、源码一致回退和独立安装 MCP 读取均已通过本次范围验收；不是全库重新生成，尚未发布。见 [M4 验收](docs/development/m4-acceptance.md)。见[增量手册](docs/user/incremental.zh-CN.md)、[ADR 0013](docs/architecture/adr/0013-incremental-attempts.md) 和 [Issue #47](https://github.com/KasterMist/repo-knowledge/issues/47)。
 
 开发版主页已接入 Open Published Wiki：读取正式 v2 文章，刷新目录、正文和证据并核对快照一致性。v1 须先审阅迁移；阅读不写入、不调用模型。最终视觉/Remote SSH 门禁仍待完成。
+
+Wiki 审阅在成功写入后刷新候选与历史，并提供只读刷新按钮。已发布候选回退后仍归档，不重新作为待发布条目；逆向历史可见但无回退按钮。刷新失败清除旧目标，并与已完成写入区分提示。

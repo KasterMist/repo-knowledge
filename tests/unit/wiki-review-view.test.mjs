@@ -52,3 +52,28 @@ test('graphical Wiki review escapes repository data and refuses mutation/path me
   assert.match(target, /<strong>review<\/strong>/u);
   assert.doesNotMatch(target, /<script>bad|<img src=x>/u);
 });
+
+test('refresh is read-only allowlisted and inverse history is not a rollback target', () => {
+  assert.deepEqual(wikiReviewMessage({ action: 'refresh' }), {
+    action: 'refresh',
+  });
+  assert.equal(
+    wikiReviewMessage({ action: 'refresh', id: 'forged' }),
+    undefined,
+  );
+  const html = wikiReviewHtml(
+    'repo',
+    [],
+    [
+      {
+        id: '00000000-0000-4000-8000-000000000001',
+        title: 'remove-wiki',
+        actionable: false,
+      },
+    ],
+    'a'.repeat(32),
+  );
+  assert.match(html, /data-action="refresh"/u);
+  assert.match(html, /remove-wiki/u);
+  assert.doesNotMatch(html, /data-action="rollback"/u);
+});

@@ -480,3 +480,45 @@ test('inventory budgets and ordinary card writes stay safe after v3 Wiki publica
     );
     assert.deepEqual(await readFile(f.path), before);
   }));
+
+test('review inventories hide committed candidates permanently and retain inverse history without rollback buttons', () =>
+  setup(async (f) => {
+    const { wikiReviewLists } =
+      await import('../../packages/vscode-extension/dist/wiki-review-lists.js');
+    const saved = await f.candidate();
+    const id = saved.candidateId;
+    assert.equal(
+      (await wikiReviewLists(f.knowledge)).candidates.some(
+        (entry) => entry.id === id,
+      ),
+      true,
+    );
+    await f.migrate();
+    const afterMigration = await wikiReviewLists(f.knowledge);
+    assert.equal(afterMigration.history.length, 1);
+    assert.equal(afterMigration.candidates.length, 1);
+    await f.publish(id);
+    const afterPublish = await wikiReviewLists(f.knowledge);
+    assert.equal(afterPublish.candidates.length, 0);
+    assert.equal(afterPublish.history.length, 2);
+    const publication = afterPublish.history.find((entry) =>
+      entry.title.startsWith('create-wiki'),
+    );
+    const review = await f.publication.previewWikiRollback(publication.id);
+    await f.publication.rollbackWiki(publication.id, review.token);
+    const afterRollback = await wikiReviewLists(f.knowledge);
+    assert.equal(afterRollback.candidates.length, 0);
+    assert.equal(afterRollback.history.length, 3);
+    assert.equal(
+      afterRollback.history.find((entry) => entry.id === publication.id)
+        .actionable,
+      false,
+    );
+    assert.equal(
+      afterRollback.history.find((entry) =>
+        entry.title.startsWith('remove-wiki'),
+      ).actionable,
+      false,
+    );
+    assert.equal((await wikiReviewLists(f.knowledge)).history.length, 3);
+  }));

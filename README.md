@@ -74,3 +74,5 @@ The development generation command sends only the explicitly selected saved-sour
 Licensed under [Apache-2.0](LICENSE). Copyright 2026 KasterMist and contributors. Independent community project; not affiliated with OpenAI or Qoder.
 
 Development now exposes Open Published Wiki from the home. It reads canonical v2 articles and refreshes the directory, body and evidence with snapshot-consistency checks. v1 requires reviewed migration; this reader never writes or calls a model. Final visual/Remote SSH gates remain pending.
+
+Wiki review now refreshes candidates/history after a successful write, with a read-only Refresh button for external changes. Committed candidates stay archived after rollback; inverse history is visible without a rollback action. Refresh failure clears stale targets and reports the completed write separately.
