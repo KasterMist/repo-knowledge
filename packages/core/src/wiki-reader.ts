@@ -136,3 +136,72 @@ export class WikiPreviewReader {
   }
 }
 export type WikiArticleView = Awaited<ReturnType<WikiPreviewReader['read']>>;
+
+/** Live canonical reader. No preview text or candidate facts may enter this path. */
+export class PublishedWikiReader {
+  constructor(private readonly knowledge: KnowledgeStore) {}
+  private async current() {
+    const value = await this.knowledge.snapshot();
+    if (value.snapshot.schemaVersion !== 2)
+      throw new KnowledgeError(
+        'WIKI_MIGRATION_REQUIRED',
+        'Published Wiki requires a reviewed v2 migration',
+      );
+    return value as typeof value & { snapshot: WikiSnapshot };
+  }
+  async catalog() {
+    const { snapshot, snapshotRevision } = await this.current();
+    return {
+      snapshotRevision,
+      articles: snapshot.articles
+        .map(({ id, title, parentId, order }) => ({
+          id,
+          title,
+          parentId,
+          order,
+        }))
+        .sort((a, b) => a.order - b.order || a.id.localeCompare(b.id)),
+    };
+  }
+  async read(id: string) {
+    const base = await this.current();
+    const reader = await WikiPreviewReader.open(
+      this.knowledge,
+      JSON.stringify(base.snapshot),
+    );
+    const view = await reader.read(id);
+    if (
+      view.snapshotRevision !== base.snapshotRevision ||
+      (await this.current()).snapshotRevision !== base.snapshotRevision
+    )
+      throw new KnowledgeError(
+        'REVISION_CONFLICT',
+        'Published Wiki changed during reading; refresh',
+      );
+    return { ...view, preview: false as const };
+  }
+  async evidence(
+    articleId: string,
+    cardId: string,
+    index: number,
+    revision: string,
+  ) {
+    const view = await this.read(articleId);
+    if (view.snapshotRevision !== revision)
+      throw new KnowledgeError(
+        'REVISION_CONFLICT',
+        'Published Wiki changed; refresh before navigation',
+      );
+    if (
+      !Number.isInteger(index) ||
+      !view.evidence.some(
+        (entry) => entry.cardId === cardId && entry.index === index,
+      )
+    )
+      throw new KnowledgeError(
+        'INVALID_EVIDENCE',
+        'Evidence does not belong to this published article',
+      );
+    return this.knowledge.evidenceLocation(cardId, index, revision);
+  }
+}

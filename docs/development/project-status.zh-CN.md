@@ -1,5 +1,7 @@
 # Repo Knowledge：任务、进度与续接入口
 
+2026-11-16 最新续接：T27.4c 进行中，首个切片加入正式 Wiki 动态读取及旧导航/混合快照保护；尚未接入图形确认或激活默认 editor/MCP。下一步按 [界面续接](t274-interface.zh-CN.md)完成阅读面板、迁移/共同发布/回退审阅及入口激活，不将核心读取实现标为完整 T27.4c。无真实模型调用或用户迁移。
+
 更新日期：2026-11-15。所有者：KasterMist。仓库：[KasterMist/repo-knowledge](https://github.com/KasterMist/repo-knowledge)。许可证：Apache-2.0。
 
 本表依据对话中确认的需求、仓库实现与验收记录，以及当日核对的 GitHub Issue #1/#3/#5 整理。核对起点为已合并的 90b2dcb（PR #8）。实现完成、自动化测试通过、人工验收通过和正式发布是不同状态，不相互替代。本表不按聊天轮数或代码量估算完成百分比。

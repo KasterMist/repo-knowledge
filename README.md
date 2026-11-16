@@ -33,6 +33,8 @@ Development adds a unified graphical home and generation form: scope, language a
 
 ## Development
 
+T27.4c work has started with a live canonical Wiki reader and stale-navigation/mixed-snapshot refusal. UI confirmation and runtime activation are still pending; see the [interface checkpoint](docs/development/t274-interface.zh-CN.md). No user migration is enabled.
+
 T27.4b adds core-only reviewed migration, raw-byte backup, atomic joint article/card publication and head-only rollback/recovery with retained article history. Default editor/CLI activation is still deferred to T27.4c. See the [transaction checkpoint](docs/development/t274-transactions.zh-CN.md); no end-user migration command or new release is enabled.
 
 T27.4a prepares explicitly opted-in v2 core compatibility: card writers, rollback and history/recovery preserve full articles and human notes. T27.4b provides the core migration/joint transactions; default editor/MCP entry points still accept v1 only and user activation remains pending. See the [compatibility checkpoint](docs/development/t274-runtime.zh-CN.md). No user data is upgraded by this change.
