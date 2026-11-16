@@ -1,12 +1,9 @@
 import * as vscode from 'vscode';
 import { randomBytes } from 'node:crypto';
-import {
-  KnowledgeStore,
-  KnowledgePublication,
-  WikiCandidates,
-} from '@repo-knowledge/core';
+import { KnowledgeStore, KnowledgePublication } from '@repo-knowledge/core';
 import type { ResolveTarget } from './workbench.js';
 import { wikiReviewHtml, wikiReviewMessage } from './wiki-review-view.js';
+import { wikiReviewLists } from './wiki-review-lists.js';
 import { WikiConfirmation } from './wiki-confirmation.js';
 
 /** Server-owned review followed by independent native confirmation. */
@@ -54,25 +51,7 @@ export class WikiReviewWorkbench implements vscode.Disposable {
           'wiki-v2',
         ),
         publication = new KnowledgePublication(knowledge);
-      const candidates = (await new WikiCandidates(knowledge).list()).map(
-        (value) => ({
-          id: value.candidate.candidateId,
-          title: value.preview.articles
-            .map((article) => article.title)
-            .join(' · '),
-        }),
-      );
-      const history = (await publication.history())
-        .filter(
-          (entry) =>
-            entry.state === 'committed' &&
-            entry.record.schemaVersion === 3 &&
-            ['migrate-wiki', 'create-wiki'].includes(entry.record.operation),
-        )
-        .map((entry) => ({
-          id: entry.record.transactionId,
-          title: entry.record.operation + ' · ' + entry.record.createdAt,
-        }));
+      let { candidates, history } = await wikiReviewLists(knowledge);
       if (revision !== this.revision || !vscode.workspace.isTrusted) return;
       const panel = vscode.window.createWebviewPanel(
         'repoKnowledge.wikiReview',
@@ -102,87 +81,109 @@ export class WikiReviewWorkbench implements vscode.Disposable {
             error,
           );
       };
+      const refresh = async (notice = '') => {
+        // Invalidate old review and inventory before I/O: failure cannot leave old targets actionable.
+        candidates = [];
+        history = [];
+        render(undefined, notice || '正在刷新列表…');
+        try {
+          const latest = await wikiReviewLists(knowledge);
+          if (!this.panels.has(panel) || revision !== this.revision) return;
+          candidates = latest.candidates;
+          history = latest.history;
+          render(undefined, notice + ' 候选和历史已刷新。');
+          return { candidates: candidates.length, history: history.length };
+        } catch {
+          render(
+            undefined,
+            (notice ? notice + ' ' : '') +
+              '列表刷新失败；请点击刷新重试，勿重复提交已完成操作。',
+          );
+          return { error: true };
+        }
+      };
       render();
-      const listener = panel.webview.onDidReceiveMessage(
-        async (value: unknown) => {
-          const message = wikiReviewMessage(value);
-          if (
-            !message ||
-            busy ||
-            !this.panels.has(panel) ||
-            !vscode.workspace.isTrusted
-          )
-            return;
-          busy = true;
-          try {
-            if (message.action === 'confirm') {
-              const result = await confirmation.confirm(
-                async (review) =>
-                  (await vscode.window.showWarningMessage(
-                    `${review.operation}\n${review.reason}\n保留元数据 ${review.retainedMetadata.entries} 项。确认写入已审阅目标？`,
-                    { modal: true },
-                    '确认写入 / Confirm',
-                  )) === '确认写入 / Confirm',
-                () => {
-                  if (
-                    !this.panels.has(panel) ||
-                    revision !== this.revision ||
-                    !vscode.workspace.isTrusted
+      const handle = async (value: unknown) => {
+        const message = wikiReviewMessage(value);
+        if (
+          !message ||
+          busy ||
+          !this.panels.has(panel) ||
+          !vscode.workspace.isTrusted
+        )
+          return;
+        busy = true;
+        try {
+          if (message.action === 'refresh') return await refresh();
+          if (message.action === 'confirm') {
+            const result = await confirmation.confirm(
+              async (review) =>
+                (await vscode.window.showWarningMessage(
+                  `${review.operation}\n${review.reason}\n保留元数据 ${review.retainedMetadata.entries} 项。确认写入已审阅目标？`,
+                  { modal: true },
+                  '确认写入 / Confirm',
+                )) === '确认写入 / Confirm',
+              () => {
+                if (
+                  !this.panels.has(panel) ||
+                  revision !== this.revision ||
+                  !vscode.workspace.isTrusted
+                )
+                  throw new Error('Workspace changed.');
+                if (
+                  vscode.workspace.textDocuments.some(
+                    (document) => document.isDirty,
                   )
-                    throw new Error('Workspace changed.');
-                  if (
-                    vscode.workspace.textDocuments.some(
-                      (document) => document.isDirty,
-                    )
-                  )
-                    throw new Error(
-                      'Save or discard unsaved editors before publication.',
-                    );
-                },
-                (review) =>
-                  review.operation === 'migrate-wiki'
-                    ? publication.migrateWiki(review.itemId, review.token)
-                    : review.operation === 'create-wiki'
-                      ? publication.publishWikiCreation(
-                          review.itemId,
-                          review.token,
-                        )
-                      : publication.rollbackWiki(review.itemId, review.token),
-              );
-              if (!(result as { cancelled?: boolean })?.cancelled) {
-                render(
-                  undefined,
-                  '操作已完成。请重新打开本页刷新候选和历史；正式知识已由事务记录保护。',
-                );
-              }
-            } else if (message.action === 'migration')
-              render(await publication.previewWikiMigration());
-            else if (
-              message.action === 'candidate' &&
-              candidates.some((item) => item.id === message.id)
-            )
-              render(await publication.previewWikiCreation(message.id));
-            else if (
-              message.action === 'rollback' &&
-              history.some((item) => item.id === message.id)
-            )
-              render(await publication.previewWikiRollback(message.id));
-          } catch (error) {
-            render(
-              undefined,
-              error instanceof Error ? error.message : 'Cannot review Wiki',
+                )
+                  throw new Error(
+                    'Save or discard unsaved editors before publication.',
+                  );
+              },
+              (review) =>
+                review.operation === 'migrate-wiki'
+                  ? publication.migrateWiki(review.itemId, review.token)
+                  : review.operation === 'create-wiki'
+                    ? publication.publishWikiCreation(
+                        review.itemId,
+                        review.token,
+                      )
+                    : publication.rollbackWiki(review.itemId, review.token),
             );
-          } finally {
-            busy = false;
-          }
-        },
-      );
+            if (!(result as { cancelled?: boolean })?.cancelled) {
+              await refresh('操作已完成。');
+            }
+          } else if (message.action === 'migration')
+            render(await publication.previewWikiMigration());
+          else if (
+            message.action === 'candidate' &&
+            candidates.some((item) => item.id === message.id)
+          )
+            render(await publication.previewWikiCreation(message.id));
+          else if (
+            message.action === 'rollback' &&
+            history.some((item) => item.id === message.id && item.actionable)
+          )
+            render(await publication.previewWikiRollback(message.id));
+        } catch (error) {
+          render(
+            undefined,
+            error instanceof Error ? error.message : 'Cannot review Wiki',
+          );
+          return { error: true };
+        } finally {
+          busy = false;
+        }
+      };
+      const listener = panel.webview.onDidReceiveMessage((value: unknown) => {
+        void handle(value);
+      });
       panel.onDidDispose(() => {
         confirmation.dispose();
         listener.dispose();
         this.panels.delete(panel);
       });
       return {
+        handle,
         repository: target.root,
         candidates: candidates.length,
         history: history.length,
