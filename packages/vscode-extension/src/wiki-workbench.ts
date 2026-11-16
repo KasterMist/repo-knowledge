@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { randomBytes } from 'node:crypto';
 import {
+  PublishedWikiReader,
   WikiPreviewReader,
   WikiCandidateReader,
   loadWikiPreviewText,
@@ -19,6 +20,11 @@ export class WikiWorkbench implements vscode.Disposable {
         (node?: { folder?: vscode.WorkspaceFolder }, text?: string) =>
           this.open(node?.folder, text),
       ),
+      vscode.commands.registerCommand(
+        'repoKnowledge.openPublishedWiki',
+        (node?: { folder?: vscode.WorkspaceFolder }) =>
+          this.open(node?.folder, undefined, undefined, true),
+      ),
       vscode.workspace.onDidChangeWorkspaceFolders(() => this.close()),
       vscode.workspace.onDidChangeConfiguration((event) => {
         if (event.affectsConfiguration('repoKnowledge')) this.close();
@@ -32,6 +38,7 @@ export class WikiWorkbench implements vscode.Disposable {
     selected?: vscode.WorkspaceFolder,
     text?: string,
     candidateId?: string,
+    published = false,
   ) {
     if (!vscode.workspace.isTrusted) return;
     const revision = this.revision;
@@ -49,7 +56,7 @@ export class WikiWorkbench implements vscode.Disposable {
     try {
       const target = await this.resolve(folder);
       if (!target) return;
-      if (text === undefined && candidateId === undefined) {
+      if (!published && text === undefined && candidateId === undefined) {
         const files = await vscode.window.showOpenDialog({
           canSelectMany: false,
           defaultUri: vscode.Uri.file(target.root),
@@ -68,8 +75,9 @@ export class WikiWorkbench implements vscode.Disposable {
           throw new Error('Select a file on this extension host.');
         text = await loadWikiPreviewText(files[0].fsPath);
       }
-      const reader =
-        candidateId === undefined
+      const reader = published
+        ? new PublishedWikiReader(target.knowledge)
+        : candidateId === undefined
           ? await WikiPreviewReader.open(target.knowledge, text!)
           : await WikiCandidateReader.open(target.knowledge, candidateId);
       if (revision !== this.revision) return;
@@ -86,17 +94,36 @@ export class WikiWorkbench implements vscode.Disposable {
       let disposed = false,
         busy = false;
       let current: { id: string; revision: string } | undefined;
+      const catalog = async () => {
+        if (reader instanceof PublishedWikiReader) return reader.catalog();
+        return { articles: reader.catalog(), snapshotRevision: undefined };
+      };
       const render = async (id?: string) => {
-        const view = id ? await reader.read(id) : undefined;
+        const directory = await catalog();
+        const selectedId =
+          id ?? directory.articles.find((entry) => entry.parentId === null)?.id;
+        const view = selectedId ? await reader.read(selectedId) : undefined;
+        if (
+          published &&
+          (await catalog()).snapshotRevision !== directory.snapshotRevision
+        )
+          throw new Error('Published Wiki changed; refresh before reading.');
+        if (
+          published &&
+          view &&
+          view.snapshotRevision !== directory.snapshotRevision
+        )
+          throw new Error('Published Wiki changed; refresh before reading.');
         if (disposed) return;
         const html = wikiHtml(
-          reader.catalog(),
+          directory.articles,
           view,
           target.root,
           `${vscode.env.remoteName ?? 'native'} · ${process.platform}`,
           randomBytes(16).toString('hex'),
           '',
           candidateId !== undefined,
+          published,
         );
         current = view
           ? { id: view.article.id, revision: view.snapshotRevision }
@@ -110,8 +137,7 @@ export class WikiWorkbench implements vscode.Disposable {
         busy = true;
         try {
           if (message.action === 'article') return await render(message.id);
-          if (message.action === 'refresh')
-            return await render(current?.id ?? reader.catalog()[0]?.id);
+          if (message.action === 'refresh') return await render(current?.id);
           if (!current || message.revision !== current.revision)
             throw new Error('Refresh before opening evidence.');
           if (candidateId !== undefined)
@@ -145,13 +171,14 @@ export class WikiWorkbench implements vscode.Disposable {
           current = undefined;
           if (!disposed)
             panel.webview.html = wikiHtml(
-              reader.catalog(),
+              [],
               undefined,
               target.root,
               vscode.env.remoteName ?? 'native',
               randomBytes(16).toString('hex'),
               error instanceof Error ? error.message : 'Cannot read article',
               candidateId !== undefined,
+              published,
             );
           return { error: true };
         } finally {
@@ -171,9 +198,7 @@ export class WikiWorkbench implements vscode.Disposable {
         this.panels.delete(panel);
       });
       try {
-        await render(
-          reader.catalog().find((entry) => entry.parentId === null)?.id,
-        );
+        await render();
       } catch (error) {
         dispose();
         panel.dispose();

@@ -25,6 +25,11 @@
   "contributes": {
     "commands": [
       {
+        "command": "repoKnowledge.openPublishedWiki",
+        "title": "Repo Knowledge: Open Published Wiki",
+        "icon": "$(book)"
+      },
+      {
         "command": "repoKnowledge.openWikiReview",
         "title": "Repo Knowledge: Open Wiki Review",
         "icon": "$(diff)"

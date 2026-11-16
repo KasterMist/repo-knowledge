@@ -298,3 +298,20 @@ test('article read budget rejects excessive card/evidence fanout before any sour
     await f.cleanup();
   }
 });
+
+test('published page is labelled separately and empty catalog suggests reviewed generation', () => {
+  const html = wikiHtml(
+    [],
+    undefined,
+    '<repo>',
+    'native',
+    'a'.repeat(32),
+    '',
+    false,
+    true,
+  );
+  assert.match(html, /已发布知识/u);
+  assert.match(html, /尚无已发布文章/u);
+  assert.doesNotMatch(html, /未发布文章预览/u);
+  assert.match(html, /&lt;repo&gt;/u);
+});
