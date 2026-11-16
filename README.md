@@ -33,6 +33,8 @@ Development adds a unified graphical home and generation form: scope, language a
 
 ## Development
 
+Development adds a read-only graphical Wiki review from the home: before/target columns for migration, joint candidates and rollback. Confirmation and compatible editor/MCP activation remain unfinished; this panel cannot write knowledge.
+
 T27.4c work has started with a live canonical Wiki reader and stale-navigation/mixed-snapshot refusal. UI confirmation and runtime activation are still pending; see the [interface checkpoint](docs/development/t274-interface.zh-CN.md). No user migration is enabled.
 
 T27.4b adds core-only reviewed migration, raw-byte backup, atomic joint article/card publication and head-only rollback/recovery with retained article history. Default editor/CLI activation is still deferred to T27.4c. See the [transaction checkpoint](docs/development/t274-transactions.zh-CN.md); no end-user migration command or new release is enabled.

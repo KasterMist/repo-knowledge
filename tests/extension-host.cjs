@@ -215,6 +215,13 @@ exports.run = async function run() {
   if (process.env.REPO_KNOWLEDGE_MULTI_ROOT === '1')
     return runMultiRoot(extension);
   const commands = await vscode.commands.getCommands(true);
+  const wikiReview = await vscode.commands.executeCommand(
+    'repoKnowledge.openWikiReview',
+  );
+  assert.ok(
+    wikiReview && !wikiReview.error,
+    'Read-only Wiki review opens in actual host',
+  );
   for (const command of extension.packageJSON.contributes.commands)
     assert.ok(commands.includes(command.command), command.command);
   const opened = await vscode.commands.executeCommand(
