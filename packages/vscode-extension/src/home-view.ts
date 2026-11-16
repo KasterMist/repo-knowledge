@@ -3,6 +3,7 @@ export const homeActions = {
   plan: 'repoKnowledge.openGenerationPanel',
   wiki: 'repoKnowledge.wiki.focus',
   preview: 'repoKnowledge.openWikiPreview',
+  reviewWiki: 'repoKnowledge.openWikiReview',
   cards: 'repoKnowledge.cards.focus',
   proposals: 'repoKnowledge.creations.focus',
 } as const;
@@ -54,7 +55,7 @@ button:hover { background: var(--vscode-button-hoverBackground); } button:focus-
 <p class="path">${escapeHtml(state.repository)}</p><p class="muted">${escapeHtml(state.host)}</p>
 <p class="problem">${escapeHtml(state.problem)}</p>
 <section><h2>共享知识 / Shared knowledge</h2><p>正式卡片 ${state.cardCount} 张 · 快照 <span class="path">${escapeHtml(state.revision || '尚未读取')}</span></p>
-${button('wiki', '源码范围导航')}${button('preview', '打开 Wiki 文章预览')}${button('cards', 'Agent 知识卡片')}
+${button('wiki', '源码范围导航')}${button('preview', '打开 Wiki 文章预览')}${button('reviewWiki', 'Wiki 图形审阅（只读）')}${button('cards', 'Agent 知识卡片')}
 <p class="muted">文章阅读器支持未发布预览；文章生成、正式发布和格式迁移尚在开发。</p></section>
 <section><h2>生成知识 / Generate knowledge</h2><p>先选择范围并检查源码清单，再明确确认发送给当前模型。生成结果只保存为待审阅候选。</p>
 ${button('plan', '打开生成面板')}${button('proposals', '查看新增待审阅')}

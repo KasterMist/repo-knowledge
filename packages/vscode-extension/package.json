@@ -25,6 +25,11 @@
   "contributes": {
     "commands": [
       {
+        "command": "repoKnowledge.openWikiReview",
+        "title": "Repo Knowledge: Open Wiki Review (Read Only)",
+        "icon": "$(diff)"
+      },
+      {
         "command": "repoKnowledge.openWikiPreview",
         "title": "Repo Knowledge: Open Wiki Preview",
         "icon": "$(book)"

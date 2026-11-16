@@ -1,5 +1,7 @@
 # Repo Knowledge：任务、进度与续接入口
 
+2026-11-16 图形审阅续接：已加入主页只读 Wiki 审阅入口、候选/历史选择和当前/目标双栏 Markdown。仅调用 preview，不含写消息或确认按钮；正常入口仍 v1。下一项继续独立确认与 editor/MCP 同步激活，T27.4c 未完成。详细边界见 docs/development/t274-interface.zh-CN.md，不重复旧手测、不发布新版。
+
 2026-11-16 最新续接：T27.4c 进行中，首个切片加入正式 Wiki 动态读取及旧导航/混合快照保护；尚未接入图形确认或激活默认 editor/MCP。下一步按 [界面续接](t274-interface.zh-CN.md)完成阅读面板、迁移/共同发布/回退审阅及入口激活，不将核心读取实现标为完整 T27.4c。无真实模型调用或用户迁移。
 
 更新日期：2026-11-15。所有者：KasterMist。仓库：[KasterMist/repo-knowledge](https://github.com/KasterMist/repo-knowledge)。许可证：Apache-2.0。
