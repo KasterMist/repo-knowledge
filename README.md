@@ -33,7 +33,9 @@ Development adds a unified graphical home and generation form: scope, language a
 
 ## Development
 
-Development adds a read-only graphical Wiki review from the home: before/target columns for migration, joint candidates and rollback. Confirmation and compatible editor/MCP activation remain unfinished; this panel cannot write knowledge.
+Wiki review now offers a separate native confirmation for the displayed migration/publication/rollback target. Cancellation writes nothing; editor and bundled MCP CLI read both v1/v2 without automatic migration. Final published-panel/visual/Remote SSH acceptance remains pending.
+
+Graphical Wiki review from the home shows before/target columns for migration, joint candidates and rollback. Writing requires a separate native confirmation; compatible editor/MCP readers do not automatically migrate v1 knowledge.
 
 T27.4c work has started with a live canonical Wiki reader and stale-navigation/mixed-snapshot refusal. UI confirmation and runtime activation are still pending; see the [interface checkpoint](docs/development/t274-interface.zh-CN.md). No user migration is enabled.
 

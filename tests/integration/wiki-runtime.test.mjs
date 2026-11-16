@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { spawnSync } from 'node:child_process';
+import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
 import {
@@ -13,7 +13,7 @@ import { createServer } from '../../packages/mcp-server/dist/index.js';
 import { fixture, root } from '../helpers.mjs';
 
 test(
-  'explicit v2 MCP factory supports four tools and article-preserving card publication; shipped CLI remains v1',
+  'explicit v2 MCP factory supports four tools and article-preserving card publication; shipped CLI accepts reviewed v2',
   { timeout: 20000 },
   async () => {
     const f = await fixture();
@@ -85,22 +85,30 @@ test(
       assert.equal(wrong.isError, true);
       assert.equal(JSON.parse(wrong.content[0].text).code, 'REVISION_CONFLICT');
       const after = await readFile(path);
-      // Actual packaged CLI has no compatibility switch; no implicit runtime activation.
-      const refused = spawnSync(
-        process.execPath,
-        [
-          join(root, 'packages/vscode-extension/dist/server.cjs'),
-          '--repository',
-          f.repository,
-          '--store',
-          f.store,
-        ],
-        { encoding: 'utf8', windowsHide: true, timeout: 10000 },
-      );
-      assert.equal(refused.status, 1);
-      assert.equal(refused.stdout, '');
-      assert.match(refused.stderr, /schemaVersion 1/u);
-      assert.ok(!refused.stderr.includes(f.repository));
+      const cli = new Client({ name: 'compatible-cli-test', version: '1.0.0' });
+      try {
+        await cli.connect(
+          new StdioClientTransport({
+            command: process.execPath,
+            args: [
+              join(root, 'packages/vscode-extension/dist/server.cjs'),
+              '--repository',
+              f.repository,
+              '--store',
+              f.store,
+            ],
+            stderr: 'pipe',
+          }),
+        );
+        const status = await cli.callTool({
+          name: 'get_knowledge_status',
+          arguments: {},
+        });
+        assert.notEqual(status.isError, true);
+        assert.equal(JSON.parse(status.content[0].text).schemaVersion, 2);
+      } finally {
+        await cli.close();
+      }
       assert.deepEqual(await readFile(path), after);
     } finally {
       await client?.close();

@@ -24,7 +24,12 @@ test('graphical Wiki review escapes repository data and refuses mutation/path me
   assert.ok(html.includes('&lt;img src=x&gt;'));
   assert.ok(html.includes("default-src 'none'"));
   assert.doesNotMatch(html, /innerHTML|command:|data-action="publish"/u);
-  assert.match(html, /只读审阅/u);
+  assert.equal(wikiReviewMessage({ action: 'confirm' }).action, 'confirm');
+  assert.equal(
+    wikiReviewMessage({ action: 'confirm', token: 'forged' }),
+    undefined,
+  );
+  assert.doesNotMatch(html, /data-action="confirm"/u);
   const target = wikiReviewHtml('fixture', [], [], 'a'.repeat(32), {
     operation: 'create-wiki',
     reason: '<img src=x>',

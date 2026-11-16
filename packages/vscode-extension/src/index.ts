@@ -77,7 +77,7 @@ export function activate(context: vscode.ExtensionContext) {
     return {
       root,
       store,
-      knowledge: new KnowledgeStore(root, store),
+      knowledge: new KnowledgeStore(root, store, 'wiki-v2'),
       configuration,
       host,
       uriForFile: (path: string) => vscode.Uri.file(path),

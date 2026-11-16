@@ -5,8 +5,11 @@ import { safeMarkdown } from './safe-markdown.js';
 export function wikiReviewMessage(value: unknown) {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return;
   const v = value as Record<string, unknown>;
-  if (Object.keys(v).join(',') === 'action' && v.action === 'migration')
-    return { action: 'migration' as const };
+  if (
+    Object.keys(v).join(',') === 'action' &&
+    (v.action === 'migration' || v.action === 'confirm')
+  )
+    return { action: v.action as 'migration' | 'confirm' };
   if (
     Object.keys(v).sort().join(',') === 'action,id' &&
     ['candidate', 'rollback'].includes(String(v.action)) &&
@@ -40,5 +43,5 @@ export function wikiReviewHtml(
     : '<p>选择操作查看当前与目标的差异。</p>';
   if (Buffer.byteLength(content, 'utf8') > 2 * 1024 * 1024)
     throw new Error('WIKI_REVIEW_LIMIT');
-  return `<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'nonce-${nonce}'; script-src 'nonce-${nonce}'; base-uri 'none'"><style nonce="${nonce}">body{font-family:var(--vscode-font-family);color:var(--vscode-foreground);background:var(--vscode-editor-background);padding:24px;overflow-wrap:anywhere}button{font:inherit;margin:6px;padding:8px;color:var(--vscode-button-foreground);background:var(--vscode-button-background)}.columns{display:grid;grid-template-columns:1fr 1fr;gap:24px}section{border:1px solid var(--vscode-panel-border);padding:12px;margin:12px 0}pre{white-space:pre-wrap}@media(max-width:700px){.columns{grid-template-columns:1fr}}</style></head><body><h1>Wiki 图形审阅</h1><p>${e(root)}</p><p>当前为只读审阅：不会迁移、发布、回退或调用模型。独立确认按钮须等 editor/MCP 兼容激活后接入。</p><button data-action="migration">审阅格式迁移</button><h2>文章＋卡片候选</h2>${list(candidates, 'candidate')}<h2>历史回退目标</h2>${list(history, 'rollback')}<p role="alert">${e(error)}</p>${content}<script nonce="${nonce}">${wikiReviewClient}</script></body></html>`;
+  return `<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'nonce-${nonce}'; script-src 'nonce-${nonce}'; base-uri 'none'"><style nonce="${nonce}">body{font-family:var(--vscode-font-family);color:var(--vscode-foreground);background:var(--vscode-editor-background);padding:24px;overflow-wrap:anywhere}button{font:inherit;margin:6px;padding:8px;color:var(--vscode-button-foreground);background:var(--vscode-button-background)}.columns{display:grid;grid-template-columns:1fr 1fr;gap:24px}section{border:1px solid var(--vscode-panel-border);padding:12px;margin:12px 0}pre{white-space:pre-wrap}@media(max-width:700px){.columns{grid-template-columns:1fr}}</style></head><body><h1>Wiki 图形审阅</h1><p>${e(root)}</p><p>先审阅，再点击独立确认并接受弹窗；取消不写入。打开页面和审阅不会调用模型。</p><button data-action="migration">审阅格式迁移</button><h2>文章＋卡片候选</h2>${list(candidates, 'candidate')}<h2>历史回退目标</h2>${list(history, 'rollback')}<p role="alert">${e(error)}</p>${content}${review ? '<button data-action="confirm">确认已审阅目标 / Confirm reviewed target</button>' : ''}<script nonce="${nonce}">${wikiReviewClient}</script></body></html>`;
 }
