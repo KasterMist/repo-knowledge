@@ -72,3 +72,5 @@ The development generation command sends only the explicitly selected saved-sour
 [Contribution guide](CONTRIBUTING.md) · [Support](SUPPORT.md) · [Security](SECURITY.md) · [Release process](docs/development/releasing.md)
 
 Licensed under [Apache-2.0](LICENSE). Copyright 2026 KasterMist and contributors. Independent community project; not affiliated with OpenAI or Qoder.
+
+Development now exposes Open Published Wiki from the home. It reads canonical v2 articles and refreshes the directory, body and evidence with snapshot-consistency checks. v1 requires reviewed migration; this reader never writes or calls a model. Final visual/Remote SSH gates remain pending.

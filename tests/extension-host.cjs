@@ -349,6 +349,67 @@ exports.run = async function run() {
     await fs.readFile(path.join(readNode.target.store, 'knowledge.json')),
     wikiBefore,
   );
+  // Self-authored fixture only: published UI must reread live canonical data.
+  const publishedPath = path.join(readNode.target.store, 'knowledge.json');
+  try {
+    const legacy = await vscode.commands.executeCommand(
+      'repoKnowledge.openPublishedWiki',
+      roots[0],
+    );
+    assert.equal(legacy.error, true);
+    const snapshot = JSON.parse(
+      await fs.readFile(
+        path.join(readNode.target.root, 'wiki-preview.json'),
+        'utf8',
+      ),
+    );
+    await fs.writeFile(publishedPath, JSON.stringify(snapshot));
+    const published = await vscode.commands.executeCommand(
+      'repoKnowledge.openPublishedWiki',
+      roots[0],
+    );
+    const initial = await published.handle({
+      action: 'article',
+      id: 'overview',
+    });
+    assert.equal(initial.preview, false);
+    const evidence = initial.evidence[0];
+    const location = await published.handle({
+      action: 'evidence',
+      cardId: evidence.cardId,
+      index: evidence.index,
+      revision: initial.snapshotRevision,
+    });
+    assert.equal(
+      await fs.realpath(location.fsPath),
+      await fs.realpath(path.join(readNode.target.root, 'src/读取.ts')),
+    );
+    snapshot.articles.find((item) => item.id === 'overview').title =
+      'Updated published title';
+    await fs.writeFile(publishedPath, JSON.stringify(snapshot));
+    const refreshed = await published.handle({ action: 'refresh' });
+    assert.equal(refreshed.article.title, 'Updated published title');
+    assert.equal(refreshed.preview, false);
+    assert.equal(
+      (
+        await published.handle({
+          action: 'evidence',
+          cardId: evidence.cardId,
+          index: evidence.index,
+          revision: initial.snapshotRevision,
+        })
+      ).error,
+      true,
+    );
+    assert.equal(
+      JSON.parse(await fs.readFile(publishedPath, 'utf8')).articles.find(
+        (item) => item.id === 'overview',
+      ).title,
+      'Updated published title',
+    );
+  } finally {
+    await fs.writeFile(publishedPath, wikiBefore);
+  }
   const impactUri = workbench.documents.create('host-impact.json', '{}');
   extension.exports.impactNavigation.remember(impactUri, {
     target: readNode.target,

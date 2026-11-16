@@ -43,12 +43,13 @@ document.getElementById('refresh').addEventListener('click', () => api.postMessa
 `;
 export function wikiHtml(
   catalog: Catalog,
-  view: WikiArticleView | undefined,
+  view: (Omit<WikiArticleView, 'preview'> & { preview: boolean }) | undefined,
   repository: string,
   host: string,
   nonce: string,
   error = '',
   candidate = false,
+  published = false,
 ) {
   if (!/^[a-f0-9]{32}$/u.test(nonce)) throw new Error('Invalid webview nonce');
   const tree = (parent: string | null): string =>
@@ -59,8 +60,9 @@ export function wikiHtml(
           `<li><button type="button" data-article="${e(entry.id)}" ${entry.id === view?.article.id ? 'aria-current="page"' : ''}>${e(entry.title)}</button>${tree(entry.id)}</li>`,
       )
       .join('')}</ul>`;
-  let content =
-    '<p>请选择目录中的文章。没有文章时，请选择有效的文章预览文件。</p>';
+  let content = published
+    ? '<p>尚无已发布文章。请先生成候选、审阅并确认发布。</p>'
+    : '<p>请选择目录中的文章。没有文章时，请选择有效的文章预览文件。</p>';
   if (view) {
     const state = {
       current: '匹配引用的源码已核验',
@@ -109,6 +111,6 @@ button { font:inherit; color:var(--vscode-button-foreground); background:var(--v
 .muted { color:var(--vscode-descriptionForeground); } .warning { color:var(--vscode-errorForeground); } .path,article { overflow-wrap:anywhere; } .card,.note { border-left:3px solid var(--vscode-panel-border); padding-left:14px; margin:16px 0; }
 pre { overflow:auto; padding:12px; background:var(--vscode-textCodeBlock-background); } code { font-family:var(--vscode-editor-font-family); } table { border-collapse:collapse; } td,th { border:1px solid var(--vscode-panel-border); padding:6px; } blockquote { border-left:3px solid var(--vscode-panel-border); padding-left:12px; } .disabled-link { text-decoration:underline dotted; }
 @media(max-width:700px) { .layout { grid-template-columns:1fr; } }
-</style></head><body><header><strong>Repo Wiki · 未发布文章预览</strong><p class="path">${e(repository)} · ${e(host)}</p><p class="muted">${candidate ? '生成候选：事实仅来自同批未发布卡片，不是正式知识；正文需要人工核对。源码/基线变化时标为过期。' : '事实来自当前正式卡片；说明是未发布数据。'}正文链接/图片禁用。未迁移或发布知识。</p><button id="refresh" type="button">重新核验并刷新</button></header>
+</style></head><body><header><strong>Repo Wiki · ${published ? '已发布知识' : '未发布文章预览'}</strong><p class="path">${e(repository)} · ${e(host)}</p><p class="muted">${published ? '来自正式知识快照；刷新重新读取目录、正文和证据，不生成或修改知识。' : candidate ? '生成候选：事实仅来自同批未发布卡片，不是正式知识；正文需要人工核对。源码/基线变化时标为过期。' : '事实来自当前正式卡片；说明是未发布数据。'}正文链接/图片禁用。本页不迁移或发布知识。</p><button id="refresh" type="button">重新核验并刷新</button></header>
 <div class="layout"><nav aria-label="文章目录">${tree(null)}</nav><article>${error ? `<p role="alert" class="warning">${e(error)}</p>` : content}</article></div><script nonce="${nonce}">${wikiClient}</script></body></html>`;
 }

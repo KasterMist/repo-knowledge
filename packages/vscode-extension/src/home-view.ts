@@ -1,7 +1,7 @@
 // Pure rendering/message boundary: repository text never becomes HTML or a command.
 export const homeActions = {
   plan: 'repoKnowledge.openGenerationPanel',
-  wiki: 'repoKnowledge.wiki.focus',
+  wiki: 'repoKnowledge.openPublishedWiki',
   preview: 'repoKnowledge.openWikiPreview',
   reviewWiki: 'repoKnowledge.openWikiReview',
   cards: 'repoKnowledge.cards.focus',
