@@ -395,6 +395,27 @@ exports.run = async function run() {
       'repoKnowledge.openPublishedWiki',
       roots[0],
     );
+    const articleRoots = await workbench.wiki.getChildren();
+    const articles = await workbench.wiki.getChildren(articleRoots[0]);
+    assert.equal(articles[0].articleId, 'overview');
+    const modules = await workbench.wiki.getChildren(articles[0]);
+    assert.equal(modules[0].articleId, 'cache-module');
+    assert.equal(
+      modules[0].collapsibleState,
+      vscode.TreeItemCollapsibleState.None,
+    );
+    assert.equal(
+      articles[0].collapsibleState,
+      vscode.TreeItemCollapsibleState.Collapsed,
+    );
+    const selectedArticle = await vscode.commands.executeCommand(
+      modules[0].command.command,
+      ...modules[0].command.arguments,
+    );
+    assert.equal(
+      (await selectedArticle.handle({ action: 'refresh' })).article.id,
+      'cache-module',
+    );
     const initial = await published.handle({
       action: 'article',
       id: 'overview',
@@ -416,6 +437,10 @@ exports.run = async function run() {
     await fs.writeFile(publishedPath, JSON.stringify(snapshot));
     const refreshed = await published.handle({ action: 'refresh' });
     assert.equal(refreshed.article.title, 'Updated published title');
+    assert.equal(
+      (await workbench.wiki.getChildren(articleRoots[0]))[0].label,
+      'Updated published title',
+    );
     assert.equal(refreshed.preview, false);
     assert.equal(
       (
@@ -433,6 +458,16 @@ exports.run = async function run() {
         (item) => item.id === 'overview',
       ).title,
       'Updated published title',
+    );
+    await fs.writeFile(
+      publishedPath,
+      JSON.stringify({ ...snapshot, articles: [] }),
+    );
+    const emptyArticles = await workbench.wiki.getChildren(articleRoots[0]);
+    assert.match(emptyArticles[0].label, /尚未生成/u);
+    assert.equal(
+      emptyArticles[0].command.command,
+      'repoKnowledge.openGenerationPanel',
     );
   } finally {
     await fs.writeFile(publishedPath, wikiBefore);
@@ -478,10 +513,9 @@ exports.run = async function run() {
     'read-fallback',
   );
   const wikiRoots = await workbench.wiki.getChildren();
-  const scope = await workbench.wiki.getChildren(wikiRoots[0]);
-  assert.equal(scope[0].label, 'src');
-  const files = await workbench.wiki.getChildren(scope[0]);
-  assert.ok(files.some((file) => file.label === '读取.ts'));
+  const emptyWiki = await workbench.wiki.getChildren(wikiRoots[0]);
+  assert.equal(emptyWiki[0].kind, 'message');
+  assert.match(emptyWiki[0].label, /文章目录/u);
   await vscode.commands.executeCommand('repoKnowledge.refreshKnowledge');
   const snapshotPath = path.join(readNode.target.store, 'knowledge.json');
   const beforeDraft = await fs.readFile(snapshotPath);
