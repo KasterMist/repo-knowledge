@@ -18,6 +18,7 @@ import { ImpactNavigation } from './impact-navigation.js';
 import { HomeWorkbench } from './home-workbench.js';
 import { GenerationPanelWorkbench } from './generation-panel.js';
 import { WikiWorkbench } from './wiki-workbench.js';
+import { CardEditWorkbench } from './card-edit-workbench.js';
 import { WikiReviewWorkbench } from './wiki-review-workbench.js';
 
 export function activate(context: vscode.ExtensionContext) {
@@ -85,6 +86,9 @@ export function activate(context: vscode.ExtensionContext) {
   };
   const workbench = new KnowledgeWorkbench(selected);
   context.subscriptions.push(workbench);
+  context.subscriptions.push(
+    new CardEditWorkbench(selected, () => workbench.refresh()),
+  );
   const wikiReader = new WikiWorkbench(selected);
   context.subscriptions.push(
     new WikiReviewWorkbench(selected, () => workbench.refresh()),

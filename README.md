@@ -78,3 +78,5 @@ Development now exposes Open Published Wiki from the home. It reads canonical v2
 Wiki review now refreshes candidates/history after a successful write, with a read-only Refresh button for external changes. Committed candidates stay archived after rollback; inverse history is visible without a rollback action. Refresh failure clears stale targets and reports the completed write separately.
 
 Development sidebar now displays the canonical Wiki article hierarchy. Expand a repository and click an article to read it; empty/legacy stores show explicit next actions instead of a source-scope tree. Confirmed Wiki writes refresh the sidebar. This is not whole-repository generation or final visual/Remote SSH acceptance.
+
+Development adds Edit Card Body: a bounded plain-text form saves one immutable update candidate while retaining the card identity and evidence. Review and publication remain separate. Unsaved form text is not persisted when closing.

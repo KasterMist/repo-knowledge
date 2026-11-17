@@ -25,6 +25,11 @@
   "contributes": {
     "commands": [
       {
+        "command": "repoKnowledge.editCardBody",
+        "title": "Repo Knowledge: Edit Card Body",
+        "icon": "$(edit)"
+      },
+      {
         "command": "repoKnowledge.openPublishedWiki",
         "title": "Repo Knowledge: Open Published Wiki",
         "icon": "$(book)"
@@ -252,6 +257,11 @@
         }
       ],
       "view/item/context": [
+        {
+          "command": "repoKnowledge.editCardBody",
+          "when": "viewItem == knowledge-card",
+          "group": "knowledge"
+        },
         {
           "command": "repoKnowledge.openCard",
           "when": "viewItem == knowledge-card",

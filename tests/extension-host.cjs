@@ -552,6 +552,33 @@ exports.run = async function run() {
   assert.equal(dirtySubmit?.error, true);
   assert.match(dirtySubmit.message, /未保存|dirty/u);
   assert.equal(await draftDocument.save(), true);
+  const editSnapshot = await fs.readFile(
+    path.join(readNode.target.store, 'knowledge.json'),
+  );
+  const cardForm = await vscode.commands.executeCommand(
+    'repoKnowledge.editCardBody',
+    readNode,
+  );
+  assert.equal(cardForm.repository, readNode.target.root);
+  assert.equal(
+    (await cardForm.handle({ action: 'submit', body: '', reason: 'r' })).error,
+    true,
+  );
+  const editResult = await cardForm.handle({
+    action: 'submit',
+    body: '空字符串会保留；未命中返回缺省值。',
+    reason: '自编界面验收',
+  });
+  assert.equal(editResult.state, 'pending-review', JSON.stringify(editResult));
+  assert.equal(
+    await cardForm.handle({ action: 'submit', body: '重复', reason: '重复' }),
+    undefined,
+  );
+  assert.deepEqual(
+    await fs.readFile(path.join(readNode.target.store, 'knowledge.json')),
+    editSnapshot,
+  );
+
   const pending = await vscode.commands.executeCommand(
     'repoKnowledge.submitDraft',
     draftNode,
