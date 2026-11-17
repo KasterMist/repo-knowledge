@@ -86,7 +86,9 @@ export function activate(context: vscode.ExtensionContext) {
   const workbench = new KnowledgeWorkbench(selected);
   context.subscriptions.push(workbench);
   const wikiReader = new WikiWorkbench(selected);
-  context.subscriptions.push(new WikiReviewWorkbench(selected));
+  context.subscriptions.push(
+    new WikiReviewWorkbench(selected, () => workbench.refresh()),
+  );
   context.subscriptions.push(wikiReader);
   const home = new HomeWorkbench(selected);
   context.subscriptions.push(home);

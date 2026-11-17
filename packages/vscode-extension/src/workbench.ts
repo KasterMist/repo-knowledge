@@ -16,7 +16,8 @@ export type ResolveTarget = (
 type Mode = 'wiki' | 'cards';
 export class KnowledgeNode extends vscode.TreeItem {
   constructor(
-    readonly kind: 'repository' | 'scope' | 'card' | 'evidence' | 'message',
+    readonly kind:
+      'repository' | 'scope' | 'card' | 'article' | 'evidence' | 'message',
     label: string,
     readonly folder: vscode.WorkspaceFolder,
     readonly target?: KnowledgeTarget,
@@ -24,6 +25,7 @@ export class KnowledgeNode extends vscode.TreeItem {
     readonly prefix = '',
     readonly evidenceIndex = 0,
     readonly snapshotRevision = '',
+    readonly articleId?: string,
   ) {
     super(
       label,
@@ -37,12 +39,18 @@ export class KnowledgeNode extends vscode.TreeItem {
         ? 'repo'
         : kind === 'scope'
           ? 'folder'
-          : kind === 'card'
+          : kind === 'card' || kind === 'article'
             ? 'book'
             : kind === 'evidence'
               ? 'references'
               : 'info',
     );
+    if (kind === 'article')
+      this.command = {
+        command: 'repoKnowledge.openPublishedWiki',
+        title: 'Read Wiki article',
+        arguments: [this],
+      };
     if (kind === 'card')
       this.command = {
         command: 'repoKnowledge.openCard',
@@ -82,7 +90,10 @@ class KnowledgeTree
       );
     if (node.kind === 'message' || node.kind === 'evidence') return [];
     try {
-      const target = node.target ?? (await this.resolve(node.folder));
+      const target =
+        this.mode === 'wiki'
+          ? await this.resolve(node.folder)
+          : (node.target ?? (await this.resolve(node.folder)));
       if (!target) return [];
       if (node.kind === 'card') {
         const result = await target.knowledge.read(node.cardId!);
@@ -102,6 +113,63 @@ class KnowledgeTree
         });
       }
       const { snapshot } = await target.knowledge.snapshot();
+      if (this.mode === 'wiki') {
+        if (snapshot.schemaVersion !== 2) {
+          const item = new KnowledgeNode(
+            'message',
+            '尚无文章目录：生成 Wiki / 审阅旧库迁移',
+            node.folder,
+          );
+          item.command = {
+            command: 'repoKnowledge.openHome',
+            title: 'Open knowledge home',
+            arguments: [node],
+          };
+          return [item];
+        }
+        if (!snapshot.articles.length) {
+          const item = new KnowledgeNode(
+            'message',
+            '尚未生成 Wiki · 点击开始',
+            node.folder,
+          );
+          item.command = {
+            command: 'repoKnowledge.openGenerationPanel',
+            title: 'Generate Wiki',
+            arguments: [node],
+          };
+          return [item];
+        }
+        if (
+          node.articleId &&
+          !snapshot.articles.some((article) => article.id === node.articleId)
+        )
+          return [];
+        return snapshot.articles
+          .filter((article) => article.parentId === (node.articleId ?? null))
+          .sort((a, b) => a.order - b.order || a.id.localeCompare(b.id))
+          .map((article) => {
+            const item = new KnowledgeNode(
+              'article',
+              article.title,
+              node.folder,
+              target,
+              undefined,
+              '',
+              0,
+              '',
+              article.id,
+            );
+            item.id = node.folder.uri.toString() + ':article:' + article.id;
+            item.description = 'r' + article.revision;
+            item.collapsibleState = snapshot.articles.some(
+              (child) => child.parentId === article.id,
+            )
+              ? vscode.TreeItemCollapsibleState.Collapsed
+              : vscode.TreeItemCollapsibleState.None;
+            return item;
+          });
+      }
       const cards = [...snapshot.cards].sort(
         (a, b) => a.title.localeCompare(b.title) || a.id.localeCompare(b.id),
       );
@@ -120,40 +188,7 @@ class KnowledgeTree
         return [
           new KnowledgeNode('message', '暂无知识卡片 / No cards', node.folder),
         ];
-      if (this.mode === 'cards') return cards.map(makeCard);
-      const groups = new Map<string, Card[]>();
-      const leaves: Card[] = [];
-      for (const card of cards) {
-        const scope = card.scope[0]!;
-        if (scope === node.prefix) {
-          leaves.push(card);
-          continue;
-        }
-        if (node.prefix && !scope.startsWith(node.prefix + '/')) continue;
-        const remainder = scope.slice(node.prefix ? node.prefix.length + 1 : 0);
-        const next = [node.prefix, remainder.split('/')[0]]
-          .filter(Boolean)
-          .join('/');
-        const group = groups.get(next) ?? [];
-        group.push(card);
-        groups.set(next, group);
-      }
-      return [
-        ...[...groups.keys()]
-          .sort()
-          .map(
-            (prefix) =>
-              new KnowledgeNode(
-                'scope',
-                prefix.split('/').at(-1)!,
-                node.folder,
-                target,
-                undefined,
-                prefix,
-              ),
-          ),
-        ...leaves.map(makeCard),
-      ];
+      return cards.map(makeCard);
     } catch (error) {
       return [
         new KnowledgeNode(

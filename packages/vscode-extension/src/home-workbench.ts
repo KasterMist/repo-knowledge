@@ -13,8 +13,9 @@ export class HomeWorkbench implements vscode.Disposable {
   private readonly disposables: vscode.Disposable[];
   constructor(private readonly resolve: ResolveTarget) {
     this.disposables = [
-      vscode.commands.registerCommand('repoKnowledge.openHome', () =>
-        this.open(),
+      vscode.commands.registerCommand(
+        'repoKnowledge.openHome',
+        (node?: { folder?: vscode.WorkspaceFolder }) => this.open(node?.folder),
       ),
       vscode.workspace.onDidChangeWorkspaceFolders(() => this.close()),
       vscode.workspace.onDidChangeConfiguration((event) => {
@@ -22,13 +23,14 @@ export class HomeWorkbench implements vscode.Disposable {
       }),
     ];
   }
-  async open() {
+  async open(selected?: vscode.WorkspaceFolder) {
     if (!vscode.workspace.isTrusted) return;
     const folders = vscode.workspace.workspaceFolders;
     const folder =
-      folders?.length === 1
+      selected ??
+      (folders?.length === 1
         ? folders[0]
-        : await vscode.window.showWorkspaceFolderPick();
+        : await vscode.window.showWorkspaceFolderPick());
     if (!folder) return;
     try {
       const target = await this.resolve(folder);

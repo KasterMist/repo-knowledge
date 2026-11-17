@@ -76,3 +76,5 @@ Licensed under [Apache-2.0](LICENSE). Copyright 2026 KasterMist and contributors
 Development now exposes Open Published Wiki from the home. It reads canonical v2 articles and refreshes the directory, body and evidence with snapshot-consistency checks. v1 requires reviewed migration; this reader never writes or calls a model. Final visual/Remote SSH gates remain pending.
 
 Wiki review now refreshes candidates/history after a successful write, with a read-only Refresh button for external changes. Committed candidates stay archived after rollback; inverse history is visible without a rollback action. Refresh failure clears stale targets and reports the completed write separately.
+
+Development sidebar now displays the canonical Wiki article hierarchy. Expand a repository and click an article to read it; empty/legacy stores show explicit next actions instead of a source-scope tree. Confirmed Wiki writes refresh the sidebar. This is not whole-repository generation or final visual/Remote SSH acceptance.

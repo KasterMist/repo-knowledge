@@ -11,7 +11,10 @@ export class WikiReviewWorkbench implements vscode.Disposable {
   private readonly panels = new Set<vscode.WebviewPanel>();
   private revision = 0;
   private readonly disposables: vscode.Disposable[];
-  constructor(private readonly resolve: ResolveTarget) {
+  constructor(
+    private readonly resolve: ResolveTarget,
+    private readonly onWrite: () => void = () => {},
+  ) {
     const close = () => {
       this.revision++;
       for (const panel of this.panels) panel.dispose();
@@ -150,6 +153,7 @@ export class WikiReviewWorkbench implements vscode.Disposable {
                     : publication.rollbackWiki(review.itemId, review.token),
             );
             if (!(result as { cancelled?: boolean })?.cancelled) {
+              this.onWrite();
               await refresh('操作已完成。');
             }
           } else if (message.action === 'migration')

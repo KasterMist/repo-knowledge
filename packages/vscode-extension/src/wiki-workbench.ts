@@ -22,8 +22,8 @@ export class WikiWorkbench implements vscode.Disposable {
       ),
       vscode.commands.registerCommand(
         'repoKnowledge.openPublishedWiki',
-        (node?: { folder?: vscode.WorkspaceFolder }) =>
-          this.open(node?.folder, undefined, undefined, true),
+        (node?: { folder?: vscode.WorkspaceFolder; articleId?: string }) =>
+          this.open(node?.folder, undefined, undefined, true, node?.articleId),
       ),
       vscode.workspace.onDidChangeWorkspaceFolders(() => this.close()),
       vscode.workspace.onDidChangeConfiguration((event) => {
@@ -39,6 +39,7 @@ export class WikiWorkbench implements vscode.Disposable {
     text?: string,
     candidateId?: string,
     published = false,
+    articleId?: string,
   ) {
     if (!vscode.workspace.isTrusted) return;
     const revision = this.revision;
@@ -198,7 +199,7 @@ export class WikiWorkbench implements vscode.Disposable {
         this.panels.delete(panel);
       });
       try {
-        await render();
+        await render(articleId);
       } catch (error) {
         dispose();
         panel.dispose();
