@@ -333,3 +333,16 @@ test('panel binds Wiki mode to the preview, keeps review IDs server-owned and re
     assert.equal(calls, 2);
     session.dispose();
   }));
+
+test('Wiki output schema uses supported disjoint anyOf blocks rather than oneOf', () => {
+  const schema = wikiGenerationOutputJsonSchema();
+  assert.equal(JSON.stringify(schema).includes('"oneOf"'), false);
+  const blocks =
+    schema.properties.articles.items.properties.sections.items.properties.blocks
+      .items;
+  assert.equal(blocks.anyOf.length, 2);
+  assert.deepEqual(
+    blocks.anyOf.map((item) => item.properties.type.const),
+    ['card', 'inference'],
+  );
+});

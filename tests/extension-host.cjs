@@ -564,14 +564,41 @@ exports.run = async function run() {
     (await cardForm.handle({ action: 'submit', body: '', reason: 'r' })).error,
     true,
   );
-  const editResult = await cardForm.handle({
+  const savedBody = '保存后关闭，再恢复的人工正文。';
+  const savedDraft = await cardForm.handle({
+    action: 'saveDraft',
+    body: savedBody,
+    reason: '恢复检查',
+  });
+  assert.ok(savedDraft.draftId, JSON.stringify(savedDraft));
+  assert.equal(
+    (
+      await cardForm.handle({
+        action: 'saveDraft',
+        body: savedBody,
+        reason: '恢复检查',
+      })
+    ).draftId,
+    savedDraft.draftId,
+  );
+  cardForm.close();
+  const restoredForm = await vscode.commands.executeCommand(
+    'repoKnowledge.resumeCardBodyDraft',
+    { folder: readNode.folder, itemId: savedDraft.draftId },
+  );
+  assert.equal(restoredForm.initialBody, savedBody);
+  const editResult = await restoredForm.handle({
     action: 'submit',
     body: '空字符串会保留；未命中返回缺省值。',
     reason: '自编界面验收',
   });
   assert.equal(editResult.state, 'pending-review', JSON.stringify(editResult));
   assert.equal(
-    await cardForm.handle({ action: 'submit', body: '重复', reason: '重复' }),
+    await restoredForm.handle({
+      action: 'submit',
+      body: '重复',
+      reason: '重复',
+    }),
     undefined,
   );
   assert.deepEqual(
@@ -946,6 +973,38 @@ exports.run = async function run() {
     assert.equal(report.current.body, card.body);
     assert.equal(report.merged.body, card.body);
     assert.equal(report.proposed.body, editedDraft.proposedCard.body);
+    const graphicalMerge = await vscode.commands.executeCommand(
+      'repoKnowledge.resolveCardConflict',
+      proposalNode,
+    );
+    assert.deepEqual(graphicalMerge.conflicts, ['body']);
+    assert.equal(
+      (
+        await graphicalMerge.handle({
+          action: 'resolve',
+          choices: { body: '' },
+          body: '',
+        })
+      ).error,
+      true,
+    );
+    const resolved = await graphicalMerge.handle({
+      action: 'resolve',
+      choices: { body: 'manual' },
+      body: card.body + '；人工核对。',
+    });
+    assert.ok(resolved.draftId, JSON.stringify(resolved));
+    const resolvedRecord = JSON.parse(await fs.readFile(resolved.path, 'utf8'));
+    assert.deepEqual(resolvedRecord.merge.resolvedFields, ['body']);
+    assert.equal(resolvedRecord.proposedCard.body, card.body + '；人工核对。');
+    assert.equal(
+      await graphicalMerge.handle({
+        action: 'resolve',
+        choices: { body: 'current' },
+        body: '',
+      }),
+      undefined,
+    );
     assert.deepEqual(await fs.readFile(snapshotPath), currentBytes);
   } finally {
     await fs.writeFile(snapshotPath, mergeBefore);
@@ -976,6 +1035,8 @@ exports.run = async function run() {
           'read-only Wiki catalog, article, host-routed evidence and invalid article recovery without publication',
           'read-only knowledge document and validated source navigation',
           'durable draft, dirty-editor rejection and saved candidate diff without publication',
+          'body form draft save, duplicate-save reuse and close/reopen recovery without canonical writes',
+          'graphical three-way conflicts require explicit resolution and save preserved human body as a draft',
           'bounded user-invoked scan plan preview without model calls',
           'explicit generation command refuses a missing reviewed plan before confirmation/backend access',
           'new-card candidate tree and read-only batch diff; first publish invocation requires review',

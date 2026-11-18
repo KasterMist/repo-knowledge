@@ -15,7 +15,7 @@ test('card editor accepts only body/reason and escapes stored text without comma
     assert.equal(cardEditMessage(value), undefined);
   assert.deepEqual(
     cardEditMessage({ action: 'submit', body: '正文', reason: '澄清' }),
-    { body: '正文', reason: '澄清' },
+    { action: 'submit', body: '正文', reason: '澄清' },
   );
   const html = cardEditHtml(
     { title: '<img>', revision: 1, body: '</textarea><script>bad()</script>' },
@@ -25,4 +25,20 @@ test('card editor accepts only body/reason and escapes stored text without comma
   assert.match(html, /&lt;\/textarea&gt;/u);
   assert.doesNotMatch(html, /<script>bad|<img>|command:/u);
   assert.match(html, /form-action 'none'/u);
+});
+
+test('saved draft action is distinct from candidate submission', () => {
+  assert.deepEqual(
+    cardEditMessage({ action: 'saveDraft', body: '保存', reason: '稍后继续' }),
+    { action: 'saveDraft', body: '保存', reason: '稍后继续' },
+  );
+  assert.equal(
+    cardEditMessage({
+      action: 'saveDraft',
+      body: '保存',
+      reason: '理由',
+      path: 'elsewhere',
+    }),
+    undefined,
+  );
 });

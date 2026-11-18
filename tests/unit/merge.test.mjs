@@ -209,3 +209,51 @@ test('stale merge review/draft and changed candidate or source cannot create pub
       code('STALE_EVIDENCE'),
     );
   }));
+
+test('graphical resolutions require exactly acknowledged conflicts and preserve current human fields', () =>
+  setup(async (f) => {
+    const old = await f.propose({ body: 'Agent suggestion' });
+    const human = await f.propose({
+      body: '人工设计理由必须保留',
+      title: '人工标题',
+    });
+    await f.publish(human.proposalId);
+    const review = await f.publication.previewMerge(old.proposalId);
+    const token = fingerprint(JSON.stringify(review));
+    await assert.rejects(
+      f.publication.createMergeDraft(old.proposalId, token, {}),
+      code('MERGE_CONFLICTS_UNRESOLVED'),
+    );
+    await assert.rejects(
+      f.publication.createMergeDraft(old.proposalId, token, {
+        body: 'x',
+        id: 'other',
+      }),
+      code('MERGE_CONFLICTS_UNRESOLVED'),
+    );
+    const canonical = await readFile(join(f.store, 'knowledge.json'));
+    const draft = await f.publication.createMergeDraft(old.proposalId, token, {
+      body: review.current.body + '；已核对建议。',
+    });
+    const stored = await f.publication.readCandidate(draft.draftId, 'drafts');
+    assert.deepEqual(stored.record.merge.resolvedFields, ['body']);
+    assert.equal(stored.input.proposedCard.title, '人工标题');
+    assert.equal(
+      stored.input.proposedCard.body,
+      '人工设计理由必须保留；已核对建议。',
+    );
+    assert.equal(
+      (await f.publication.submitDraft(draft.draftId)).state,
+      'pending-review',
+    );
+    assert.deepEqual(
+      await readFile(join(f.store, 'knowledge.json')),
+      canonical,
+    );
+    const newer = await f.propose({ tags: ['changed'] });
+    await f.publish(newer.proposalId);
+    await assert.rejects(
+      f.publication.createMergeDraft(old.proposalId, token, { body: 'stale' }),
+      code('MERGE_REVIEW_CHANGED'),
+    );
+  }));

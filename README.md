@@ -79,4 +79,4 @@ Wiki review now refreshes candidates/history after a successful write, with a re
 
 Development sidebar now displays the canonical Wiki article hierarchy. Expand a repository and click an article to read it; empty/legacy stores show explicit next actions instead of a source-scope tree. Confirmed Wiki writes refresh the sidebar. This is not whole-repository generation or final visual/Remote SSH acceptance.
 
-Development adds Edit Card Body: a bounded plain-text form saves one immutable update candidate while retaining the card identity and evidence. Review and publication remain separate. Unsaved form text is not persisted when closing.
+Development adds Edit Card Body: a bounded plain-text form saves one immutable update candidate while retaining the card identity and evidence. Review and publication remain separate. Use Save Draft and Resume Card Body Draft to persist/reopen a body-only draft; unsaved input is still lost on closing. Resolve Card Conflict shows base/current/proposed values, requires explicit choices and saves an acknowledged merge draft without publication.
