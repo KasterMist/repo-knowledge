@@ -1,16 +1,20 @@
 import * as vscode from 'vscode';
+import { KnowledgePublication } from '@repo-knowledge/core';
+import type { PublicationNode } from './publication-workbench.js';
 import { randomBytes } from 'node:crypto';
 import type { KnowledgeNode, ResolveTarget } from './workbench.js';
 import { cardEditHtml, cardEditMessage } from './card-edit-view.js';
 
 export class CardEditWorkbench implements vscode.Disposable {
   private readonly panels = new Set<vscode.WebviewPanel>();
+  private revision = 0;
   private readonly disposables: vscode.Disposable[];
   constructor(
     private readonly resolve: ResolveTarget,
     private readonly refresh: () => void,
   ) {
     const close = () => {
+      this.revision++;
       for (const panel of this.panels) panel.dispose();
       this.panels.clear();
     };
@@ -19,19 +23,51 @@ export class CardEditWorkbench implements vscode.Disposable {
         'repoKnowledge.editCardBody',
         (node?: KnowledgeNode) => this.open(node),
       ),
+      vscode.commands.registerCommand(
+        'repoKnowledge.resumeCardBodyDraft',
+        (node?: PublicationNode) => this.open(undefined, node, true),
+      ),
       vscode.workspace.onDidChangeWorkspaceFolders(close),
       vscode.workspace.onDidChangeConfiguration((event) => {
         if (event.affectsConfiguration('repoKnowledge')) close();
       }),
     ];
   }
-  async open(node?: KnowledgeNode) {
+  async open(
+    node?: KnowledgeNode,
+    draftNode?: PublicationNode,
+    resume = false,
+  ) {
     if (!vscode.workspace.isTrusted) return;
+    const revision = this.revision;
     try {
-      const target = await this.resolve(node?.folder);
+      const target = await this.resolve(node?.folder ?? draftNode?.folder);
       if (!target) return;
+      const publication = new KnowledgePublication(target.knowledge);
+      let recovered;
+      if (resume) {
+        // Resume is explicit; opening an ordinary editor never scans other stores.
+        const selected =
+          draftNode?.itemId ??
+          (
+            await vscode.window.showQuickPick(
+              (await publication.listCandidates('drafts')).map((item) => ({
+                label: item.title,
+                description: item.id,
+                id: item.id,
+              })),
+            )
+          )?.id;
+        if (!selected) return;
+        recovered = await publication.readCandidate(selected, 'drafts');
+        if (recovered.record.schemaVersion !== 2 || recovered.record.merge)
+          throw new Error(
+            'Use the merge workflow for this draft; only captured ordinary drafts can reopen here.',
+          );
+      }
       const id =
-        node?.kind === 'card'
+        recovered?.input.id ??
+        (node?.kind === 'card'
           ? node.cardId
           : (
               await vscode.window.showQuickPick(
@@ -39,9 +75,30 @@ export class CardEditWorkbench implements vscode.Disposable {
                   (card) => ({ label: card.title, id: card.id }),
                 ),
               )
-            )?.id;
+            )?.id);
       if (!id) return;
-      const base = await target.knowledge.read(id);
+      const current = await target.knowledge.read(id);
+      if (recovered && recovered.record.schemaVersion === 2) {
+        const original = recovered.record.baseCard;
+        if (
+          JSON.stringify({
+            ...recovered.input.proposedCard,
+            body: original.body,
+            revision: original.revision,
+          }) !== JSON.stringify(original)
+        )
+          throw new Error(
+            'This draft also changes metadata; use the existing draft editor to preserve all fields.',
+          );
+      }
+      const base =
+        recovered && recovered.record.schemaVersion === 2
+          ? {
+              card: recovered.record.baseCard,
+              snapshotRevision: recovered.input.baseSnapshot,
+            }
+          : current;
+      if (revision !== this.revision || !vscode.workspace.isTrusted) return;
       const panel = vscode.window.createWebviewPanel(
         'repoKnowledge.cardEditor',
         '编辑卡片 · ' + base.card.title,
@@ -54,10 +111,14 @@ export class CardEditWorkbench implements vscode.Disposable {
       );
       this.panels.add(panel);
       panel.webview.html = cardEditHtml(
-        base.card,
+        recovered?.input.proposedCard ?? base.card,
         target.root,
         randomBytes(16).toString('hex'),
+        recovered?.input.reason ?? '',
       );
+      let lastDraft:
+        | { body: string; reason: string; draftId: string; path: string }
+        | undefined;
       let busy = false,
         saved = false;
       const handle = async (value: unknown) => {
@@ -89,6 +150,24 @@ export class CardEditWorkbench implements vscode.Disposable {
             )
           )
             throw new Error('Save or discard unsaved editors first.');
+          if (edit.action === 'saveDraft') {
+            const result =
+              lastDraft?.body === edit.body && lastDraft.reason === edit.reason
+                ? lastDraft
+                : await publication.createDraft(id, {
+                    body: edit.body,
+                    reason: edit.reason,
+                    baseSnapshot: base.snapshotRevision,
+                  });
+            lastDraft = { ...result, body: edit.body, reason: edit.reason };
+            this.refresh();
+            await reply(
+              '草稿已保存：' +
+                result.draftId +
+                '。可关闭后恢复；尚未提交或发布。',
+            );
+            return { draftId: result.draftId, path: result.path };
+          }
           const result = await target.knowledge.propose({
             id,
             baseRevision: base.card.revision,
@@ -129,7 +208,12 @@ export class CardEditWorkbench implements vscode.Disposable {
         listener.dispose();
         this.panels.delete(panel);
       });
-      return { handle, repository: target.root };
+      return {
+        handle,
+        repository: target.root,
+        close: () => panel.dispose(),
+        initialBody: recovered?.input.proposedCard.body ?? base.card.body,
+      };
     } catch (error) {
       void vscode.window.showErrorMessage(
         'Repo Knowledge: ' +

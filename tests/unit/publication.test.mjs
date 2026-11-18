@@ -199,3 +199,36 @@ test('unknown history and traversal candidates fail closed', () =>
     );
     assert.deepEqual(await readFile(f.path), bytes);
   }));
+
+test('edited draft snapshots survive recreation without publishing and reject an obsolete base', () =>
+  setup(async (f) => {
+    const original = await readFile(f.path);
+    const base = await f.knowledge.read('read-fallback');
+    const draft = await f.publication.createDraft('read-fallback', {
+      baseSnapshot: base.snapshotRevision,
+      body: '持久人工草稿',
+      reason: '保存并恢复',
+    });
+    const restored = await new KnowledgePublication(
+      new KnowledgeStore(f.repository, f.store),
+    ).readCandidate(draft.draftId, 'drafts');
+    assert.equal(restored.input.proposedCard.body, '持久人工草稿');
+    assert.deepEqual(restored.input.proposedCard.evidence, base.card.evidence);
+    assert.deepEqual(await readFile(f.path), original);
+    const pending = await f.candidate();
+    const review = await f.publication.previewProposal(pending.proposalId);
+    await f.publication.publish(pending.proposalId, review.token);
+    await assert.rejects(
+      f.publication.createDraft('read-fallback', {
+        baseSnapshot: base.snapshotRevision,
+        body: 'obsolete',
+        reason: 'old',
+      }),
+      code('REVISION_CONFLICT'),
+    );
+    assert.equal(
+      (await f.publication.readCandidate(draft.draftId, 'drafts')).input
+        .proposedCard.body,
+      '持久人工草稿',
+    );
+  }));

@@ -181,6 +181,16 @@
       {
         "command": "repoKnowledge.openImpactTarget",
         "title": "Repo Knowledge: Open Impact Report Target"
+      },
+      {
+        "command": "repoKnowledge.resumeCardBodyDraft",
+        "title": "Repo Knowledge: Resume Card Body Draft",
+        "icon": "$(edit)"
+      },
+      {
+        "command": "repoKnowledge.resolveCardConflict",
+        "title": "Repo Knowledge: Resolve Card Conflict",
+        "icon": "$(git-merge)"
       }
     ],
     "configuration": {
@@ -316,6 +326,16 @@
           "command": "repoKnowledge.generateKnowledge",
           "when": "viewItem == knowledge-repository",
           "group": "planning"
+        },
+        {
+          "command": "repoKnowledge.resumeCardBodyDraft",
+          "when": "view == repoKnowledge.drafts && viewItem == knowledge-drafts",
+          "group": "inline@1"
+        },
+        {
+          "command": "repoKnowledge.resolveCardConflict",
+          "when": "view == repoKnowledge.proposals && viewItem == knowledge-proposals",
+          "group": "inline@2"
         }
       ]
     }

@@ -185,8 +185,23 @@ export class KnowledgePublication {
       throw error;
     }
   }
-  async createDraft(id: string) {
+  async createDraft(
+    id: string,
+    edit?: { body: string; reason: string; baseSnapshot: string },
+  ) {
     const result = await this.knowledge.read(id);
+    if (edit) {
+      z.strictObject({
+        body: cardSchema.shape.body,
+        reason: z.string().trim().min(1).max(2000),
+        baseSnapshot: digest,
+      }).parse(edit);
+      if (edit.baseSnapshot !== result.snapshotRevision)
+        throw new KnowledgeError(
+          'REVISION_CONFLICT',
+          'Draft base changed; keep the saved draft and review a merge.',
+        );
+    }
     const proposalId = randomUUID();
     const draft = {
       schemaVersion: 2,
@@ -196,8 +211,12 @@ export class KnowledgePublication {
       id,
       baseRevision: result.card.revision,
       baseSnapshot: result.snapshotRevision,
-      reason: '人工编辑 / Human edit',
-      proposedCard: { ...result.card, revision: result.card.revision + 1 },
+      reason: edit?.reason ?? '人工编辑 / Human edit',
+      proposedCard: {
+        ...result.card,
+        body: edit?.body ?? result.card.body,
+        revision: result.card.revision + 1,
+      },
     };
     const directory = await this.directory('drafts', true);
     if ((await this.names('drafts')).length >= 200)
@@ -580,7 +599,11 @@ export class KnowledgePublication {
       context: await this.reviewToken(current.snapshotRevision),
     };
   }
-  async createMergeDraft(id: string, token: string) {
+  async createMergeDraft(
+    id: string,
+    token: string,
+    resolutions?: Record<string, unknown>,
+  ) {
     const review = await this.previewMerge(id);
     if (fingerprint(JSON.stringify(review)) !== token)
       throw new KnowledgeError(
@@ -595,6 +618,16 @@ export class KnowledgePublication {
         'LIMIT',
         'Too many drafts or merge reviews; back up complete store',
       );
+    let merged = review.merged;
+    if (resolutions) {
+      const fields = Object.keys(resolutions).sort();
+      if (fields.join(',') !== [...review.conflicts].sort().join(','))
+        throw new KnowledgeError(
+          'MERGE_CONFLICTS_UNRESOLVED',
+          'Resolve exactly the displayed conflicting fields.',
+        );
+      merged = cardSchema.parse({ ...review.merged, ...resolutions });
+    }
     const reviewId = randomUUID();
     const receipt = mergeReviewSchema.parse({
       schemaVersion: 1,
@@ -615,8 +648,8 @@ export class KnowledgePublication {
       baseSnapshot: review.baseSnapshot,
       baseCard: review.current,
       reason: '三方合并 / Three-way merge ' + id,
-      proposedCard: review.merged,
-      merge: { reviewId, resolvedFields: [] },
+      proposedCard: merged,
+      merge: { reviewId, resolvedFields: resolutions ? review.conflicts : [] },
     });
     await writeExclusive(path, json(draft));
     return { draftId: reviewId, path, conflicts: review.conflicts };

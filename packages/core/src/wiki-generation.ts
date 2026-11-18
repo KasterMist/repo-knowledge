@@ -44,7 +44,7 @@ const generatedArticleSchema = z.strictObject({
         title: wikiArticleSchema.shape.title,
         blocks: z
           .array(
-            z.discriminatedUnion('type', [
+            z.union([
               z.strictObject({ id, type: z.literal('card'), cardId: id }),
               z.strictObject({
                 id,

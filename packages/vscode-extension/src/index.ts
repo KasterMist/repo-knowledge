@@ -1,3 +1,4 @@
+import { CardMergeWorkbench } from './card-merge-workbench.js';
 // Extension activation, UI and packaging are introduced in M1 / T07.
 import * as vscode from 'vscode';
 import { createHash } from 'node:crypto';
@@ -88,6 +89,7 @@ export function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(workbench);
   context.subscriptions.push(
     new CardEditWorkbench(selected, () => workbench.refresh()),
+    new CardMergeWorkbench(selected, () => workbench.refresh()),
   );
   const wikiReader = new WikiWorkbench(selected);
   context.subscriptions.push(
