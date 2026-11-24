@@ -46,6 +46,7 @@ export const generationDisabledFeatures = [
 ] as const;
 const verifiedModels: Record<string, readonly string[]> = {
   '0.162.0-alpha.17.2': ['gpt-6.1-sol'],
+  '0.169.0-alpha.11.1': ['gpt-6.1-sol'],
   '0.164.0-alpha.11.1': [
     'gpt-6.1-sol',
     'gpt-6-astra',

@@ -207,3 +207,37 @@ test('unknown executable/version and an in-repository generation cwd fail before
     await f.cleanup();
   }
 });
+
+test('Codex 0.169 compatibility retains disabled surfaces and rejects unknown models/features', () => {
+  const version = '0.169.0-alpha.11.1';
+  assert.equal(
+    validateGenerationConfiguration(config(), version, ['inherited']).model,
+    'gpt-6.1-sol',
+  );
+  for (const field of generationDisabledFeatures) {
+    const unsafe = config();
+    unsafe.features[field] = true;
+    assert.throws(
+      () => validateGenerationConfiguration(unsafe, version, ['inherited']),
+      code('UNVERIFIED_EXECUTION_FEATURE'),
+    );
+  }
+  const future = config();
+  future.features.future_execution = true;
+  assert.throws(
+    () => validateGenerationConfiguration(future, version, ['inherited']),
+    code('UNVERIFIED_EXECUTION_FEATURE'),
+  );
+  const unknown = config();
+  unknown.model = 'gpt-6-astra';
+  assert.throws(
+    () => validateGenerationConfiguration(unknown, version, ['inherited']),
+    code('UNVERIFIED_MODEL_CAPABILITIES'),
+  );
+  const active = config();
+  active.mcp_servers.inherited.enabled = true;
+  assert.throws(
+    () => validateGenerationConfiguration(active, version, ['inherited']),
+    code('MCP_CONFIG_UNCONFIRMED'),
+  );
+});
