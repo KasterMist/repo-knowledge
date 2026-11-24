@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { safeMarkdown } from '../../packages/vscode-extension/dist/safe-markdown.js';
 import {
   cardEditHtml,
   cardEditMessage,
@@ -41,4 +42,28 @@ test('saved draft action is distinct from candidate submission', () => {
     }),
     undefined,
   );
+});
+
+test('preview accepts bounded body without a save reason and never enables source links or raw HTML', () => {
+  const body = '**正文** <img src=x onerror=bad()> [运行](command:bad)';
+  assert.deepEqual(cardEditMessage({ action: 'preview', body, reason: '' }), {
+    action: 'preview',
+    body,
+    reason: '',
+  });
+  assert.equal(
+    cardEditMessage({ action: 'submit', body, reason: '' }),
+    undefined,
+  );
+  assert.equal(
+    cardEditMessage({ action: 'preview', body: 'x'.repeat(16001), reason: '' }),
+    undefined,
+  );
+  assert.equal(
+    cardEditMessage({ action: 'preview', body, reason: '', path: 'other' }),
+    undefined,
+  );
+  const html = safeMarkdown(body);
+  assert.match(html, /<strong>正文<\/strong>/u);
+  assert.doesNotMatch(html, /<img|<a|command:/u);
 });

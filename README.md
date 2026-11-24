@@ -1,5 +1,9 @@
 # Repo Knowledge
 
+Development increment (2026-11-24): impact review also opens a graphical card-maintenance panel. Edit a selected card or enter its existing, separately confirmed single-card generation flow; a reviewed scope plan is still required. The original JSON report remains available. No automatic generation or publication.
+
+Development increment (2026-11-23): the card-body form supports an explicit restricted Markdown preview before saving. Preview does not validate source freshness, call a model, save or publish knowledge. It is not included in the published M1 package.
+
 [简体中文](README.zh-CN.md)
 
 Shared repository knowledge for developers and coding agents, targeting VS Code on **Windows and Linux**.
