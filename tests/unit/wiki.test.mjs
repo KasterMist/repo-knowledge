@@ -11,6 +11,7 @@ import {
   resolveWikiArticle,
   KnowledgeStore,
   fingerprint,
+  prepareWikiNoteEdit,
 } from '../../packages/core/dist/index.js';
 import { fixture } from '../helpers.mjs';
 
@@ -50,6 +51,72 @@ async function model(f) {
   );
   return { snapshot, text };
 }
+
+test('human note review preparation preserves shared facts and bindings and refuses stale or forged edits', async () => {
+  const f = await fixture();
+  try {
+    const { snapshot } = await model(f);
+    const original = structuredClone(snapshot);
+    const request = {
+      articleId: 'overview',
+      sectionId: 'behavior',
+      blockId: 'reason',
+      baseRevision: 1,
+      baseSnapshot: fingerprint(JSON.stringify(snapshot)),
+      body: '人工补充：空字符串应保持。',
+      reason: '澄清意图',
+    };
+    const result = prepareWikiNoteEdit(snapshot, request);
+    assert.deepEqual(snapshot, original);
+    assert.deepEqual(result.after.cards, original.cards);
+    assert.equal(result.after.articles[0].revision, 2);
+    assert.deepEqual(
+      result.after.articles[0].sections[0].blocks[0],
+      original.articles[0].sections[0].blocks[0],
+    );
+    assert.deepEqual(
+      result.after.articles[0].sections[0].blocks[1].references,
+      original.articles[0].sections[0].blocks[1].references,
+    );
+    assert.equal(result.published, false);
+    for (const patch of [{ baseRevision: 2 }, { baseSnapshot: '0'.repeat(64) }])
+      assert.throws(
+        () => prepareWikiNoteEdit(snapshot, { ...request, ...patch }),
+        (e) => e.code === 'REVISION_CONFLICT',
+      );
+    assert.throws(
+      () => prepareWikiNoteEdit(snapshot, { ...request, blockId: 'read' }),
+      (e) => e.code === 'WIKI_NOTE_NOT_EDITABLE',
+    );
+    assert.throws(() =>
+      prepareWikiNoteEdit(snapshot, { ...request, author: 'human' }),
+    );
+    assert.throws(() =>
+      prepareWikiNoteEdit(snapshot, { ...request, body: ' ' }),
+    );
+    assert.throws(
+      () =>
+        prepareWikiNoteEdit(snapshot, {
+          ...request,
+          body: original.articles[0].sections[0].blocks[1].body,
+        }),
+      (e) => e.code === 'WIKI_NOTE_UNCHANGED',
+    );
+    const modelNote = structuredClone(snapshot);
+    modelNote.articles[0].sections[0].blocks[1].kind = 'inference';
+    modelNote.articles[0].sections[0].blocks[1].author = 'model';
+    assert.throws(
+      () =>
+        prepareWikiNoteEdit(modelNote, {
+          ...request,
+          baseSnapshot: fingerprint(JSON.stringify(modelNote)),
+        }),
+      (e) => e.code === 'WIKI_NOTE_NOT_EDITABLE',
+    );
+  } finally {
+    await f.cleanup();
+  }
+});
 
 test('Wiki upgrade/downgrade previews preserve v1 knowledge, hashes and filesystem bytes without enabling v2 runtime', async () => {
   const f = await fixture();
