@@ -77,9 +77,12 @@ export class GenerationWorkbench implements vscode.Disposable {
           recover
             ? 'repoKnowledge.recoverIncrementalUpdate'
             : 'repoKnowledge.generateKnowledgeUpdate',
-          async (node?: { folder?: vscode.WorkspaceFolder }) => {
+          async (node?: {
+            folder?: vscode.WorkspaceFolder;
+            cardId?: string;
+          }) => {
             try {
-              return await this.update(node?.folder, recover);
+              return await this.update(node?.folder, recover, node?.cardId);
             } catch (error) {
               const message =
                 error instanceof CodexBackendError
@@ -131,7 +134,11 @@ export class GenerationWorkbench implements vscode.Disposable {
       this.busy = false;
     }
   }
-  async update(folder?: vscode.WorkspaceFolder, recover = false) {
+  async update(
+    folder?: vscode.WorkspaceFolder,
+    recover = false,
+    cardId?: string,
+  ) {
     if (!vscode.workspace.isTrusted)
       throw new Error('Incremental updates require a trusted workspace.');
     if (this.busy) throw new Error('A generation task is already active.');
@@ -197,19 +204,27 @@ export class GenerationWorkbench implements vscode.Disposable {
       guard();
       const status = await target.knowledge.status(),
         snapshot = await target.knowledge.snapshot();
-      const chosen = await vscode.window.showQuickPick(
-        snapshot.snapshot.cards.map((card) => ({
-          label: card.title,
-          description:
-            card.id +
-            ' · ' +
-            (status.cards.find((entry) => entry.id === card.id)?.stale
-              ? 'stale'
-              : 'current'),
-          card,
-        })),
-        { title: '选择一张已有卡片 / Select one existing card' },
-      );
+      const requested =
+        cardId === undefined
+          ? undefined
+          : snapshot.snapshot.cards.find((card) => card.id === cardId);
+      if (cardId !== undefined && !requested)
+        throw new Error('Requested card is not in this knowledge store.');
+      const chosen = requested
+        ? { card: requested }
+        : await vscode.window.showQuickPick(
+            snapshot.snapshot.cards.map((card) => ({
+              label: card.title,
+              description:
+                card.id +
+                ' · ' +
+                (status.cards.find((entry) => entry.id === card.id)?.stale
+                  ? 'stale'
+                  : 'current'),
+              card,
+            })),
+            { title: '选择一张已有卡片 / Select one existing card' },
+          );
       if (!chosen) return { cancelled: true };
       if (
         (await vscode.window.showWarningMessage(

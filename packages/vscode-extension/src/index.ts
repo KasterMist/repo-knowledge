@@ -16,6 +16,7 @@ import { KnowledgeWorkbench } from './workbench.js';
 import { BackendWorkbench } from './backend-workbench.js';
 import { GenerationWorkbench } from './generation-workbench.js';
 import { ImpactNavigation } from './impact-navigation.js';
+import { ImpactPanel } from './impact-panel.js';
 import { HomeWorkbench } from './home-workbench.js';
 import { GenerationPanelWorkbench } from './generation-panel.js';
 import { WikiWorkbench } from './wiki-workbench.js';
@@ -99,6 +100,8 @@ export function activate(context: vscode.ExtensionContext) {
   const home = new HomeWorkbench(selected);
   context.subscriptions.push(home);
   const impactNavigation = new ImpactNavigation(workbench.documents);
+  const impactPanel = new ImpactPanel();
+  context.subscriptions.push(impactPanel);
   context.subscriptions.push(impactNavigation);
   const backend = new BackendWorkbench(
     selected,
@@ -208,6 +211,7 @@ export function activate(context: vscode.ExtensionContext) {
               await vscode.workspace.openTextDocument(uri),
               { preview: false },
             );
+            await impactPanel.open(target, report);
             return report;
           } finally {
             listeners.forEach((listener) => listener.dispose());

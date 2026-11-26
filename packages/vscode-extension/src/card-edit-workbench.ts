@@ -4,6 +4,7 @@ import type { PublicationNode } from './publication-workbench.js';
 import { randomBytes } from 'node:crypto';
 import type { KnowledgeNode, ResolveTarget } from './workbench.js';
 import { cardEditHtml, cardEditMessage } from './card-edit-view.js';
+import { safeMarkdown } from './safe-markdown.js';
 
 export class CardEditWorkbench implements vscode.Disposable {
   private readonly panels = new Set<vscode.WebviewPanel>();
@@ -142,6 +143,12 @@ export class CardEditWorkbench implements vscode.Disposable {
         }
         busy = true;
         try {
+          if (edit.action === 'preview') {
+            const html = safeMarkdown(edit.body);
+            await panel.webview.postMessage({ type: 'preview', html });
+            await reply('仅预览输入正文；未核验源码，未保存、提交或发布。');
+            return { preview: true, html };
+          }
           if (
             vscode.workspace.textDocuments.some(
               (document) =>
