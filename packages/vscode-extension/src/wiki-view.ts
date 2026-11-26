@@ -7,8 +7,11 @@ export function wikiMessage(value: unknown) {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return;
   const data = value as Record<string, unknown>,
     keys = Object.keys(data).sort().join(',');
-  if (keys === 'action' && data.action === 'refresh')
-    return { action: 'refresh' as const };
+  if (
+    keys === 'action' &&
+    (data.action === 'refresh' || data.action === 'generate')
+  )
+    return { action: data.action as 'refresh' | 'generate' };
   if (
     keys === 'action,id' &&
     data.action === 'article' &&
@@ -37,6 +40,8 @@ export function wikiMessage(value: unknown) {
 }
 export const wikiClient = `
 const api = acquireVsCodeApi();
+const generate = document.getElementById('generate');
+if(generate?.dataset?.action === 'generate') generate.addEventListener('click',()=>api.postMessage({action:'generate'}));
 document.querySelectorAll('button[data-article]').forEach(button => button.addEventListener('click', () => api.postMessage({ action: 'article', id: button.dataset.article })));
 document.querySelectorAll('button[data-card]').forEach(button => button.addEventListener('click', () => api.postMessage({ action: 'evidence', cardId: button.dataset.card, index: Number(button.dataset.index), revision: button.dataset.revision })));
 const search = document.getElementById('wiki-search');
@@ -68,7 +73,7 @@ export function wikiHtml(
       )
       .join('')}</ul>`;
   let content = published
-    ? '<p>尚无已发布文章。请先生成候选、审阅并确认发布。</p>'
+    ? '<h1>为这个仓库建立 Repo Wiki</h1><p>生成后，你可以在左侧按章节浏览文章，点击阅读正文和源码证据。</p><p>先选择源码范围和预算，确认后生成待审阅内容，再单独发布到正式目录。</p><button id="generate" data-action="generate" type="button">选择范围并生成 Wiki…</button><p class="muted">如果已经生成候选，请在知识工作台审阅并确认发布；未发布内容不会混入正式文章。</p>'
     : '<p>请选择目录中的文章。没有文章时，请选择有效的文章预览文件。</p>';
   if (view) {
     const state = {
