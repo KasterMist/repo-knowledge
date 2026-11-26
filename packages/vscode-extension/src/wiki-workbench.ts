@@ -13,6 +13,15 @@ export class WikiWorkbench implements vscode.Disposable {
   private readonly panels = new Map<vscode.WebviewPanel, () => void>();
   private readonly disposables: vscode.Disposable[];
   private revision = 0;
+  private readonly published = new Map<
+    string,
+    {
+      panel: vscode.WebviewPanel;
+      handle: (value: unknown) => Promise<unknown>;
+      reader: PublishedWikiReader | WikiPreviewReader | WikiCandidateReader;
+      repository: string;
+    }
+  >();
   constructor(private readonly resolve: ResolveTarget) {
     this.disposables = [
       vscode.commands.registerCommand(
@@ -82,6 +91,22 @@ export class WikiWorkbench implements vscode.Disposable {
           ? await WikiPreviewReader.open(target.knowledge, text!)
           : await WikiCandidateReader.open(target.knowledge, candidateId);
       if (revision !== this.revision) return;
+      const key = JSON.stringify([
+        folder.uri.toString(),
+        target.root,
+        target.store,
+      ]);
+      const existing = published ? this.published.get(key) : undefined;
+      if (existing) {
+        await existing.handle(
+          articleId
+            ? { action: 'article', id: articleId }
+            : { action: 'refresh' },
+        );
+        if (revision !== this.revision) return;
+        existing.panel.reveal(vscode.ViewColumn.One);
+        return existing;
+      }
       const panel = vscode.window.createWebviewPanel(
         'repoKnowledge.wikiPreview',
         `Repo Wiki · ${folder.name}`,
@@ -92,8 +117,7 @@ export class WikiWorkbench implements vscode.Disposable {
           localResourceRoots: [],
         },
       );
-      let disposed = false,
-        busy = false;
+      let disposed = false;
       let current: { id: string; revision: string } | undefined;
       const catalog = async () => {
         if (reader instanceof PublishedWikiReader) return reader.catalog();
@@ -132,11 +156,17 @@ export class WikiWorkbench implements vscode.Disposable {
         panel.webview.html = html;
         return view;
       };
-      const handle = async (value: unknown) => {
+      const processMessage = async (value: unknown) => {
         const message = wikiMessage(value);
-        if (!message || disposed || busy || !vscode.workspace.isTrusted) return;
-        busy = true;
+        if (!message || disposed || !vscode.workspace.isTrusted) return;
         try {
+          if (message.action === 'generate') {
+            if (!published) return;
+            return await vscode.commands.executeCommand(
+              'repoKnowledge.openGenerationPanel',
+              { folder },
+            );
+          }
           if (message.action === 'article') return await render(message.id);
           if (message.action === 'refresh') return await render(current?.id);
           if (!current || message.revision !== current.revision)
@@ -182,9 +212,13 @@ export class WikiWorkbench implements vscode.Disposable {
               published,
             );
           return { error: true };
-        } finally {
-          busy = false;
         }
+      };
+      let queue: Promise<unknown> = Promise.resolve();
+      const handle = (value: unknown) => {
+        const next = queue.then(() => processMessage(value));
+        queue = next.catch(() => {});
+        return next;
       };
       const messages = panel.webview.onDidReceiveMessage((message: unknown) => {
         void handle(message);
@@ -194,9 +228,13 @@ export class WikiWorkbench implements vscode.Disposable {
         messages.dispose();
       };
       this.panels.set(panel, dispose);
+      const session = { panel, reader, handle, repository: target.root };
+      if (published) this.published.set(key, session);
       panel.onDidDispose(() => {
         dispose();
         this.panels.delete(panel);
+        if (this.published.get(key)?.panel === panel)
+          this.published.delete(key);
       });
       try {
         await render(articleId);
@@ -205,7 +243,7 @@ export class WikiWorkbench implements vscode.Disposable {
         panel.dispose();
         throw error;
       }
-      return { reader, handle, repository: target.root };
+      return session;
     } catch (error) {
       void vscode.window.showErrorMessage(
         `Repo Knowledge: ${error instanceof Error ? error.message : 'Cannot open Wiki preview'}`,
@@ -220,6 +258,7 @@ export class WikiWorkbench implements vscode.Disposable {
       panel.dispose();
     }
     this.panels.clear();
+    this.published.clear();
   }
   dispose() {
     this.close();

@@ -367,7 +367,13 @@ test('published page is labelled separately and empty catalog suggests reviewed 
     true,
   );
   assert.match(html, /已发布知识/u);
-  assert.match(html, /尚无已发布文章/u);
+  assert.match(html, /为这个仓库建立 Repo Wiki/u);
+  assert.match(html, /data-action="generate"/u);
+  assert.deepEqual(wikiMessage({ action: 'generate' }), { action: 'generate' });
+  assert.equal(
+    wikiMessage({ action: 'generate', folder: '/elsewhere' }),
+    undefined,
+  );
   assert.doesNotMatch(html, /未发布文章预览/u);
   assert.match(html, /&lt;repo&gt;/u);
 });

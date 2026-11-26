@@ -413,6 +413,17 @@ exports.run = async function run() {
       ...modules[0].command.arguments,
     );
     assert.equal(
+      selectedArticle.panel,
+      published.panel,
+      'article clicks reuse the existing published reader',
+    );
+    const navigations = await Promise.all([
+      published.handle({ action: 'article', id: 'overview' }),
+      published.handle({ action: 'article', id: 'cache-module' }),
+    ]);
+    assert.equal(navigations[0].article.id, 'overview');
+    assert.equal(navigations[1].article.id, 'cache-module');
+    assert.equal(
       (await selectedArticle.handle({ action: 'refresh' })).article.id,
       'cache-module',
     );
