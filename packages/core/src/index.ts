@@ -21,3 +21,4 @@ export * from './wiki-generation.js';
 export * from './snapshot-format.js';
 export * from './wiki-transactions.js';
 export * from './wiki-note-edit.js';
+export * from './wiki-note-candidates.js';

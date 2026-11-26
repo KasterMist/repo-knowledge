@@ -3,7 +3,7 @@ import { cardSchema } from './schema.js';
 import { wikiSnapshotSchema } from './wiki.js';
 import { fingerprint, KnowledgeError } from './files.js';
 
-const requestSchema = z.strictObject({
+export const wikiNoteEditRequestSchema = z.strictObject({
   articleId: cardSchema.shape.id,
   sectionId: cardSchema.shape.id,
   blockId: cardSchema.shape.id,
@@ -20,7 +20,7 @@ const requestSchema = z.strictObject({
 /** Pure review preparation only: no persistence, publication or source freshness claim. */
 export function prepareWikiNoteEdit(snapshot: unknown, request: unknown) {
   const before = wikiSnapshotSchema.parse(snapshot);
-  const edit = requestSchema.parse(request);
+  const edit = wikiNoteEditRequestSchema.parse(request);
   const baseSnapshot = fingerprint(JSON.stringify(before));
   const article = before.articles.find((value) => value.id === edit.articleId);
   if (

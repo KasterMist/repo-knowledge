@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFile, writeFile } from 'node:fs/promises';
+import { readFile, writeFile, cp, mkdir, symlink } from 'node:fs/promises';
 import { join } from 'node:path';
 import {
   bindWikiCard,
@@ -12,6 +12,7 @@ import {
   KnowledgeStore,
   fingerprint,
   prepareWikiNoteEdit,
+  WikiNoteCandidates,
 } from '../../packages/core/dist/index.js';
 import { fixture } from '../helpers.mjs';
 
@@ -51,6 +52,84 @@ async function model(f) {
   );
   return { snapshot, text };
 }
+
+test('durable human note candidates survive restart, bind stores, retain stale bases and never publish', async () => {
+  const f = await fixture();
+  try {
+    const { snapshot } = await model(f);
+    const path = join(f.store, 'knowledge.json');
+    await writeFile(path, JSON.stringify(snapshot));
+    const before = await readFile(path);
+    const knowledge = new KnowledgeStore(f.repository, f.store, 'wiki-v2');
+    const request = {
+      articleId: 'overview',
+      sectionId: 'behavior',
+      blockId: 'reason',
+      baseRevision: 1,
+      baseSnapshot: fingerprint(JSON.stringify(snapshot)),
+      body: '待审阅人工说明',
+      reason: '澄清',
+    };
+    const saved = await new WikiNoteCandidates(knowledge).save(request);
+    const restarted = new WikiNoteCandidates(knowledge);
+    const read = await restarted.read(saved.candidateId);
+    assert.equal(read.state, 'current');
+    assert.equal(read.published, false);
+    assert.equal(read.review.after.articles[0].revision, 2);
+    assert.equal((await restarted.list()).length, 1);
+    assert.deepEqual(await readFile(path), before);
+    const other = join(f.directory, 'other-store');
+    await cp(f.store, other, { recursive: true });
+    await assert.rejects(
+      new WikiNoteCandidates(
+        new KnowledgeStore(f.repository, other, 'wiki-v2'),
+      ).read(saved.candidateId),
+      (e) => e.code === 'INVALID_WIKI_NOTE_CANDIDATE',
+    );
+    snapshot.articles[0].revision = 2;
+    await writeFile(path, JSON.stringify(snapshot));
+    assert.equal((await restarted.read(saved.candidateId)).state, 'changed');
+    await assert.rejects(
+      restarted.save(request),
+      (e) => e.code === 'REVISION_CONFLICT',
+    );
+    await assert.rejects(restarted.read('../knowledge'));
+    const candidatePath = join(
+      f.store,
+      'wiki-note-candidates',
+      saved.candidateId + '.json',
+    );
+    const damaged = JSON.parse(await readFile(candidatePath, 'utf8'));
+    damaged.request.author = 'human';
+    await writeFile(candidatePath, JSON.stringify(damaged));
+    await assert.rejects(restarted.read(saved.candidateId));
+  } finally {
+    await f.cleanup();
+  }
+});
+
+test('note candidate staging refuses an escaping directory link before writing', async () => {
+  const f = await fixture();
+  try {
+    const { snapshot } = await model(f);
+    await writeFile(join(f.store, 'knowledge.json'), JSON.stringify(snapshot));
+    const outside = join(f.directory, 'outside');
+    await mkdir(outside);
+    await symlink(
+      outside,
+      join(f.store, 'wiki-note-candidates'),
+      process.platform === 'win32' ? 'junction' : 'dir',
+    );
+    await assert.rejects(
+      new WikiNoteCandidates(
+        new KnowledgeStore(f.repository, f.store, 'wiki-v2'),
+      ).list(),
+      (e) => e.code === 'PATH_ESCAPE',
+    );
+  } finally {
+    await f.cleanup();
+  }
+});
 
 test('human note review preparation preserves shared facts and bindings and refuses stale or forged edits', async () => {
   const f = await fixture();
