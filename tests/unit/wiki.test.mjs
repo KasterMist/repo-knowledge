@@ -1,6 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFile, writeFile, cp, mkdir, symlink } from 'node:fs/promises';
+import {
+  readFile,
+  writeFile,
+  cp,
+  mkdir,
+  symlink,
+  unlink,
+} from 'node:fs/promises';
 import { join } from 'node:path';
 import {
   bindWikiCard,
@@ -13,6 +20,7 @@ import {
   fingerprint,
   prepareWikiNoteEdit,
   WikiNoteCandidates,
+  KnowledgePublication,
 } from '../../packages/core/dist/index.js';
 import { fixture } from '../helpers.mjs';
 
@@ -52,6 +60,108 @@ async function model(f) {
   );
   return { snapshot, text };
 }
+
+test('reviewed note publication and monotonic rollback preserve facts and retain valid history', async () => {
+  const f = await fixture();
+  try {
+    const { snapshot } = await model(f),
+      path = join(f.store, 'knowledge.json');
+    await writeFile(path, JSON.stringify(snapshot));
+    const knowledge = new KnowledgeStore(f.repository, f.store, 'wiki-v2'),
+      p = new KnowledgePublication(knowledge);
+    const request = {
+      articleId: 'overview',
+      sectionId: 'behavior',
+      blockId: 'reason',
+      baseRevision: 1,
+      baseSnapshot: fingerprint(JSON.stringify(snapshot)),
+      body: '已审阅的新人工说明',
+      reason: '澄清',
+    };
+    const candidate = await new WikiNoteCandidates(knowledge).save(request);
+    const review = await p.previewWikiNote(candidate.candidateId);
+    await assert.rejects(
+      p.publishWikiNote(candidate.candidateId, 'wrong'),
+      (e) => e.code === 'REVIEW_CHANGED',
+    );
+    const result = await p.publishWikiNote(candidate.candidateId, review.token);
+    assert.equal(result.revision, 2);
+    await unlink(join(f.store, 'history', result.transactionId, 'committed'));
+    assert.equal(
+      (await p.history()).find(
+        (h) => h.record.transactionId === result.transactionId,
+      ).state,
+      'prepared',
+    );
+    await p.recover(result.transactionId, result.snapshotRevision);
+    assert.deepEqual(
+      (await knowledge.snapshot()).snapshot.cards,
+      snapshot.cards,
+    );
+    const back = await p.previewWikiNote(result.transactionId, true);
+    await p.publishWikiNote(result.transactionId, back.token, true);
+    const current = (await knowledge.snapshot()).snapshot;
+    assert.equal(current.articles[0].revision, 3);
+    assert.equal(
+      current.articles[0].sections[0].blocks[1].body,
+      snapshot.articles[0].sections[0].blocks[1].body,
+    );
+    assert.deepEqual(current.cards, snapshot.cards);
+    assert.equal(
+      (await p.history()).filter((h) => h.state === 'committed').length,
+      2,
+    );
+    await assert.rejects(
+      p.publishWikiNote(candidate.candidateId, review.token),
+    );
+  } finally {
+    await f.cleanup();
+  }
+});
+
+test('note review rejects candidate mutation and changed source without publishing', async () => {
+  const f = await fixture();
+  try {
+    const { snapshot } = await model(f),
+      path = join(f.store, 'knowledge.json');
+    await writeFile(path, JSON.stringify(snapshot));
+    const knowledge = new KnowledgeStore(f.repository, f.store, 'wiki-v2'),
+      p = new KnowledgePublication(knowledge);
+    const request = {
+      articleId: 'overview',
+      sectionId: 'behavior',
+      blockId: 'reason',
+      baseRevision: 1,
+      baseSnapshot: fingerprint(JSON.stringify(snapshot)),
+      body: '第一版人工说明',
+      reason: '澄清',
+    };
+    const saved = await new WikiNoteCandidates(knowledge).save(request),
+      review = await p.previewWikiNote(saved.candidateId);
+    const candidatePath = join(
+      f.store,
+      'wiki-note-candidates',
+      saved.candidateId + '.json',
+    );
+    const record = JSON.parse(await readFile(candidatePath, 'utf8'));
+    record.request.body = '审阅后修改的正文';
+    await writeFile(candidatePath, JSON.stringify(record));
+    await assert.rejects(
+      p.publishWikiNote(saved.candidateId, review.token),
+      (e) => e.code === 'REVIEW_CHANGED',
+    );
+    const fresh = await p.previewWikiNote(saved.candidateId);
+    await writeFile(join(f.repository, 'src/读取.ts'), '// changed source\n');
+    await assert.rejects(
+      p.publishWikiNote(saved.candidateId, fresh.token),
+      (e) => e.code === 'STALE_EVIDENCE',
+    );
+    assert.deepEqual((await knowledge.snapshot()).snapshot, snapshot);
+    assert.equal((await p.history()).length, 0);
+  } finally {
+    await f.cleanup();
+  }
+});
 
 test('durable human note candidates survive restart, bind stores, retain stale bases and never publish', async () => {
   const f = await fixture();

@@ -16,6 +16,8 @@ export const wikiJournalSchema = z.strictObject({
     'restore-wiki',
     'create-wiki',
     'remove-wiki',
+    'edit-note',
+    'rollback-note',
   ]),
   itemId: z.uuid(),
   cardIds: z.array(cardSchema.shape.id).max(8),
@@ -82,6 +84,38 @@ export function validateWikiTransition(
     return;
   }
   if (before.schemaVersion !== 2 || after.schemaVersion !== 2) return invalid();
+  if (
+    record.operation === 'edit-note' ||
+    record.operation === 'rollback-note'
+  ) {
+    if (record.cardIds.length || record.articleIds.length !== 1)
+      return invalid();
+    const old = before.articles.find((a) => a.id === record.articleIds[0]);
+    const next = after.articles.find((a) => a.id === record.articleIds[0]);
+    if (!old || !next || next.revision !== old.revision + 1) return invalid();
+    const restored = structuredClone(after);
+    const article = restored.articles.find((a) => a.id === old.id)!;
+    article.revision = old.revision;
+    let changed = 0;
+    for (const section of article.sections)
+      for (const block of section.blocks) {
+        const previous = old.sections
+          .find((s) => s.id === section.id)
+          ?.blocks.find((b) => b.id === block.id);
+        if (
+          block.type === 'note' &&
+          previous?.type === 'note' &&
+          block.body !== previous.body
+        ) {
+          if (block.author !== 'human' || previous.author !== 'human')
+            return invalid();
+          changed++;
+          block.body = previous.body;
+        }
+      }
+    if (changed !== 1 || !same(restored, before)) return invalid();
+    return;
+  }
   const smaller = record.operation === 'create-wiki' ? before : after;
   const larger = record.operation === 'create-wiki' ? after : before;
   const cards = new Set(record.cardIds),
