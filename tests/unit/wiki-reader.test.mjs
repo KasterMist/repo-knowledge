@@ -218,7 +218,11 @@ test('reader message bridge is strict and shipped browser script sends only arti
     }),
     document: {
       querySelectorAll: (selector) =>
-        selector.includes('data-article') ? [article] : [evidence],
+        selector.includes('data-article')
+          ? [article]
+          : selector.includes('data-card')
+            ? [evidence]
+            : [],
       getElementById: () => ({
         addEventListener: (_type, fn) => {
           handlers.refresh = fn;
@@ -240,6 +244,58 @@ test('reader message bridge is strict and shipped browser script sends only arti
     },
     { action: 'refresh' },
   ]);
+});
+
+test('Wiki directory search retains matching descendants and sends no model or navigation request', () => {
+  let onInput;
+  const sent = [];
+  const child = {
+    dataset: { title: 'cuda kernel' },
+    hidden: false,
+    querySelectorAll: () => [],
+  };
+  const parent = {
+    dataset: { title: 'architecture' },
+    hidden: false,
+    querySelectorAll: () => [child],
+  };
+  const other = {
+    dataset: { title: 'build' },
+    hidden: false,
+    querySelectorAll: () => [],
+  };
+  const search = {
+    value: 'kernel',
+    addEventListener: (_event, fn) => {
+      onInput = fn;
+    },
+  };
+  const empty = { hidden: true };
+  runInNewContext(wikiClient, {
+    acquireVsCodeApi: () => ({ postMessage: (value) => sent.push(value) }),
+    document: {
+      querySelectorAll: (selector) =>
+        selector === 'li[data-wiki-entry]' ? [parent, child, other] : [],
+      getElementById: (id) =>
+        id === 'wiki-search'
+          ? search
+          : id === 'search-empty'
+            ? empty
+            : { addEventListener: () => {} },
+    },
+  });
+  onInput();
+  assert.equal(parent.hidden, false);
+  assert.equal(child.hidden, false);
+  assert.equal(other.hidden, true);
+  assert.equal(empty.hidden, true);
+  search.value = 'no match';
+  onInput();
+  assert.equal(empty.hidden, false);
+  search.value = '';
+  onInput();
+  assert.equal(other.hidden, false);
+  assert.deepEqual(sent, []);
 });
 
 test('article read budget rejects excessive card/evidence fanout before any source reads', async () => {

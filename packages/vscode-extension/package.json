@@ -233,23 +233,28 @@
         },
         {
           "id": "repoKnowledge.cards",
-          "name": "知识卡片 · Cards"
+          "name": "知识卡片 · Cards",
+          "visibility": "collapsed"
         },
         {
           "id": "repoKnowledge.drafts",
-          "name": "草稿 · Drafts"
+          "name": "草稿 · Drafts",
+          "visibility": "collapsed"
         },
         {
           "id": "repoKnowledge.proposals",
-          "name": "待审阅 · Proposals"
+          "name": "待审阅 · Proposals",
+          "visibility": "collapsed"
         },
         {
           "id": "repoKnowledge.creations",
-          "name": "新增待审阅 · New Cards"
+          "name": "新增待审阅 · New Cards",
+          "visibility": "collapsed"
         },
         {
           "id": "repoKnowledge.history",
-          "name": "发布历史 · History"
+          "name": "发布历史 · History",
+          "visibility": "collapsed"
         }
       ]
     },
