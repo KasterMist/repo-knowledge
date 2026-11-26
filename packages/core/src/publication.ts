@@ -27,7 +27,8 @@ import { scanPlanSchema, type ScanPlan } from './scan.js';
 import { boundedBytes, within, fingerprint, KnowledgeError } from './files.js';
 import { cardSchema, type Card, type ProposalInput } from './schema.js';
 import type { RuntimeSnapshot } from './snapshot-format.js';
-import { prepareWikiUpgrade } from './wiki.js';
+import { prepareWikiUpgrade, resolveWikiArticle } from './wiki.js';
+import { WikiNoteCandidates } from './wiki-note-candidates.js';
 import { WikiCandidates, validateGeneratedWiki } from './wiki-generation.js';
 import {
   rawDigest,
@@ -797,19 +798,42 @@ export class KnowledgePublication {
       validateWikiTransition(record, previous, next, before, after);
       if (
         record.operation === 'restore-wiki' ||
-        record.operation === 'remove-wiki'
+        record.operation === 'remove-wiki' ||
+        record.operation === 'rollback-note'
       ) {
         const source = await this.historyEntry(record.itemId, chain);
+        const restoredSource = this.knowledge.parseSnapshot(
+          JSON.parse(source.before),
+        );
+        if (
+          record.operation === 'rollback-note' &&
+          restoredSource.schemaVersion === 2 &&
+          next.schemaVersion === 2
+        ) {
+          const article = restoredSource.articles.find(
+            (a) => a.id === record.articleIds[0],
+          );
+          const updated = next.articles.find(
+            (a) => a.id === record.articleIds[0],
+          );
+          if (!article || !updated)
+            throw new KnowledgeError(
+              'INVALID_HISTORY',
+              'Missing rollback article',
+            );
+          article.revision = updated.revision;
+        }
         if (
           source.state !== 'committed' ||
           source.record.schemaVersion !== 3 ||
           source.record.operation !==
             (record.operation === 'restore-wiki'
               ? 'migrate-wiki'
-              : 'create-wiki') ||
+              : record.operation === 'rollback-note'
+                ? 'edit-note'
+                : 'create-wiki') ||
           source.record.afterSnapshot !== record.beforeSnapshot ||
-          json(this.knowledge.parseSnapshot(JSON.parse(source.before))) !==
-            json(next) ||
+          json(restoredSource) !== json(next) ||
           (record.operation === 'restore-wiki' &&
             rawDigest(afterBytes) !== source.record.beforeBytesSha256)
         )
@@ -1331,6 +1355,7 @@ export class KnowledgePublication {
       'incremental-attempts',
       'merge-reviews',
       'wiki-candidates',
+      'wiki-note-candidates',
       'plans',
       'dependency-baselines',
     ]) {
@@ -1602,6 +1627,154 @@ export class KnowledgePublication {
   }
   async previewWikiCreation(id: string) {
     return (await this.prepareWikiCreation(id)).review;
+  }
+  private async prepareNote(
+    id: string,
+    rollback: boolean,
+    ownTransaction?: string,
+  ) {
+    uuid.parse(id);
+    const current = await this.knowledge.snapshot();
+    if (current.snapshot.schemaVersion !== 2)
+      throw new KnowledgeError(
+        'INVALID_SNAPSHOT',
+        'Note publication requires v2',
+      );
+    let snapshot = structuredClone(current.snapshot);
+    let articleId: string;
+    let proof: string;
+    let reason = '恢复原说明正文，文章修订继续递增。';
+    if (rollback) {
+      const entry = await this.historyEntry(id);
+      if (
+        entry.state !== 'committed' ||
+        entry.record.schemaVersion !== 3 ||
+        entry.record.operation !== 'edit-note' ||
+        current.snapshotRevision !== entry.record.afterSnapshot
+      )
+        throw new KnowledgeError(
+          'REVISION_CONFLICT',
+          'Note rollback requires its unmodified committed head',
+        );
+      const before = this.knowledge.parseSnapshot(JSON.parse(entry.before));
+      if (before.schemaVersion !== 2)
+        throw new KnowledgeError('INVALID_HISTORY', 'Expected v2 note history');
+      articleId = entry.record.articleIds[0]!;
+      const old = before.articles.find((a) => a.id === articleId)!;
+      const live = snapshot.articles.find((a) => a.id === articleId)!;
+      snapshot.articles = snapshot.articles.map((a) =>
+        a.id === articleId ? { ...old, revision: live.revision + 1 } : a,
+      );
+      const history = await this.history();
+      const priorTransactions = entry.record.priorTransactions;
+      if (
+        history.some(
+          (h) =>
+            h.state === 'committed' &&
+            h.record.transactionId !== id &&
+            !priorTransactions.includes(h.record.transactionId),
+        )
+      )
+        throw new KnowledgeError(
+          'REVISION_CONFLICT',
+          'A later transaction prevents note rollback',
+        );
+      proof =
+        json(entry.record) +
+        rawDigest(entry.beforeBytes) +
+        rawDigest(entry.afterBytes);
+    } else {
+      const candidate = await new WikiNoteCandidates(this.knowledge).read(id);
+      if (candidate.state !== 'current')
+        throw new KnowledgeError(
+          'REVISION_CONFLICT',
+          'Note candidate base changed',
+        );
+      if (
+        (await this.history()).some(
+          (h) =>
+            h.state === 'committed' &&
+            h.record.operation === 'edit-note' &&
+            h.record.itemId === id,
+        )
+      )
+        throw new KnowledgeError(
+          'ALREADY_PUBLISHED',
+          'Note candidate already published',
+        );
+      snapshot = candidate.review.after;
+      articleId = candidate.candidate.request.articleId;
+      proof = candidate.candidateRevision;
+      reason = candidate.review.reason;
+    }
+    if (resolveWikiArticle(current.snapshot, articleId).needsReview)
+      throw new KnowledgeError(
+        'STALE_EVIDENCE',
+        'Article bindings need review',
+      );
+    const article = current.snapshot.articles.find((a) => a.id === articleId)!;
+    const ids = new Set(
+      article.sections.flatMap((s) =>
+        s.blocks.flatMap((b) =>
+          b.type === 'card'
+            ? [b.reference.cardId]
+            : b.references.map((r) => r.cardId),
+        ),
+      ),
+    );
+    for (const cardId of ids) {
+      const read = await this.knowledge.read(cardId);
+      if (read.stale || read.snapshotRevision !== current.snapshotRevision)
+        throw new KnowledgeError(
+          'STALE_EVIDENCE',
+          'Article source evidence changed',
+        );
+    }
+    const baseBytesSha256 = rawDigest(
+      await this.readBytes(
+        join(await realpath(this.knowledge.storeRoot), 'knowledge.json'),
+      ),
+    );
+    return {
+      snapshot,
+      snapshotRevision: current.snapshotRevision,
+      baseBytesSha256,
+      articleId,
+      review: await this.wikiReview(
+        {
+          itemId: id,
+          operation: rollback ? 'rollback-note' : 'edit-note',
+          baseSnapshot: current.snapshotRevision,
+          before: current.snapshot,
+          after: snapshot,
+          reason,
+          retainedMetadata: await this.wikiInventory(ownTransaction),
+        },
+        proof + baseBytesSha256,
+      ),
+    };
+  }
+  async previewWikiNote(id: string, rollback = false) {
+    return (await this.prepareNote(id, rollback)).review;
+  }
+  async publishWikiNote(id: string, token: string, rollback = false) {
+    return this.locked(async () => {
+      const prepared = await this.prepareNote(id, rollback);
+      if (prepared.review.token !== token)
+        throw new KnowledgeError('REVIEW_CHANGED', 'Note review changed');
+      return this.commitSnapshot(
+        prepared.review,
+        async (own) => {
+          const fresh = await this.prepareNote(id, rollback, own);
+          if (fresh.review.token !== token)
+            throw new KnowledgeError('REVIEW_CHANGED', 'Note review changed');
+          return fresh;
+        },
+        { schemaVersion: 3, cardIds: [], articleIds: [prepared.articleId] },
+        prepared.snapshot.articles.find((a) => a.id === prepared.articleId)!
+          .revision,
+      );
+    });
   }
   async publishWikiCreation(id: string, token: string) {
     return this.locked(async () => {
